@@ -4,12 +4,12 @@ import json
 from typing import List, Dict
 
 from github.Repository import Repository
-from github.GithubException import UnknownObjectException
+# from github.GithubException import UnknownObjectException
 from loguru import logger
 import tomli
 
 from . import GithubLinter
-from .utils import add_result
+from .utils import add_result, get_file_from_repo
 
 CATEGORY = "pyproject.toml"
 
@@ -40,17 +40,10 @@ def check_pyproject_toml(
     warnings_object: Dict[str, List[str]],
 ) -> None:
     """ checks the data for the pyproject.toml file """
-    try:
-        fileresult = repo_object.get_contents("pyproject.toml")
-    except UnknownObjectException:
-        logger.debug("pyproject.toml not found in {}", repo_object.full_name)
+    fileresult = get_file_from_repo(repo_object, "pyproject.toml")
+    if not fileresult:
         return
 
-    if not fileresult:
-        logger.debug("Couldn't find pyproject.toml...?")
-        return
-    if isinstance(fileresult, list):
-        fileresult = fileresult[0]
     config_expected = github_object.config.get(CATEGORY)
 
     try:

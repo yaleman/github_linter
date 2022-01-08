@@ -18,7 +18,8 @@ dynamic = [
 dependencies = [
     "click",
     "PyGithub",
-    "requests"
+    "requests",
+    "pyyaml",
 ]
 
 keywords = [
@@ -31,10 +32,11 @@ Home = "https://github.com/yaleman/github_linter"
 
 [project.optional-dependencies]
 dev = [
+    "flit",
     "pytest",
     "pylint",
     "mypy",
-    "flit",
+    "types-PyYAML",
 ]
 
 [project.scripts]

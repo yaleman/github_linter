@@ -6,14 +6,16 @@ from typing import List, Dict
 
 import click
 
-# from github.ContentFile import ContentFile
 # import github
+from github.ContentFile import ContentFile
 from github.Repository import Repository
 # from github.GithubException import UnknownObjectException
 from loguru import logger
 
 from . import GithubLinter
 from .pyproject import check_pyproject_toml
+from .dependabot import check_dependabot_config
+from .utils import add_result
 
 # TODO: add cli filter for repo
 # TODO: add cli fliter for org/user (owner)
@@ -24,22 +26,28 @@ def handle_repo(github_object: GithubLinter, repo: Repository):
     # logger.info("owner: {}", repo.owner)
     logger.info(repo.full_name)
     # logger.info("Blobs URL: {}", repo.blobs_url)
-    if repo.parent:
-        logger.warning("Parent: {}", repo.parent.full_name)
-
-    # contents = repo.get_contents("")
-    # for content_file in contents:
-    #    print(content_file)
 
     errors: Dict[str, List[str]] = {}
     warnings: Dict[str, List[str]] = {}
+    if repo.parent:
+        logger.warning("Parent: {}", repo.parent.full_name)
+
+    contents = repo.get_contents("")
+    if isinstance(contents, ContentFile):
+        contents = [contents]
+
+    for content_file in contents:
+        if content_file.name in github_object.config.get("files_to_remove"):
+            add_result(errors, "files_to_remove", f"File '{content_file.name}' needs to be removed from {repo.full_name}.")
 
     check_pyproject_toml(github_object, repo, errors, warnings)
-
-    if errors or warnings:
+    check_dependabot_config(repo, errors, warnings)
+    if errors:
         logger.error(json.dumps(errors, indent=4, ensure_ascii=False))
+    if warnings:
         logger.warning(json.dumps(warnings, indent=4, ensure_ascii=False))
-    else:
+
+    if not errors or warnings:
         logger.info("{} all good", repo.full_name)
 
 
