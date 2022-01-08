@@ -9,31 +9,35 @@ import click
 # import github
 # from github.ContentFile import ContentFile
 from github.Repository import Repository
+
 # from github.GithubException import UnknownObjectException
 from loguru import logger
 
 from . import GithubLinter
-from .pyproject import check_pyproject_toml
-from .dependabot import check_dependabot_config
-from .utils import check_files_to_remove
+
+# from .utils import check_files_to_remove
 from .types import DICTLIST
 
-# TODO: add cli filter for repo
-# TODO: add cli fliter for org/user (owner)
+# all the tests
+
+from .generic_tests import check_files_to_remove
+from .pyproject import check_pyproject_toml
+from .dependabot import check_dependabot_config
+from .pylintrc import check_pylintrc
 
 MODULES = {
-    "check_files" : check_files_to_remove,
-    "pyproject" : check_pyproject_toml,
-    "dependabot" : check_dependabot_config,
+    "check_files": check_files_to_remove,
+    "pyproject": check_pyproject_toml,
+    "dependabot": check_dependabot_config,
+    "pylintrc" : check_pylintrc,
 }
-
 
 
 def handle_repo(
     github_object: GithubLinter,
     repo: Repository,
     enabled_modules: Optional[List[str]],
-    ):
+):
     """ does things """
     # logger.info("owner: {}", repo.owner)
     logger.info(repo.full_name)
@@ -65,16 +69,16 @@ def handle_repo(
         logger.info("{} all good", repo.full_name)
 
 
-
-# TODO: check for pyproject.toml
 # TODO: check for .pylintrc
-# TODO: check for .drone.yml
 # TODO: sanity check... stuff?
 
 # TODO: check for .github/workflows/ dir
 # TODO: check for .github/dependabot.yml config
 
-def search_repos(github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]]) -> List[Repository]:
+
+def search_repos(
+    github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]]
+) -> List[Repository]:
     """ search repos based on cli input """
     if kwargs_object.get("repo") or kwargs_object.get("owner"):
         search = ""
@@ -95,26 +99,27 @@ def search_repos(github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]])
         repos = github.github.get_user().get_repos()
     return repos
 
+
 @click.command()
 @click.option("--repo", "-r", multiple=True, help="Filter repos")
 @click.option("--owner", "-o", multiple=True, help="Filter owners")
-@click.option("--module", "-m", multiple=True, help="Check modules")
+@click.option(
+    "--module", "-m",
+    multiple=True,
+    type=click.Choice(list(MODULES.keys())),
+    help="Specify which modules to run",
+    )
 def cli(**kwargs):
-    """ cli interface """
+    """ Github linter for checking your repositories for various things. """
     github = GithubLinter()
-    # logger.debug("Getting user")
-    # user = github.github.get_user()
-    # logger.info(dir(user))
 
     logger.debug("Getting repos")
-
     repos = search_repos(github, kwargs)
 
     if "module" in kwargs:
         module: List[str] = kwargs["module"]
     else:
         module = None
-
 
     for repo in repos:
         handle_repo(github, repo, module)

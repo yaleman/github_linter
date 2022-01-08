@@ -28,25 +28,25 @@ from .utils import add_result, get_file_from_repo
 # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates
 
 CONFIG = {
-    "version" : "2",
-    "updates" : [
+    "version": "2",
+    "updates": [
         {
-            "directory" : "/",
-            "schedule" : {
-                "interval" : "daily",
-                "time" : "06:00",
-                "timezone" : "Australia/Brisbane"
-            }
+            "directory": "/",
+            "schedule": {
+                "interval": "daily",
+                "time": "06:00",
+                "timezone": "Australia/Brisbane",
+            },
         }
     ],
-    "open-pull-requests-limit" : 99
+    "open-pull-requests-limit": 99,
 }
 
 
 CATEGORY = "dependabot"
 
 VALID_VALUES = {
-    "package-ecosystem" : [
+    "package-ecosystem": [
         "bundler",
         "cargo",
         "composer",
@@ -65,24 +65,34 @@ VALID_VALUES = {
         "npm",
     ]
 }
-def check_update_config(updates: List[Dict[str,str]],
+
+
+def check_update_config(
+    updates: List[Dict[str, str]],
     error_object: DICTLIST,
-    _: DICTLIST,): # warnings_object
+    _: DICTLIST, # warnings_object
+):
     """ checks update config """
 
     for update in updates:
         logger.debug(json.dumps(update, indent=4))
         if "package-ecosystem" not in update:
             add_result(error_object, CATEGORY, "package-ecosystem not set in an update")
-        elif update.get("package-ecosystem","") not in VALID_VALUES["package-ecosystem"]:
-            add_result(error_object, CATEGORY, f"package-ecosystem set to invalid value: '{update['package-ecosystem']}'")
+        elif (
+            update.get("package-ecosystem", "") not in VALID_VALUES["package-ecosystem"]
+        ):
+            add_result(
+                error_object,
+                CATEGORY,
+                f"package-ecosystem set to invalid value: '{update['package-ecosystem']}'",
+            )
 
 def check_dependabot_config(
     _: GithubLinter,
     repo: Repository,
     errors_object: DICTLIST,
     warnings_object: DICTLIST,
-    ):
+):
     """ checks for dependabot config """
 
     fileresult = get_file_from_repo(repo, ".github/dependabot.yml")
@@ -96,8 +106,12 @@ def check_dependabot_config(
         logger.error("Failed to parse dependabot config: {}", exc)
         add_result(errors_object, CATEGORY, f"Failed to parse dependabot config: {exc}")
         return
-    logger.debug(json.dumps(dependabot_config, indent=4, default=str, ensure_ascii=False))
+    logger.debug(
+        json.dumps(dependabot_config, indent=4, default=str, ensure_ascii=False)
+    )
     if dependabot_config.get("updates"):
-        check_update_config(dependabot_config["updates"], errors_object, warnings_object)
+        check_update_config(
+            dependabot_config["updates"], errors_object, warnings_object
+        )
 
     return

@@ -1,11 +1,11 @@
 """ goes through your repos and checks for things """
 
-import json
 from json.decoder import JSONDecodeError
 import os
 from pathlib import Path
 from typing import Union, Dict
 
+import json5 as json # type: ignore
 from loguru import logger
 from github import Github
 
@@ -25,25 +25,16 @@ def load_config() -> Union[Dict[str, str], bool]:
     return config
 
 
-#pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods
 class GithubLinter:
     """ does things """
 
     def __init__(self):
         """ setup """
         if os.getenv("GITHUB_TOKEN"):
-            logger.info("Using GITHUB_TOKEN")
+            logger.debug("Using GITHUB_TOKEN")
             self.github = Github(os.getenv("GITHUB_TOKEN"))
-            # self.user = self.github.get_user()
-            # self.interested_owners = [self.user.login]
-            # for org in self.user.get_orgs():
-            #     self.interested_owners.append(org.login)
 
         self.config = load_config()
         if not self.config:
             self.config = {}
-
-
-# using username and password
-# TODO: config file things
-# g = Github("user", "password")

@@ -1,9 +1,11 @@
 """ pyproject.toml checks """
 
 import json
+
 # from typing import List, Dict
 
 from github.Repository import Repository
+
 # from github.GithubException import UnknownObjectException
 from loguru import logger
 import tomli
@@ -13,6 +15,7 @@ from .types import DICTLIST
 from .utils import add_result, get_file_from_repo
 
 CATEGORY = "pyproject.toml"
+
 
 def check_pyproject_authors(
     github_object: GithubLinter,
@@ -29,10 +32,13 @@ def check_pyproject_authors(
     elif config_expected and config_expected.get("authors"):
         for author in project_object["authors"]:
             if author not in config_expected.get("authors"):
-                add_result(errors_object, CATEGORY, f"Project author not expected: {author}")
+                add_result(
+                    errors_object, CATEGORY, f"Project author not expected: {author}"
+                )
     else:
         for author in project_object["authors"]:
             add_result(warnings_object, CATEGORY, f"Check author is expected: {author}")
+
 
 def check_pyproject_toml(
     github_object: GithubLinter,
@@ -53,7 +59,9 @@ def check_pyproject_toml(
         logger.debug(
             "Failed to parse {}/pyproject.toml: {}", repo_object.full_name, tomli_error
         )
-        add_result(errors_object, CATEGORY, f"Failed to parse pyproject.toml: {tomli_error}")
+        add_result(
+            errors_object, CATEGORY, f"Failed to parse pyproject.toml: {tomli_error}"
+        )
         return
     logger.debug(json.dumps(parsed, indent=4, ensure_ascii=False))
 
