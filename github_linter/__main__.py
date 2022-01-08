@@ -41,6 +41,8 @@ def handle_repo(
     """ does things """
     # logger.info("owner: {}", repo.owner)
     logger.info(repo.full_name)
+    if repo.archived:
+        logger.warning("Repository is archived!")
     # logger.info("Blobs URL: {}", repo.blobs_url)
 
     errors: DICTLIST = {}
