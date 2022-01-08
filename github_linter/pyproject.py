@@ -44,7 +44,7 @@ def check_pyproject_toml(
     if not fileresult:
         return
 
-    config_expected = github_object.config.get(CATEGORY)
+    # config_expected = github_object.config.get(CATEGORY)
 
     try:
         parsed = tomli.loads(fileresult.decoded_content.decode("utf-8"))

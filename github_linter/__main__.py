@@ -1,7 +1,7 @@
 """ cli bits """
 
 import json
-from typing import List, Dict
+from typing import List, Dict, Any
 
 
 import click
@@ -60,6 +60,26 @@ def handle_repo(github_object: GithubLinter, repo: Repository):
 # TODO: check for .github/workflows/ dir
 # TODO: check for .github/dependabot.yml config
 
+def search_repos(github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]]) -> List[Repository]:
+    """ search repos based on cli input """
+    if kwargs_object.get("repo") or kwargs_object.get("owner"):
+        search = ""
+        searchrepos = []
+        if kwargs_object.get("repo"):
+            for repo in kwargs_object["repo"]:
+                if kwargs_object.get("owner"):
+                    for owner in kwargs_object["owner"]:
+                        searchrepos.append(f"{owner}/{repo}")
+                else:
+                    searchrepos.append(repo)
+        else:
+            searchrepos = [f"user:{owner}" for owner in kwargs_object["owner"]]
+        search = " OR ".join(searchrepos)
+        logger.debug("Search string: '{}'", search)
+        repos = github.github.search_repositories(query=search)
+    else:
+        repos = github.github.get_user().get_repos()
+    return repos
 
 @click.command()
 @click.option("--repo", "-r", multiple=True, help="Filter repos")
@@ -67,31 +87,13 @@ def handle_repo(github_object: GithubLinter, repo: Repository):
 def cli(**kwargs: dict):
     """ cli interface """
     github = GithubLinter()
-    logger.debug("Getting user")
-    user = github.github.get_user()
+    # logger.debug("Getting user")
+    # user = github.github.get_user()
     # logger.info(dir(user))
 
     logger.debug("Getting repos")
 
-    if kwargs.get("repo") or kwargs.get("owner"):
-        search = ""
-        searchrepos = []
-        if kwargs.get("repo"):
-            for repo in kwargs["repo"]:
-                if kwargs.get("owner"):
-                    for owner in kwargs["owner"]:
-                        searchrepos.append(f"{owner}/{repo}")
-                else:
-                    searchrepos.append(repo)
-        else:
-            searchrepos = [f"user:{owner}" for owner in kwargs["owner"]]
-        search = " OR ".join(searchrepos)
-        logger.debug("Search string: '{}'", search)
-        repos = github.github.search_repositories(query=search)
-        logger.debug(list(repos))
-
-    else:
-        repos = user.get_repos()
+    repos = search_repos(github, kwargs)
 
     for repo in repos:
         handle_repo(github, repo)
