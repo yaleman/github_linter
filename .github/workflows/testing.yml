@@ -24,8 +24,6 @@ jobs:
         uses: fylein/python-pylint-github-action@v4
         with:
           args: |
-            apt-get -y install git
-            find / -type f -name git
             python3 -m pip install --quiet --upgrade flit pytest pylint
             FLIT_ROOT_INSTALL=1 python3 -m flit install --deps all
             python3 -m pylint --rcfile=.pylintrc github_linter

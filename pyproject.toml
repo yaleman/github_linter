@@ -20,6 +20,7 @@ dependencies = [
     "PyGithub",
     "requests",
     "pyyaml",
+    "loguru",
 ]
 
 keywords = [
