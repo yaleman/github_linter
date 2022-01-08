@@ -1,0 +1,31 @@
+name: test the things
+
+on:
+  push:
+    branches:
+      - main  # Set a branch to deploy
+  pull_request:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
+      - name: Set up Python 3
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Running tests
+        uses: fylein/python-pylint-github-action@v4
+        with:
+          args: |
+            apt-get -y install git
+            find / -type f -name git
+            python3 -m pip install --quiet --upgrade flit pytest pylint
+            FLIT_ROOT_INSTALL=1 python3 -m flit install --deps all
+            python3 -m pylint --rcfile=.pylintrc github_linter
