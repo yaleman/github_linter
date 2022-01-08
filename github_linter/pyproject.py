@@ -1,7 +1,7 @@
 """ pyproject.toml checks """
 
 import json
-from typing import List, Dict
+# from typing import List, Dict
 
 from github.Repository import Repository
 # from github.GithubException import UnknownObjectException
@@ -9,6 +9,7 @@ from loguru import logger
 import tomli
 
 from . import GithubLinter
+from .types import DICTLIST
 from .utils import add_result, get_file_from_repo
 
 CATEGORY = "pyproject.toml"
@@ -16,8 +17,8 @@ CATEGORY = "pyproject.toml"
 def check_pyproject_authors(
     github_object: GithubLinter,
     project_object: dict,
-    errors_object: Dict[str, List[str]],
-    warnings_object: Dict[str, List[str]],
+    errors_object: DICTLIST,
+    warnings_object: DICTLIST,
 ) -> None:
     """ checks the authors exist and are valid """
 
@@ -36,8 +37,8 @@ def check_pyproject_authors(
 def check_pyproject_toml(
     github_object: GithubLinter,
     repo_object: Repository,
-    errors_object: Dict[str, List[str]],
-    warnings_object: Dict[str, List[str]],
+    errors_object: DICTLIST,
+    warnings_object: DICTLIST,
 ) -> None:
     """ checks the data for the pyproject.toml file """
     fileresult = get_file_from_repo(repo_object, "pyproject.toml")

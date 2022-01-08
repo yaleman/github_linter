@@ -1,13 +1,13 @@
 """ cli bits """
 
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 import click
 
 # import github
-from github.ContentFile import ContentFile
+# from github.ContentFile import ContentFile
 from github.Repository import Repository
 # from github.GithubException import UnknownObjectException
 from loguru import logger
@@ -15,33 +15,47 @@ from loguru import logger
 from . import GithubLinter
 from .pyproject import check_pyproject_toml
 from .dependabot import check_dependabot_config
-from .utils import add_result
+from .utils import check_files_to_remove
+from .types import DICTLIST
 
 # TODO: add cli filter for repo
 # TODO: add cli fliter for org/user (owner)
 
+MODULES = {
+    "check_files" : check_files_to_remove,
+    "pyproject" : check_pyproject_toml,
+    "dependabot" : check_dependabot_config,
+}
 
-def handle_repo(github_object: GithubLinter, repo: Repository):
+
+
+def handle_repo(
+    github_object: GithubLinter,
+    repo: Repository,
+    enabled_modules: Optional[List[str]],
+    ):
     """ does things """
     # logger.info("owner: {}", repo.owner)
     logger.info(repo.full_name)
     # logger.info("Blobs URL: {}", repo.blobs_url)
 
-    errors: Dict[str, List[str]] = {}
-    warnings: Dict[str, List[str]] = {}
+    errors: DICTLIST = {}
+    warnings: DICTLIST = {}
     if repo.parent:
         logger.warning("Parent: {}", repo.parent.full_name)
 
-    contents = repo.get_contents("")
-    if isinstance(contents, ContentFile):
-        contents = [contents]
+    if enabled_modules:
+        for module in enabled_modules:
+            if module not in MODULES:
+                logger.error("Module not found: {}", module)
+            else:
+                MODULES[module](github_object, repo, errors, warnings)
+    else:
+        for module in MODULES:
+            MODULES[module](github_object, repo, errors, warnings)
 
-    for content_file in contents:
-        if content_file.name in github_object.config.get("files_to_remove"):
-            add_result(errors, "files_to_remove", f"File '{content_file.name}' needs to be removed from {repo.full_name}.")
-
-    check_pyproject_toml(github_object, repo, errors, warnings)
-    check_dependabot_config(repo, errors, warnings)
+    # check_pyproject_toml(github_object, repo, errors, warnings)
+    # check_dependabot_config(github_object, repo, errors, warnings)
     if errors:
         logger.error(json.dumps(errors, indent=4, ensure_ascii=False))
     if warnings:
@@ -84,7 +98,8 @@ def search_repos(github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]])
 @click.command()
 @click.option("--repo", "-r", multiple=True, help="Filter repos")
 @click.option("--owner", "-o", multiple=True, help="Filter owners")
-def cli(**kwargs: dict):
+@click.option("--module", "-m", multiple=True, help="Check modules")
+def cli(**kwargs):
     """ cli interface """
     github = GithubLinter()
     # logger.debug("Getting user")
@@ -95,8 +110,14 @@ def cli(**kwargs: dict):
 
     repos = search_repos(github, kwargs)
 
+    if "module" in kwargs:
+        module: List[str] = kwargs["module"]
+    else:
+        module = None
+
+
     for repo in repos:
-        handle_repo(github, repo)
+        handle_repo(github, repo, module)
 
 
 if __name__ == "__main__":

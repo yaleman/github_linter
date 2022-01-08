@@ -25,6 +25,7 @@ def load_config() -> Union[Dict[str, str], bool]:
     return config
 
 
+#pylint: disable=too-few-public-methods
 class GithubLinter:
     """ does things """
 
@@ -33,10 +34,10 @@ class GithubLinter:
         if os.getenv("GITHUB_TOKEN"):
             logger.info("Using GITHUB_TOKEN")
             self.github = Github(os.getenv("GITHUB_TOKEN"))
-            self.user = self.github.get_user()
-            self.interested_owners = [self.user.login]
-            for org in self.user.get_orgs():
-                self.interested_owners.append(org.login)
+            # self.user = self.github.get_user()
+            # self.interested_owners = [self.user.login]
+            # for org in self.user.get_orgs():
+            #     self.interested_owners.append(org.login)
 
         self.config = load_config()
         if not self.config:

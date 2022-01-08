@@ -7,7 +7,10 @@ from loguru import logger
 from github.Repository import Repository
 import yaml
 
+from github_linter import GithubLinter
+
 # from . import GithubLinter
+from .types import DICTLIST
 from .utils import add_result, get_file_from_repo
 
 # template = """
@@ -21,6 +24,8 @@ from .utils import add_result, get_file_from_repo
 #     timezone: Australia/Brisbane
 #   open-pull-requests-limit: 99
 # """
+
+# https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates
 
 CONFIG = {
     "version" : "2",
@@ -40,10 +45,43 @@ CONFIG = {
 
 CATEGORY = "dependabot"
 
+VALID_VALUES = {
+    "package-ecosystem" : [
+        "bundler",
+        "cargo",
+        "composer",
+        "docker",
+        "mix",
+        "elm",
+        "gitsubmodule",
+        "github-actions",
+        "gomod",
+        "gradle",
+        "maven",
+        "npm",
+        "nuget",
+        "pip",
+        "terraform",
+        "npm",
+    ]
+}
+def check_update_config(updates: List[Dict[str,str]],
+    error_object: DICTLIST,
+    _: DICTLIST,): # warnings_object
+    """ checks update config """
+
+    for update in updates:
+        logger.debug(json.dumps(update, indent=4))
+        if "package-ecosystem" not in update:
+            add_result(error_object, CATEGORY, "package-ecosystem not set in an update")
+        elif update.get("package-ecosystem","") not in VALID_VALUES["package-ecosystem"]:
+            add_result(error_object, CATEGORY, f"package-ecosystem set to invalid value: '{update['package-ecosystem']}'")
+
 def check_dependabot_config(
+    _: GithubLinter,
     repo: Repository,
-    errors_object: Dict[str, List[str]],
-    _: Dict[str, List[str]],
+    errors_object: DICTLIST,
+    warnings_object: DICTLIST,
     ):
     """ checks for dependabot config """
 
@@ -59,4 +97,7 @@ def check_dependabot_config(
         add_result(errors_object, CATEGORY, f"Failed to parse dependabot config: {exc}")
         return
     logger.debug(json.dumps(dependabot_config, indent=4, default=str, ensure_ascii=False))
+    if dependabot_config.get("updates"):
+        check_update_config(dependabot_config["updates"], errors_object, warnings_object)
+
     return
