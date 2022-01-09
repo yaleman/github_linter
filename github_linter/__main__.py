@@ -1,8 +1,8 @@
 """ cli bits """
 
 import json
-from typing import List, Dict, Any, Optional
-from inspect import ismodule, isfunction
+from typing import List, Dict, Any
+from inspect import ismodule
 
 import click
 
@@ -21,11 +21,12 @@ from .types import DICTLIST
 # all the tests
 #
 # from .tests.pyproject import check_pyproject_toml
-from .tests import generic, dependabot, pylintrc, pyproject
+from .tests import generic, dependabot, issues, pylintrc, pyproject
 
 MODULES = {
     "dependabot": dependabot,
     "generic" : generic,
+    "issues" : issues,
     "pylintrc" : pylintrc,
     "pyproject": pyproject,
 }
@@ -35,21 +36,18 @@ def run_module(github_object: GithubLinter, repo_object: Repository, errors_obje
     if module not in MODULES:
         logger.error("Module not found: {}", module)
         return False
-    if ismodule(MODULES[module]):
-        for check in dir(MODULES[module]):
-            if check.startswith("check_"):
-                logger.debug("Running {}", check)
-                getattr(MODULES[module],check)(github_object, repo_object, errors_object, warnings_object)
-    elif isfunction(MODULES[module]):
-        MODULES[module](github_object, repo_object, errors_object, warnings_object)
-    else:
+    if not ismodule(MODULES[module]):
         raise TypeError(f"Found type {type(MODULES[module])} while running module.")
+    for check in dir(MODULES[module]):
+        if check.startswith("check_"):
+            logger.debug("Running {}", check)
+            getattr(MODULES[module],check)(github_object, repo_object, errors_object, warnings_object)
     return True
 
 def handle_repo(
     github_object: GithubLinter,
     repo: Repository,
-    enabled_modules: Optional[List[str]],
+    enabled_modules: List[str],
 ):
     """ does things """
     # logger.info("owner: {}", repo.owner)
@@ -64,7 +62,7 @@ def handle_repo(
         logger.warning("Parent: {}", repo.parent.full_name)
 
     if not enabled_modules:
-        enabled_modules = MODULES
+        enabled_modules = list(MODULES.keys())
     for module in enabled_modules:
         run_module(github_object, repo, errors, warnings, module)
 
@@ -104,10 +102,22 @@ def search_repos(
             searchrepos = [f"user:{owner}" for owner in kwargs_object["owner"]]
         search = " OR ".join(searchrepos)
         logger.debug("Search string: '{}'", search)
-        repos = github.github.search_repositories(query=search)
-    else:
-        repos = github.github.get_user().get_repos()
-    return repos
+        search_result = github.github.search_repositories(query=search)
+
+
+        # filter search results by owner
+        if kwargs_object.get("owner"):
+            # logger.debug("Filtering based on owner: {}", kwargs_object["owner"])
+            filtered_result = [ repo for repo in search_result if repo.owner.login in kwargs_object["owner"] ]
+            search_result = filtered_result
+        # filter search results by repo name
+        if kwargs_object.get("repo"):
+            # logger.debug("Filtering based on repo: {}", kwargs_object["repo"])
+            filtered_result = [ repo for repo in search_result if repo.name in kwargs_object["repo"] ]
+            search_result = filtered_result
+        return search_result
+
+    return github.github.get_user().get_repos()
 
 
 @click.command()
@@ -129,10 +139,24 @@ def cli(**kwargs):
     if "module" in kwargs:
         module: List[str] = kwargs["module"]
     else:
-        module = None
+        module = list(MODULES.keys())
+
+    user = github.github.get_user()
+
+    if github.config.get("check_forks"):
+        logger.debug("Checking forks")
 
     for repo in repos:
-        handle_repo(github, repo, module)
+        logger.debug(repo)
+        if not repo.parent:
+            handle_repo(github, repo, module)
+        # if it's a fork and you're checking them
+        elif repo.parent.owner.login != user.login and github.config.get("check_forks"):
+            handle_repo(github, repo, module)
+        else:
+            logger.warning("check_forks is true and {} is a fork, skipping.", repo.full_name)
+
+
 
 
 if __name__ == "__main__":

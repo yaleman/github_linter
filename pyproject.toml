@@ -21,6 +21,7 @@ dependencies = [
     "requests",
     "pyyaml",
     "loguru",
+    "json5",
 ]
 
 keywords = [
@@ -50,4 +51,6 @@ exclude = [
     ".gitignore",
     ".pylintrc",
     "*.json.example*",
+    "test_*.py",
+    "*.sh",
 ]

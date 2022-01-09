@@ -14,15 +14,20 @@ __version__ = "0.0.1"
 
 def load_config() -> Union[Dict[str, str], bool]:
     """ loads config """
-    configfile = Path(os.path.expanduser("~/.config/github_linter.json"))
-    if not configfile.exists():
-        logger.error("Failed to find config file: {}", configfile.as_posix)
-    try:
-        config = json.load(configfile.open(encoding="utf8"))
-    except JSONDecodeError as json_error:
-        logger.error("Failed to load {}: {}", configfile.as_posix, json_error)
-        return False
-    return config
+    for configfile in [
+        Path("./github_linter.json"),
+        Path(os.path.expanduser("~/.config/github_linter.json")),
+    ]:
+        if not configfile.exists():
+            continue
+        try:
+            config = json.load(configfile.open(encoding="utf8"))
+            logger.debug("Using config file {}", configfile.as_posix())
+            return config
+        except JSONDecodeError as json_error:
+            logger.error("Failed to load {}: {}", configfile.as_posix(), json_error)
+    logger.error("Failed to find config file")
+    return False
 
 
 # pylint: disable=too-few-public-methods
