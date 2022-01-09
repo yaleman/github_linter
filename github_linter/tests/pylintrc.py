@@ -4,6 +4,7 @@
 from typing import Optional
 
 from configparser import ConfigParser
+
 # from loguru import logger
 from github.Repository import Repository
 
@@ -17,9 +18,8 @@ from ..utils import add_result, get_file_from_repo
 
 CATEGORY = "pylintrc"
 
-LANGUAGES = [
-    "python"
-]
+LANGUAGES = ["python"]
+
 
 def load_pylintrc(repo: Repository) -> Optional[ConfigParser]:
     """ grabs the .pylintrc file from the repository """
@@ -54,7 +54,11 @@ def check_max_line_length_configured(
             expected = github.config[CATEGORY]["max-line-length"]
 
     if int(linelength) != int(expected):
-        add_result(errors_object, CATEGORY, f"max-line-length wrong, is {linelength}, should be {expected}")
+        add_result(
+            errors_object,
+            CATEGORY,
+            f"max-line-length wrong, is {linelength}, should be {expected}",
+        )
     return True
 
 

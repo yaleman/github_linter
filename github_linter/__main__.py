@@ -85,9 +85,10 @@ def handle_repo(
     if not errors or warnings:
         logger.debug("{} all good", repo.full_name)
     github_object.report[repo.full_name] = {
-        "errors" : errors,
-        "warnings" : warnings,
+        "errors": errors,
+        "warnings": warnings,
     }
+
 
 # TODO: sanity check... stuff?
 
@@ -95,6 +96,7 @@ def handle_repo(
 # TODO: check for .github/dependabot.yml config
 # TODO: disable modules based on #repo.get_languages...
 # TODO: add tests to make sure all modules have CATEGORY and LANGUAGES set
+
 
 def search_repos(
     github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]]
@@ -175,6 +177,7 @@ def cli(**kwargs):
                 "check_forks is true and {} is a fork, skipping.", repo.full_name
             )
     github.display_report()
+
 
 if __name__ == "__main__":
     cli()

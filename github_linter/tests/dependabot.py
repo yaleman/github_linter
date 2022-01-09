@@ -57,23 +57,24 @@ DEPENDABOT_CONFIG_FILE = TypedDict(
     },
 )
 
-PACKAGE_ECOSYSTEM : Dict[str, List[str]] = {
-        "bundler" : [] ,
-        "cargo" : [ "rust" ],
-        "composer" : [],
-        "docker" : [],
-        "mix" : [],
-        "elm" : [],
-        "gitsubmodule" : [],
-        "github-actions" : [],
-        "gomod" : [],
-        "gradle" : [],
-        "maven" : [],
-        "npm" : [],
-        "nuget" : [],
-        "pip" : ["python"],
-        "terraform" : [ "HCL" ],
+PACKAGE_ECOSYSTEM: Dict[str, List[str]] = {
+    "bundler": [],
+    "cargo": ["rust"],
+    "composer": [],
+    "docker": [],
+    "mix": [],
+    "elm": [],
+    "gitsubmodule": [],
+    "github-actions": [],
+    "gomod": [],
+    "gradle": [],
+    "maven": [],
+    "npm": [],
+    "nuget": [],
+    "pip": ["python"],
+    "terraform": ["HCL"],
 }
+
 
 def find_language_in_ecosystem(language: str) -> Optional[str]:
     """ checks to see if languages are in VALID_VALUES["package-ecosystem"] """
@@ -83,7 +84,9 @@ def find_language_in_ecosystem(language: str) -> Optional[str]:
             return package
     return None
 
- # TODO: base dependabot config on repo.get_languages() - ie {'Python': 22722, 'Shell': 328}
+
+# TODO: base dependabot config on repo.get_languages() - ie {'Python': 22722, 'Shell': 328}
+
 
 def validate_updates_for_langauges(
     repo: Repository,
@@ -104,18 +107,32 @@ def validate_updates_for_langauges(
         logger.debug(
             "Need to ensure updates exist for these package ecosystems: {}",
             ", ".join(required_package_managers),
-            )
+        )
         package_managers_covered = []
         for update in updates:
             if "package-ecosystem" in update:
-                if update["package-ecosystem"] in required_package_managers and update["package-ecosystem"] not in package_managers_covered:
+                if (
+                    update["package-ecosystem"] in required_package_managers
+                    and update["package-ecosystem"] not in package_managers_covered
+                ):
                     package_managers_covered.append(update["package-ecosystem"])
-                    logger.debug("Satisified requirement for {}", update["package-ecosystem"])
+                    logger.debug(
+                        "Satisified requirement for {}", update["package-ecosystem"]
+                    )
         if set(required_package_managers) != set(package_managers_covered):
-            for manager in [ manager for manager in required_package_managers if manager not in package_managers_covered ]:
-                add_result(error_object, CATEGORY, f"Package manager needs to be configured for {manager}")
+            for manager in [
+                manager
+                for manager in required_package_managers
+                if manager not in package_managers_covered
+            ]:
+                add_result(
+                    error_object,
+                    CATEGORY,
+                    f"Package manager needs to be configured for {manager}",
+                )
         else:
             logger.debug("")
+
 
 def validate_update_config(
     updates,
@@ -186,4 +203,6 @@ def check_dependabot_config(
             dependabot_config["updates"], errors_object, warnings_object
         )
 
-        validate_updates_for_langauges(repo, dependabot_config["updates"], errors_object, warnings_object)
+        validate_updates_for_langauges(
+            repo, dependabot_config["updates"], errors_object, warnings_object
+        )
