@@ -10,14 +10,14 @@ from github.Repository import Repository
 from loguru import logger
 import tomli
 
-from . import GithubLinter
-from .types import DICTLIST
-from .utils import add_result, get_file_from_repo
+from .. import GithubLinter
+from ..types import DICTLIST
+from ..utils import add_result, get_file_from_repo
 
 CATEGORY = "pyproject.toml"
 
 
-def check_pyproject_authors(
+def validate_pyproject_authors(
     github_object: GithubLinter,
     project_object: dict,
     errors_object: DICTLIST,
@@ -71,7 +71,7 @@ def check_pyproject_toml(
         project = parsed["project"]
 
         # check the authors are expected
-        check_pyproject_authors(github_object, project, errors_object, warnings_object)
+        validate_pyproject_authors(github_object, project, errors_object, warnings_object)
         for url in project.get("urls"):
             logger.debug("URL: {} - {}", url, project["urls"][url])
     return

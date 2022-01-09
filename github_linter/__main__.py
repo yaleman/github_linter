@@ -2,7 +2,7 @@
 
 import json
 from typing import List, Dict, Any, Optional
-
+from inspect import ismodule, isfunction
 
 import click
 
@@ -19,19 +19,32 @@ from . import GithubLinter
 from .types import DICTLIST
 
 # all the tests
-
-from .generic_tests import check_files_to_remove
-from .pyproject import check_pyproject_toml
-from .dependabot import check_dependabot_config
-from .pylintrc import check_pylintrc
+#
+# from .tests.pyproject import check_pyproject_toml
+from .tests import generic, dependabot, pylintrc, pyproject
 
 MODULES = {
-    "check_files": check_files_to_remove,
-    "pyproject": check_pyproject_toml,
-    "dependabot": check_dependabot_config,
-    "pylintrc" : check_pylintrc,
+    "dependabot": dependabot,
+    "generic" : generic,
+    "pylintrc" : pylintrc,
+    "pyproject": pyproject,
 }
 
+def run_module(github_object: GithubLinter, repo_object: Repository, errors_object: DICTLIST, warnings_object: DICTLIST, module: str) -> bool:
+    """ runs a module after checking what it is """
+    if module not in MODULES:
+        logger.error("Module not found: {}", module)
+        return False
+    if ismodule(MODULES[module]):
+        for check in dir(MODULES[module]):
+            if check.startswith("check_"):
+                logger.debug("Running {}", check)
+                getattr(MODULES[module],check)(github_object, repo_object, errors_object, warnings_object)
+    elif isfunction(MODULES[module]):
+        MODULES[module](github_object, repo_object, errors_object, warnings_object)
+    else:
+        raise TypeError(f"Found type {type(MODULES[module])} while running module.")
+    return True
 
 def handle_repo(
     github_object: GithubLinter,
@@ -50,15 +63,10 @@ def handle_repo(
     if repo.parent:
         logger.warning("Parent: {}", repo.parent.full_name)
 
-    if enabled_modules:
-        for module in enabled_modules:
-            if module not in MODULES:
-                logger.error("Module not found: {}", module)
-            else:
-                MODULES[module](github_object, repo, errors, warnings)
-    else:
-        for module in MODULES:
-            MODULES[module](github_object, repo, errors, warnings)
+    if not enabled_modules:
+        enabled_modules = MODULES
+    for module in enabled_modules:
+        run_module(github_object, repo, errors, warnings, module)
 
     # check_pyproject_toml(github_object, repo, errors, warnings)
     # check_dependabot_config(github_object, repo, errors, warnings)

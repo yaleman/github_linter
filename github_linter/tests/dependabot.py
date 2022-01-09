@@ -10,8 +10,8 @@ import yaml
 from github_linter import GithubLinter
 
 # from . import GithubLinter
-from .types import DICTLIST
-from .utils import add_result, get_file_from_repo
+from ..types import DICTLIST
+from ..utils import add_result, get_file_from_repo
 
 # template = """
 # version: 2
@@ -75,7 +75,7 @@ VALID_VALUES = {
 }
 
 
-def check_update_config(
+def validate_update_config(
     updates,
     error_object: DICTLIST,
     _: DICTLIST, # warnings_object
@@ -94,7 +94,7 @@ def check_update_config(
                 f"package-ecosystem set to invalid value: '{update['package-ecosystem']}'",
             )
 
-def dependabot_load_file(
+def load_file(
     repo: Repository,
     errors_object: DICTLIST,
     _: DICTLIST,
@@ -125,12 +125,13 @@ def check_dependabot_config(
 ):
     """ checks for dependabot config """
 
-    dependabot_config = dependabot_load_file(repo, errors_object, warnings_object)
+    dependabot_config = load_file(repo, errors_object, warnings_object)
+
     if not dependabot_config:
         add_result(warnings_object, CATEGORY, "No dependabot configuration found.")
         return
 
     if "updates" in dependabot_config:
-        check_update_config(
+        validate_update_config(
             dependabot_config["updates"], errors_object, warnings_object
         )

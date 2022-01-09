@@ -3,14 +3,15 @@
 from github.ContentFile import ContentFile
 
 
-from . import GithubLinter
-from .types import DICTLIST
-from .utils import add_result
+from .. import GithubLinter
+from ..types import DICTLIST
+from ..utils import add_result
 
 __all__ = [
     "check_files_to_remove",
 ]
 
+CATEGORY = "generic"
 
 def check_files_to_remove(
     github_object: GithubLinter,
@@ -30,3 +31,14 @@ def check_files_to_remove(
                 "files_to_remove",
                 f"File '{content_file.name}' needs to be removed from {repo.full_name}.",
             )
+
+#pylint: disable=unused-argument
+def check_open_issues(
+    github_object: GithubLinter,
+    repo,
+    _: DICTLIST,
+    warnings_object: DICTLIST,  # warnings_object
+) -> None:
+    """ Adds a warning if there's open issues """
+    if repo.open_issues:
+        add_result(warnings_object, CATEGORY, f"There are open issues for {repo.full_name}")

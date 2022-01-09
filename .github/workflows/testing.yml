@@ -34,7 +34,7 @@ jobs:
           args: |
             python3 -m pip install --no-cache-dir --quiet --upgrade flit pytest pylint
             FLIT_ROOT_INSTALL=1 python3 -m flit install --deps all
-            python3 -m pylint github_linter/
+            python3 -m pylint *.py github_linter/
   mypy:
     runs-on: ubuntu-latest
     concurrency:

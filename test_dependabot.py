@@ -1,7 +1,7 @@
 """ testing dependabot """
 
-from github_linter.dependabot import dependabot_load_file
+from github_linter.tests.dependabot import load_file
 
 def test_load_file():
     """ tests loading the dependabot file """
-    dependabot_load_file(None, {}, {})
+    load_file(None, {}, {})
