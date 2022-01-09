@@ -15,7 +15,9 @@ from ..types import DICTLIST
 from ..utils import add_result, get_file_from_repo
 
 CATEGORY = "pyproject.toml"
-
+LANGUAGES = [
+    "python"
+]
 
 def validate_pyproject_authors(
     github_object: GithubLinter,

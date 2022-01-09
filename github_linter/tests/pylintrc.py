@@ -17,6 +17,9 @@ from ..utils import add_result, get_file_from_repo
 
 CATEGORY = "pylintrc"
 
+LANGUAGES = [
+    "python"
+]
 
 def check_pylintrc(
     _: GithubLinter,

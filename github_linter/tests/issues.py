@@ -7,6 +7,9 @@ from ..utils import DICTLIST, add_result
 
 
 CATEGORY = "issues"
+LANGUAGES = [
+    "all"
+]
 
 # pylint: disable=unused-argument
 def check_open_issues(

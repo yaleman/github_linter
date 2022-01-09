@@ -29,6 +29,13 @@ The config file is called `github_linter.json` - you can put it in the local dir
 ## Adding new test modules
 
 1. Add a module under `github_linter/tests/`
+    - Set `str: CATEGORY` to a name which will go in the reports.
+    - Set `List[str]: LANGUAGES` to a list of lower case languages, eg:
+        - python
+        - javascript
+        - rust
+        - shell
+        - "all" is allowed if it's a generic thing
 2. Call the tests `check_<something>`
 3. Import the module in `__main__`
 4. Add the module to `__main__.MODULES`

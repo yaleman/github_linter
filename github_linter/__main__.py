@@ -90,12 +90,12 @@ def handle_repo(
         "warnings" : warnings,
     }
 
-# TODO: check for .pylintrc
 # TODO: sanity check... stuff?
 
 # TODO: check for .github/workflows/ dir
 # TODO: check for .github/dependabot.yml config
-
+# TODO: disable modules based on #repo.get_languages...
+# TODO: add tests to make sure all modules have CATEGORY and LANGUAGES set
 
 def search_repos(
     github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]]

@@ -46,12 +46,13 @@ jobs:
       - name: Set up Python 3
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: 3.8
 
       - name: Running mypy
         uses: fylein/python-pylint-github-action@v4
         with:
           args: |
+            python3 --version
             python3 -m pip install --quiet --no-cache-dir --upgrade flit
             FLIT_ROOT_INSTALL=1 python3 -m flit install
             ./run_mypy.sh
@@ -66,12 +67,13 @@ jobs:
       - name: Set up Python 3
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: 3.8
 
       - name: Running pytest
         uses: fylein/python-pylint-github-action@v4
         with:
           args: |
+            python3 --version
             python3 -m pip install --quiet --no-cache-dir --upgrade flit
             FLIT_ROOT_INSTALL=1 python3 -m flit install
             python3 -m pytest

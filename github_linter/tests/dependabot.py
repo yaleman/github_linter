@@ -28,6 +28,11 @@ from ..utils import add_result, get_file_from_repo
 
 # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates
 
+CATEGORY = "dependabot"
+LANGUAGES = [
+    "all",
+]
+
 CONFIG = {
     "version": "2",
     "updates": [
@@ -43,7 +48,6 @@ CONFIG = {
     "open-pull-requests-limit": 99,
 }
 
-CATEGORY = "dependabot"
 
 DEPENDABOT_CONFIG_FILE = TypedDict(
     "DEPENDABOT_CONFIG_FILE",
