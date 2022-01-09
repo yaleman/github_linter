@@ -64,10 +64,9 @@ class GithubLinter:
                         warnings = [ f" - {warning}" for warning in repo["warnings"][category]]
             if errors or warnings:
                 logger.info("Report for {}", repo_name)
-                for error in errors: logger.error(error)
-                for warning in warnings: logger.warning(warning)
+                for error in errors:
+                    logger.error(error)
+                for warning in warnings:
+                    logger.warning(warning)
             else:
                 logger.info("Repository {} checks out OK", repo_name)
-
-
-
