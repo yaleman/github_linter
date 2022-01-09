@@ -13,6 +13,7 @@ __all__ = [
 
 CATEGORY = "generic"
 
+
 def check_files_to_remove(
     github_object: GithubLinter,
     repo,

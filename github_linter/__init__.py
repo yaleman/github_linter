@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from typing import Union, Dict
 
-import json5 as json # type: ignore
+import json5 as json  # type: ignore
 from loguru import logger
 from github import Github
 

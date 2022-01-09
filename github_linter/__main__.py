@@ -25,13 +25,20 @@ from .tests import generic, dependabot, issues, pylintrc, pyproject
 
 MODULES = {
     "dependabot": dependabot,
-    "generic" : generic,
-    "issues" : issues,
-    "pylintrc" : pylintrc,
+    "generic": generic,
+    "issues": issues,
+    "pylintrc": pylintrc,
     "pyproject": pyproject,
 }
 
-def run_module(github_object: GithubLinter, repo_object: Repository, errors_object: DICTLIST, warnings_object: DICTLIST, module: str) -> bool:
+
+def run_module(
+    github_object: GithubLinter,
+    repo_object: Repository,
+    errors_object: DICTLIST,
+    warnings_object: DICTLIST,
+    module: str,
+) -> bool:
     """ runs a module after checking what it is """
     if module not in MODULES:
         logger.error("Module not found: {}", module)
@@ -41,8 +48,11 @@ def run_module(github_object: GithubLinter, repo_object: Repository, errors_obje
     for check in dir(MODULES[module]):
         if check.startswith("check_"):
             logger.debug("Running {}", check)
-            getattr(MODULES[module],check)(github_object, repo_object, errors_object, warnings_object)
+            getattr(MODULES[module], check)(
+                github_object, repo_object, errors_object, warnings_object
+            )
     return True
+
 
 def handle_repo(
     github_object: GithubLinter,
@@ -104,16 +114,21 @@ def search_repos(
         logger.debug("Search string: '{}'", search)
         search_result = github.github.search_repositories(query=search)
 
-
         # filter search results by owner
         if kwargs_object.get("owner"):
             # logger.debug("Filtering based on owner: {}", kwargs_object["owner"])
-            filtered_result = [ repo for repo in search_result if repo.owner.login in kwargs_object["owner"] ]
+            filtered_result = [
+                repo
+                for repo in search_result
+                if repo.owner.login in kwargs_object["owner"]
+            ]
             search_result = filtered_result
         # filter search results by repo name
         if kwargs_object.get("repo"):
             # logger.debug("Filtering based on repo: {}", kwargs_object["repo"])
-            filtered_result = [ repo for repo in search_result if repo.name in kwargs_object["repo"] ]
+            filtered_result = [
+                repo for repo in search_result if repo.name in kwargs_object["repo"]
+            ]
             search_result = filtered_result
         return search_result
 
@@ -124,11 +139,12 @@ def search_repos(
 @click.option("--repo", "-r", multiple=True, help="Filter repos")
 @click.option("--owner", "-o", multiple=True, help="Filter owners")
 @click.option(
-    "--module", "-m",
+    "--module",
+    "-m",
     multiple=True,
     type=click.Choice(list(MODULES.keys())),
     help="Specify which modules to run",
-    )
+)
 def cli(**kwargs):
     """ Github linter for checking your repositories for various things. """
     github = GithubLinter()
@@ -154,9 +170,9 @@ def cli(**kwargs):
         elif repo.parent.owner.login != user.login and github.config.get("check_forks"):
             handle_repo(github, repo, module)
         else:
-            logger.warning("check_forks is true and {} is a fork, skipping.", repo.full_name)
-
-
+            logger.warning(
+                "check_forks is true and {} is a fork, skipping.", repo.full_name
+            )
 
 
 if __name__ == "__main__":

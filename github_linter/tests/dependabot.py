@@ -5,6 +5,7 @@ from typing import Dict, List, Union, TypedDict
 
 from loguru import logger
 from github.Repository import Repository
+import pytz
 import yaml
 
 from github_linter import GithubLinter
@@ -44,12 +45,11 @@ CONFIG = {
 
 CATEGORY = "dependabot"
 
-DEPENDABOT_CONFIG_FILE = TypedDict (
-
+DEPENDABOT_CONFIG_FILE = TypedDict(
     "DEPENDABOT_CONFIG_FILE",
     {
         "version": int,
-        "updates": List[Dict[str,str]],
+        "updates": List[Dict[str, str]],
     },
 )
 
@@ -78,7 +78,7 @@ VALID_VALUES = {
 def validate_update_config(
     updates,
     error_object: DICTLIST,
-    _: DICTLIST, # warnings_object
+    _: DICTLIST,  # warnings_object
 ):
     """ checks update config """
     for update in updates:
@@ -93,12 +93,21 @@ def validate_update_config(
                 CATEGORY,
                 f"package-ecosystem set to invalid value: '{update['package-ecosystem']}'",
             )
+        if "schedule" in update:
+            if "timezone" in update["schedule"]:
+                if update["schedule"]["timezone"] not in pytz.all_timezones:
+                    add_result(
+                        error_object,
+                        CATEGORY,
+                        f"Update timezone's not valid? {update['schedule']['timezone']}",
+                    )
+
 
 def load_file(
     repo: Repository,
     errors_object: DICTLIST,
     _: DICTLIST,
-    ) -> Union[Dict, DEPENDABOT_CONFIG_FILE]:
+) -> Union[Dict, DEPENDABOT_CONFIG_FILE]:
     """ grabs the config file and loads it """
     fileresult = get_file_from_repo(repo, ".github/dependabot.yml")
     if not fileresult:
@@ -108,7 +117,7 @@ def load_file(
     try:
         dependabot_config = yaml.safe_load(fileresult.decoded_content.decode("utf-8"))
         logger.debug(
-           json.dumps(dependabot_config, indent=4, default=str, ensure_ascii=False)
+            json.dumps(dependabot_config, indent=4, default=str, ensure_ascii=False)
         )
         return dependabot_config
     except yaml.YAMLError as exc:

@@ -6,6 +6,7 @@
 
 # from loguru import logger
 from github.Repository import Repository
+
 # import yaml
 
 from github_linter import GithubLinter
@@ -16,10 +17,11 @@ from ..utils import add_result, get_file_from_repo
 
 CATEGORY = "pylintrc"
 
+
 def check_pylintrc(
     _: GithubLinter,
     repo: Repository,
-    __: DICTLIST, #
+    __: DICTLIST,  #
     warnings_object: DICTLIST,
 ):
     """ checks for .pylintrc config """

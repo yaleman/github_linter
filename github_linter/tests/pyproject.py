@@ -40,6 +40,7 @@ def validate_pyproject_authors(
         for author in project_object["authors"]:
             add_result(warnings_object, CATEGORY, f"Check author is expected: {author}")
 
+
 # pylint: disable=unused-argument
 def validate_project_name(
     github_object: GithubLinter,
@@ -50,7 +51,9 @@ def validate_project_name(
 ) -> bool:
     """ validates that the project name matches the repo name """
     if "name" not in project_object:
-        add_result(errors_object, CATEGORY, "No 'name' field in [project] section of config")
+        add_result(
+            errors_object, CATEGORY, "No 'name' field in [project] section of config"
+        )
         return False
 
     project_name = project_object["name"]
@@ -58,9 +61,11 @@ def validate_project_name(
         add_result(
             errors_object,
             CATEGORY,
-            f"Project name doesn't match repo name repo: {repo_object.name} project: {project_name}.")
+            f"Project name doesn't match repo name repo: {repo_object.name} project: {project_name}.",
+        )
         return False
     return True
+
 
 # pylint: disable=unused-argument
 def validate_readme_configured(
@@ -72,10 +77,15 @@ def validate_readme_configured(
 ) -> bool:
     """ validates that the project has a readme configured """
     if "readme" not in project_object:
-        add_result(errors_object, CATEGORY, "No 'readme' field in [project] section of config")
+        add_result(
+            errors_object, CATEGORY, "No 'readme' field in [project] section of config"
+        )
         return False
 
-    if "pyproject" not in github_object.config or "readme" not in github_object.config["pyproject"]:
+    if (
+        "pyproject" not in github_object.config
+        or "readme" not in github_object.config["pyproject"]
+    ):
         expected_readme = "README.md"
     else:
         expected_readme = github_object.config["pyproject"]["readme"]
@@ -85,9 +95,11 @@ def validate_readme_configured(
         add_result(
             errors_object,
             CATEGORY,
-            f"Readme invalid - should be {expected_readme}, is {project_readme}")
+            f"Readme invalid - should be {expected_readme}, is {project_readme}",
+        )
         return False
     return True
+
 
 def validate_scripts(
     github_object: GithubLinter,
@@ -110,7 +122,7 @@ def validate_scripts(
                 errors_object,
                 CATEGORY,
                 f"Script has invalid module: expected {repo_object.name}, found {script_def_module}",
-                )
+            )
         # check it's pulling from __main__
         if len(script_def_module.split(".") > 1):
             if script_def_module.split(".")[1].split(":") != "__main__":
@@ -118,9 +130,10 @@ def validate_scripts(
                     errors_object,
                     CATEGORY,
                     f"Script has invalid module: expected __main__, found {script_def_module}",
-                    )
+                )
                 retval = False
     return retval
+
 
 def check_pyproject_toml(
     github_object: GithubLinter,
@@ -153,8 +166,12 @@ def check_pyproject_toml(
         project = parsed["project"]
 
         # check the authors are expected
-        validate_pyproject_authors(github_object, repo_object, project, errors_object, warnings_object)
-        validate_project_name(github_object, repo_object, project, errors_object, warnings_object)
+        validate_pyproject_authors(
+            github_object, repo_object, project, errors_object, warnings_object
+        )
+        validate_project_name(
+            github_object, repo_object, project, errors_object, warnings_object
+        )
 
         for url in project.get("urls"):
             logger.debug("URL: {} - {}", url, project["urls"][url])
