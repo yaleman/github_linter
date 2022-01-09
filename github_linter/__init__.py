@@ -43,3 +43,5 @@ class GithubLinter:
         self.config = load_config()
         if not self.config:
             self.config = {}
+
+        self.report = {}

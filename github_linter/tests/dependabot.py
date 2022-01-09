@@ -54,26 +54,27 @@ DEPENDABOT_CONFIG_FILE = TypedDict(
 )
 
 VALID_VALUES = {
-    "package-ecosystem": [
-        "bundler",
-        "cargo",
-        "composer",
-        "docker",
-        "mix",
-        "elm",
-        "gitsubmodule",
-        "github-actions",
-        "gomod",
-        "gradle",
-        "maven",
-        "npm",
-        "nuget",
-        "pip",
-        "terraform",
-        "npm",
-    ]
+    "package-ecosystem": {
+        "bundler" : [] ,
+        "cargo" : [],
+        "composer" : [],
+        "docker" : [],
+        "mix" : [],
+        "elm" : [],
+        "gitsubmodule" : [],
+        "github-actions" : [],
+        "gomod" : [],
+        "gradle" : [],
+        "maven" : [],
+        "npm" : [],
+        "nuget" : [],
+        "pip" : ["Python"],
+        "terraform" : [],
+    }
 }
 
+
+ # TODO: base dependabot config on repo.get_languages() - ie {'Python': 22722, 'Shell': 328}
 
 def validate_update_config(
     updates,
@@ -86,7 +87,7 @@ def validate_update_config(
         if "package-ecosystem" not in update:
             add_result(error_object, CATEGORY, "package-ecosystem not set in an update")
         elif (
-            update.get("package-ecosystem", "") not in VALID_VALUES["package-ecosystem"]
+            update["package-ecosystem"] not in VALID_VALUES["package-ecosystem"]
         ):
             add_result(
                 error_object,

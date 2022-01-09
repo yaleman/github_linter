@@ -85,7 +85,10 @@ def handle_repo(
 
     if not errors or warnings:
         logger.info("{} all good", repo.full_name)
-
+    github_object.report[repo.full_name] = {
+        "errors" : errors,
+        "warnings" : warnings,
+    }
 
 # TODO: check for .pylintrc
 # TODO: sanity check... stuff?
@@ -163,7 +166,6 @@ def cli(**kwargs):
         logger.debug("Checking forks")
 
     for repo in repos:
-        logger.debug(repo)
         if not repo.parent:
             handle_repo(github, repo, module)
         # if it's a fork and you're checking them
@@ -173,7 +175,7 @@ def cli(**kwargs):
             logger.warning(
                 "check_forks is true and {} is a fork, skipping.", repo.full_name
             )
-
+    logger.info(json.dumps(github.report, indent=4, default=str, ensure_ascii=False))
 
 if __name__ == "__main__":
     cli()
