@@ -24,16 +24,16 @@ jobs:
         uses: fylein/python-pylint-github-action@v4
         with:
           args: |
-            python3 -m pip install --quiet --upgrade flit pytest pylint
-            FLIT_ROOT_INSTALL=1 python3 -m flit install --deps all
-            python3 -m pylint --rcfile=.pylintrc github_linter
+            python -m pip install --quiet --upgrade flit pytest pylint
+            FLIT_ROOT_INSTALL=1 python -m flit install --deps all
+            python -m pylint --rcfile=.pylintrc github_linter
 
       - name: Running tests
         uses: fylein/python-pylint-github-action@v4
         with:
           args: |
-            python3 -m pip install --no-cache-dir --quiet --upgrade flit
-            FLIT_ROOT_INSTALL=1 python3 -m flit install
+            python -m pip install --no-cache-dir --quiet --upgrade flit
+            FLIT_ROOT_INSTALL=1 python -m flit install
             ./run_pylint.sh
   mypy:
     runs-on: ubuntu-latest
@@ -50,9 +50,9 @@ jobs:
 
       - name: Running mypy
         run: |
-          python3 --version
-          python3 -m pip install --quiet --no-cache-dir --upgrade flit
-          FLIT_ROOT_INSTALL=1 python3 -m flit install
+          python --version
+          python -m pip install --quiet --no-cache-dir --upgrade flit
+          FLIT_ROOT_INSTALL=1 python -m flit install
           ./run_mypy.sh
   pytest:
     runs-on: ubuntu-latest
@@ -68,8 +68,7 @@ jobs:
           python-version: 3.8
 
       - name: Running pytest
-        run: |
-          python3 --version
-          python3 -m pip install --quiet --no-cache-dir --upgrade flit
-          FLIT_ROOT_INSTALL=1 python3 -m flit install
-          python3 -m pytest
+        run: python --version &&
+          python -m pip install --quiet --no-cache-dir --upgrade flit
+          FLIT_ROOT_INSTALL=1 python -m flit install
+          python -m pytest
