@@ -1,7 +1,7 @@
 """ checks for dependabot config """
 
 import json
-from typing import Dict, List, Union, TypedDict
+from typing import Dict, List, Union, TypedDict, Optional
 
 from loguru import logger
 from github.Repository import Repository
@@ -33,20 +33,20 @@ LANGUAGES = [
     "all",
 ]
 
-CONFIG = {
-    "version": "2",
-    "updates": [
-        {
-            "directory": "/",
-            "schedule": {
-                "interval": "daily",
-                "time": "06:00",
-                "timezone": "Australia/Brisbane",
-            },
-        }
-    ],
-    "open-pull-requests-limit": 99,
-}
+# CONFIG = {
+#     "version": "2",
+#     "updates": [
+#         {
+#             "directory": "/",
+#             "schedule": {
+#                 "interval": "daily",
+#                 "time": "06:00",
+#                 "timezone": "Australia/Brisbane",
+#             },
+#         }
+#     ],
+#     "open-pull-requests-limit": 99,
+# }
 
 
 DEPENDABOT_CONFIG_FILE = TypedDict(
@@ -57,10 +57,9 @@ DEPENDABOT_CONFIG_FILE = TypedDict(
     },
 )
 
-VALID_VALUES = {
-    "package-ecosystem": {
+PACKAGE_ECOSYSTEM : Dict[str, List[str]] = {
         "bundler" : [] ,
-        "cargo" : [],
+        "cargo" : [ "rust" ],
         "composer" : [],
         "docker" : [],
         "mix" : [],
@@ -72,13 +71,51 @@ VALID_VALUES = {
         "maven" : [],
         "npm" : [],
         "nuget" : [],
-        "pip" : ["Python"],
-        "terraform" : [],
-    }
+        "pip" : ["python"],
+        "terraform" : [ "HCL" ],
 }
 
+def find_language_in_ecosystem(language: str) -> Optional[str]:
+    """ checks to see if languages are in VALID_VALUES["package-ecosystem"] """
+    for package in PACKAGE_ECOSYSTEM:
+        lowerlang = [lang.lower() for lang in PACKAGE_ECOSYSTEM[package]]
+        if language.lower() in lowerlang:
+            return package
+    return None
 
  # TODO: base dependabot config on repo.get_languages() - ie {'Python': 22722, 'Shell': 328}
+
+def validate_updates_for_langauges(
+    repo: Repository,
+    updates,
+    error_object: DICTLIST,
+    _: DICTLIST,
+):
+    """ ensures that for every known language/package ecosystem, there's a configured update task """
+    languages = repo.get_languages()
+    required_package_managers = []
+    for language in languages:
+        package_manager = find_language_in_ecosystem(language)
+        if package_manager:
+            logger.info("Language is in package manager: {}", package_manager)
+            required_package_managers.append(package_manager)
+
+    if required_package_managers:
+        logger.debug(
+            "Need to ensure updates exist for these package ecosystems: {}",
+            ", ".join(required_package_managers),
+            )
+        package_managers_covered = []
+        for update in updates:
+            if "package-ecosystem" in update:
+                if update["package-ecosystem"] in required_package_managers and update["package-ecosystem"] not in package_managers_covered:
+                    package_managers_covered.append(update["package-ecosystem"])
+                    logger.debug("Satisified requirement for {}", update["package-ecosystem"])
+        if set(required_package_managers) != set(package_managers_covered):
+            for manager in [ manager for manager in required_package_managers if manager not in package_managers_covered ]:
+                add_result(error_object, CATEGORY, f"Package manager needs to be configured for {manager}")
+        else:
+            logger.debug("")
 
 def validate_update_config(
     updates,
@@ -90,9 +127,7 @@ def validate_update_config(
         logger.debug(json.dumps(update, indent=4))
         if "package-ecosystem" not in update:
             add_result(error_object, CATEGORY, "package-ecosystem not set in an update")
-        elif (
-            update["package-ecosystem"] not in VALID_VALUES["package-ecosystem"]
-        ):
+        elif update["package-ecosystem"] not in PACKAGE_ECOSYSTEM:
             add_result(
                 error_object,
                 CATEGORY,
@@ -141,11 +176,14 @@ def check_dependabot_config(
 
     dependabot_config = load_file(repo, errors_object, warnings_object)
 
-    if not dependabot_config:
-        add_result(warnings_object, CATEGORY, "No dependabot configuration found.")
-        return
+    # TODO: this only matters if there's languages that dependabot supports
+    # if not dependabot_config:
+    #     add_result(warnings_object, CATEGORY, "No dependabot configuration found.")
+    #     return
 
     if "updates" in dependabot_config:
         validate_update_config(
             dependabot_config["updates"], errors_object, warnings_object
         )
+
+        validate_updates_for_langauges(repo, dependabot_config["updates"], errors_object, warnings_object)
