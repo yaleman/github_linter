@@ -1,6 +1,7 @@
 {
     "check_forks" : false,
     "pyproject.toml" : {
+        "readme" : "README.md",
         "authors" : [
             {
                 "name" : "James Hodgkinson",

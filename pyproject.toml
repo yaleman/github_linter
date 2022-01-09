@@ -31,7 +31,6 @@ keywords = [
 [project.urls]
 Home = "https://github.com/yaleman/github_linter"
 
-
 [project.optional-dependencies]
 dev = [
     "flit",
@@ -42,7 +41,7 @@ dev = [
 ]
 
 [project.scripts]
-fileshimstem = "github_linter.__main__:run"
+github_linter = "github_linter.__main__:cli"
 
 
 [tool.flit.sdist]

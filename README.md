@@ -15,7 +15,7 @@ Mainly because I've got like ~100 repos and keep changing how I do things.
     - Checks for open Pull Requests
 - `pyproject.toml`
     - Checks authors based on a list.
-    - TODO: Check module name matches repo
+    - Check module name matches repo
     - TODO: Check for imports, maybe?
 - pylintrc
     - Checks it exists
