@@ -29,6 +29,6 @@ def check_files_to_remove(
         if content_file.name in github_object.config.get("files_to_remove"):
             add_result(
                 errors_object,
-                "files_to_remove",
+                CATEGORY,
                 f"File '{content_file.name}' needs to be removed from {repo.full_name}.",
             )

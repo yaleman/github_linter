@@ -45,3 +45,29 @@ class GithubLinter:
             self.config = {}
 
         self.report = {}
+
+    def display_report(self):
+        """ displays a report """
+        for repo_name in self.report:
+            repo = self.report[repo_name]
+            if not repo:
+                logger.warning("Empty report for {}, skipping", repo_name)
+            errors = []
+            warnings = []
+            if "errors" in repo and repo["errors"]:
+                for category in repo["errors"]:
+                    if repo["errors"][category]:
+                        errors = [ f" - {error}" for error in repo["errors"][category]]
+            if "warnings" in repo and repo["warnings"]:
+                for category in repo["warnings"]:
+                    if repo["warnings"][category]:
+                        warnings = [ f" - {warning}" for warning in repo["warnings"][category]]
+            if errors or warnings:
+                logger.info("Report for {}", repo_name)
+                for error in errors: logger.error(error)
+                for warning in warnings: logger.warning(warning)
+            else:
+                logger.info("Repository {} checks out OK", repo_name)
+
+
+

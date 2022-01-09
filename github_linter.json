@@ -13,10 +13,14 @@
             }
         ]
     },
+    "pylintrc" : {
+        "max-line-length" : 200
+    },
     "files_to_remove" : [
         "Pipfile",
         "Pipfile.lock",
         ".DS_Store",
-        ".drone.yml"
+        ".drone.yml",
+        "setup.py"
     ]
 }

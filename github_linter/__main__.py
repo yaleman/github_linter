@@ -61,7 +61,7 @@ def handle_repo(
 ):
     """ does things """
     # logger.info("owner: {}", repo.owner)
-    logger.info(repo.full_name)
+    logger.debug(repo.full_name)
     if repo.archived:
         logger.warning("Repository is archived!")
     # logger.info("Blobs URL: {}", repo.blobs_url)
@@ -78,13 +78,13 @@ def handle_repo(
 
     # check_pyproject_toml(github_object, repo, errors, warnings)
     # check_dependabot_config(github_object, repo, errors, warnings)
-    if errors:
-        logger.error(json.dumps(errors, indent=4, ensure_ascii=False))
-    if warnings:
-        logger.warning(json.dumps(warnings, indent=4, ensure_ascii=False))
+    # if errors:
+    #     logger.error(json.dumps(errors, indent=4, ensure_ascii=False))
+    # if warnings:
+    #     logger.warning(json.dumps(warnings, indent=4, ensure_ascii=False))
 
     if not errors or warnings:
-        logger.info("{} all good", repo.full_name)
+        logger.debug("{} all good", repo.full_name)
     github_object.report[repo.full_name] = {
         "errors" : errors,
         "warnings" : warnings,
@@ -175,7 +175,7 @@ def cli(**kwargs):
             logger.warning(
                 "check_forks is true and {} is a fork, skipping.", repo.full_name
             )
-    logger.info(json.dumps(github.report, indent=4, default=str, ensure_ascii=False))
+    github.display_report()
 
 if __name__ == "__main__":
     cli()

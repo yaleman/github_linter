@@ -6,7 +6,6 @@ import json
 
 from github.Repository import Repository
 
-# from github.GithubException import UnknownObjectException
 from loguru import logger
 import tomli
 

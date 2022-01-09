@@ -14,7 +14,8 @@ def add_result(result_object: DICTLIST, category: str, value: str) -> None:
     """ adds an result to the target object"""
     if category not in result_object:
         result_object[category] = []
-    result_object[category].append(value)
+    if value not in result_object[category]:
+        result_object[category].append(value)
 
 
 def get_file_from_repo(

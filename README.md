@@ -19,7 +19,7 @@ Mainly because I've got like ~100 repos and keep changing how I do things.
     - TODO: Check for imports, maybe?
 - pylintrc
     - Checks it exists
-    - TODO: Checks for max line length
+    - Checks for max line length configuration
     - TODO: Checks for other things (typically I disable TODO's, IE W0501)
 
 ## Configuration
