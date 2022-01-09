@@ -1,7 +1,7 @@
 """ checks for dependabot config """
 
 import json
-from typing import Dict, List
+from typing import Dict, List, Union, TypedDict
 
 from loguru import logger
 from github.Repository import Repository
@@ -42,8 +42,16 @@ CONFIG = {
     "open-pull-requests-limit": 99,
 }
 
-
 CATEGORY = "dependabot"
+
+DEPENDABOT_CONFIG_FILE = TypedDict (
+
+    "DEPENDABOT_CONFIG_FILE",
+    {
+        "version": int,
+        "updates": List[Dict[str,str]],
+    },
+)
 
 VALID_VALUES = {
     "package-ecosystem": [
@@ -68,12 +76,11 @@ VALID_VALUES = {
 
 
 def check_update_config(
-    updates: List[Dict[str, str]],
+    updates,
     error_object: DICTLIST,
     _: DICTLIST, # warnings_object
 ):
     """ checks update config """
-
     for update in updates:
         logger.debug(json.dumps(update, indent=4))
         if "package-ecosystem" not in update:
@@ -87,6 +94,29 @@ def check_update_config(
                 f"package-ecosystem set to invalid value: '{update['package-ecosystem']}'",
             )
 
+def dependabot_load_file(
+    repo: Repository,
+    errors_object: DICTLIST,
+    _: DICTLIST,
+    ) -> Union[Dict, DEPENDABOT_CONFIG_FILE]:
+    """ grabs the config file and loads it """
+    fileresult = get_file_from_repo(repo, ".github/dependabot.yml")
+    if not fileresult:
+        logger.debug("Couldn't find dependabot config.")
+        return {}
+
+    try:
+        dependabot_config = yaml.safe_load(fileresult.decoded_content.decode("utf-8"))
+        logger.debug(
+           json.dumps(dependabot_config, indent=4, default=str, ensure_ascii=False)
+        )
+        return dependabot_config
+    except yaml.YAMLError as exc:
+        logger.error("Failed to parse dependabot config: {}", exc)
+        add_result(errors_object, CATEGORY, f"Failed to parse dependabot config: {exc}")
+    return {}
+
+
 def check_dependabot_config(
     _: GithubLinter,
     repo: Repository,
@@ -95,23 +125,12 @@ def check_dependabot_config(
 ):
     """ checks for dependabot config """
 
-    fileresult = get_file_from_repo(repo, ".github/dependabot.yml")
-    if not fileresult:
-        logger.debug("Couldn't find dependabot config.")
+    dependabot_config = dependabot_load_file(repo, errors_object, warnings_object)
+    if not dependabot_config:
+        add_result(warnings_object, CATEGORY, "No dependabot configuration found.")
         return
 
-    try:
-        dependabot_config = yaml.safe_load(fileresult.decoded_content.decode("utf-8"))
-    except yaml.YAMLError as exc:
-        logger.error("Failed to parse dependabot config: {}", exc)
-        add_result(errors_object, CATEGORY, f"Failed to parse dependabot config: {exc}")
-        return
-    logger.debug(
-        json.dumps(dependabot_config, indent=4, default=str, ensure_ascii=False)
-    )
-    if dependabot_config.get("updates"):
+    if "updates" in dependabot_config:
         check_update_config(
             dependabot_config["updates"], errors_object, warnings_object
         )
-
-    return
