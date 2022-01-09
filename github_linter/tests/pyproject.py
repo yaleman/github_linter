@@ -49,11 +49,11 @@ def validate_project_name(
     warnings_object: DICTLIST,
 ) -> bool:
     """ validates that the project name matches the repo name """
-    if "name" not in project_object["project"]:
+    if "name" not in project_object:
         add_result(errors_object, CATEGORY, "No 'name' field in [project] section of config")
         return False
 
-    project_name = project_object["project"]["name"]
+    project_name = project_object["name"]
     if project_name != repo_object.name:
         add_result(
             errors_object,
@@ -71,7 +71,7 @@ def validate_readme_configured(
     warnings_object: DICTLIST,
 ) -> bool:
     """ validates that the project has a readme configured """
-    if "readme" not in project_object["project"]:
+    if "readme" not in project_object:
         add_result(errors_object, CATEGORY, "No 'readme' field in [project] section of config")
         return False
 
@@ -80,7 +80,7 @@ def validate_readme_configured(
     else:
         expected_readme = github_object.config["pyproject"]["readme"]
 
-    project_readme = project_object["project"]["readme"]
+    project_readme = project_object["readme"]
     if project_readme != expected_readme:
         add_result(
             errors_object,
@@ -88,6 +88,39 @@ def validate_readme_configured(
             f"Readme invalid - should be {expected_readme}, is {project_readme}")
         return False
     return True
+
+def validate_scripts(
+    github_object: GithubLinter,
+    repo_object: Repository,
+    project_object: dict,
+    errors_object: DICTLIST,
+    warnings_object: DICTLIST,
+) -> bool:
+    """ validates that the project has a readme configured """
+    if "scripts" not in project_object:
+        # add_result(errors_object, CATEGORY, "No 'readme' field in [project] section of config")
+        logger.debug("No scripts configured in pyproject.toml")
+        return False
+    retval = True
+    for script in project_object["scripts"]:
+        script_def = project_object["scripts"][script]
+        script_def_module = script_def.split(".")[0]
+        if script_def_module != repo_object.name:
+            add_result(
+                errors_object,
+                CATEGORY,
+                f"Script has invalid module: expected {repo_object.name}, found {script_def_module}",
+                )
+        # check it's pulling from __main__
+        if len(script_def_module.split(".") > 1):
+            if script_def_module.split(".")[1].split(":") != "__main__":
+                add_result(
+                    errors_object,
+                    CATEGORY,
+                    f"Script has invalid module: expected __main__, found {script_def_module}",
+                    )
+                retval = False
+    return retval
 
 def check_pyproject_toml(
     github_object: GithubLinter,
@@ -126,4 +159,3 @@ def check_pyproject_toml(
         for url in project.get("urls"):
             logger.debug("URL: {} - {}", url, project["urls"][url])
     return
-

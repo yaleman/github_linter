@@ -1,10 +1,12 @@
 """ testing pyproject """
 
-from io import BytesIO
+# from io import BytesIO
 
-from github.ContentFile import ContentFile
+# from github.ContentFile import ContentFile
+from github_linter.tests.pyproject import validate_project_name, validate_readme_configured
 
 
+# pylint: disable=too-few-public-methods
 class TestRepoFoo:
     """ just for testing """
     name = "foobar"
@@ -17,7 +19,14 @@ class TestRepoFoo:
     #         return readme
     #     return BytesIO()
 
-from github_linter.tests.pyproject import validate_project_name, validate_readme_configured
+# pylint: disable=too-few-public-methods
+class TestGithub:
+    """ test instance """
+    config = {
+        "pyproject.toml" : {
+        "readme" : "README.md"
+        }
+    }
 
 def test_validate_project_name_fails_when_bad():
     """ if the name doesn't match, then we should yell """
@@ -30,57 +39,45 @@ def test_validate_project_name_fails_when_bad():
     assert not validate_project_name(None, TestRepoFoo, testproject, {}, {})
 
 
-def test_validate_project_name_fails_when_good():
+def test_validate_project_name_good():
     """ if the name matches we're good """
-
     testproject = {
-        "project" : {
-            "name" : "foobar"
-        }
+        "name" : "foobar"
     }
     assert validate_project_name(None, TestRepoFoo, testproject, {}, {})
 
-def test_validate_project_name_fails_when_good():
+def test_validate_project_name_fails_when_missing():
     """ if the name is missing we yell """
 
     testproject = {
-        "project" : {
             # "name" : "foobar"
-        }
     }
     assert not validate_project_name(None, TestRepoFoo, testproject, {}, {})
 
 def test_validate_readme_configured_invalid():
     """ checks the readme is set and is invalid """
-    class TestGithub:
-        """ test instance """
-        config = {
-            "pyproject.toml" : {
-            "readme" : "README.md"
-            }
-        }
     testproject = {
-        "project" : {
-            "name" : "zotbar",
-            "readme" : "foobar"
-        }
+        "name" : "zotbar",
+        "readme" : "foobar"
     }
-    assert not validate_readme_configured(TestGithub, TestRepoFoo, testproject, {}, {})
+
+    errors_object = {}
+    warnings_object = {}
+    result = validate_readme_configured(TestGithub, TestRepoFoo, testproject, errors_object, warnings_object)
+    assert  errors_object
+    assert not warnings_object
+    assert not result
 
 def test_validate_readme_configured():
     """ checks the readme is set and is invalid """
-    class TestGithub:
-        """ test instance """
-        config = {
-            "pyproject.toml" : {
-            "readme" : "README.md"
-            }
-        }
+
     testproject = {
-        "project" : {
             "name" : "zotbar",
             "readme" : "README.md"
-        }
     }
-    assert validate_readme_configured(TestGithub, TestRepoFoo, testproject, {}, {})
-
+    errors_object = {}
+    warnings_object = {}
+    result = validate_readme_configured(TestGithub, TestRepoFoo, testproject, errors_object, warnings_object)
+    assert not errors_object
+    assert not warnings_object
+    assert result
