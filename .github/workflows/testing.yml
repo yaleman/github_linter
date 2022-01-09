@@ -49,13 +49,11 @@ jobs:
           python-version: 3.8
 
       - name: Running mypy
-        uses: fylein/python-pylint-github-action@v4
-        with:
-          args: |
-            python3 --version
-            python3 -m pip install --quiet --no-cache-dir --upgrade flit
-            FLIT_ROOT_INSTALL=1 python3 -m flit install
-            ./run_mypy.sh
+        run: |
+          python3 --version
+          python3 -m pip install --quiet --no-cache-dir --upgrade flit
+          FLIT_ROOT_INSTALL=1 python3 -m flit install
+          ./run_mypy.sh
   pytest:
     runs-on: ubuntu-latest
     concurrency:
@@ -70,10 +68,8 @@ jobs:
           python-version: 3.8
 
       - name: Running pytest
-        uses: fylein/python-pylint-github-action@v4
-        with:
-          args: |
-            python3 --version
-            python3 -m pip install --quiet --no-cache-dir --upgrade flit
-            FLIT_ROOT_INSTALL=1 python3 -m flit install
-            python3 -m pytest
+        run: |
+          python3 --version
+          python3 -m pip install --quiet --no-cache-dir --upgrade flit
+          FLIT_ROOT_INSTALL=1 python3 -m flit install
+          python3 -m pytest
