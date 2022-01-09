@@ -15,23 +15,12 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
-      - name: Set up Python 3
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
-
       - name: Running tests
-        uses: fylein/python-pylint-github-action@v4
-        with:
-          args: |
-            python -m pip install --quiet --upgrade flit pytest pylint
-            FLIT_ROOT_INSTALL=1 python -m flit install --deps all
-            python -m pylint --rcfile=.pylintrc github_linter
-
-      - name: Running tests
-        uses: fylein/python-pylint-github-action@v4
-        with:
-          args: |
+        run: |
             python -m pip install --no-cache-dir --quiet --upgrade flit
             FLIT_ROOT_INSTALL=1 python -m flit install
             ./run_pylint.sh
@@ -43,11 +32,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
-      - name: Set up Python 3
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
-
       - name: Running mypy
         run: |
           python --version
@@ -66,7 +54,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
-
       - name: Running pytest
         run: |
           python --version
