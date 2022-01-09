@@ -63,3 +63,22 @@ jobs:
       - name: Running pytest
         run: |
           python -m pytest
+  # notify:
+  #   runs-on: ubuntu-latest
+  #   concurrency:
+  #     group: ${{ github.workflow }}-${{ github.ref }}
+  #   needs:
+  #     - mypy
+  #     - pylint
+  #     -
+  # TODO: Make this run after everything else
+      # - name: pushover-actions
+      #   uses: umahmood/pushover-actions@main
+      #   env:
+      #     PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_TOKEN }}
+      #     PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
+      #   with:
+      #     status: ${{ job.status }}
+      #     title: 'Github Actions Result'
+      #     message: 'DNS deployment finished!'
+      #   if: ${{ always() }}
