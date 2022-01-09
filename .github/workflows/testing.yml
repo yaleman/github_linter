@@ -68,7 +68,8 @@ jobs:
           python-version: 3.8
 
       - name: Running pytest
-        run: python --version &&
+        run: |
+          python --version
           python -m pip install --quiet --no-cache-dir --upgrade flit
           FLIT_ROOT_INSTALL=1 python -m flit install
           python -m pytest
