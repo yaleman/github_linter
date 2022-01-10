@@ -101,7 +101,7 @@ def validate_updates_for_langauges(
     for language in languages:
         package_manager = find_language_in_ecosystem(language)
         if package_manager:
-            logger.info("Language is in package manager: {}", package_manager)
+            logger.debug("Language is in package manager: {}", package_manager)
             required_package_managers.append(package_manager)
 
     if required_package_managers:

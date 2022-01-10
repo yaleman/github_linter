@@ -1,6 +1,6 @@
 """ checks for dependabot config """
 
-from configparser import ConfigParser
+from configparser import ConfigParser, NoOptionError #, NoSectionError
 from typing import Optional
 
 import json5 as json
@@ -47,20 +47,25 @@ def check_max_line_length_configured(
     github: GithubLinter,
     errors_object: DICTLIST,  #
     warnings_object: DICTLIST,
-):
+) -> None:
     """ checks for the max-line-length setting in .pylintrc """
     config: Optional[ConfigParser] = load_pylintrc(github)
 
     if not config:
         add_result(warnings_object, CATEGORY, ".pylintrc not found")
-        return False
+        return
     if "MASTER" not in config.sections():
         logger.debug("Can't find MASTER entry, dumping config")
         logger.debug(json.dumps(config, indent=4, default=str, ensure_ascii=False))
-    linelength = config.get("MASTER", "max-line-length")
-
-    if not linelength:
+        return
+    try:
+        linelength = config.get("MASTER", "max-line-length")
+    except NoOptionError:
         add_result(warnings_object, CATEGORY, "max-line-length not configured")
+        return
+
+
+    # default setting
     expected = 100
     if "pylintrc" in github.config:
         if "max-line-length" in github.config[CATEGORY]:
@@ -71,8 +76,8 @@ def check_max_line_length_configured(
             errors_object,
             CATEGORY,
             f"max-line-length wrong, is {linelength}, should be {expected}",
-        )
-    return True
+            )
+    return
 
 
 def check_pylintrc(

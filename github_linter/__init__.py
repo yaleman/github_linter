@@ -4,18 +4,20 @@ from datetime import datetime
 from json.decoder import JSONDecodeError
 import os
 from pathlib import Path
+import sys
 import time
 from types import ModuleType
-from typing import Union, Dict, Optional
+from typing import Dict, Optional
 
 import json5 as json
 from loguru import logger
 from github import Github
 from github.Repository import Repository
 import pytz
+from github_linter.exceptions import RepositoryNotSet
 
 from .types import DICTLIST
-
+from .utils import add_result
 __version__ = "0.0.1"
 
 def load_config() -> Optional[Dict[str, str]]:
@@ -162,6 +164,31 @@ class GithubLinter:
         time.sleep(self.check_rate_limits())
 
 
+    add_result = add_result
+
+    def module_language_check(
+        self,
+        module : ModuleType,
+    ) -> bool:
+        """ checks a repo + module for the exposed languages and makes sure they line up
+
+        returns True if any of the language modules is in the repo
+        """
+
+        if not self.current_repo:
+            raise RepositoryNotSet
+
+        if "all" in module.LANGUAGES:
+            return True
+
+        repo_langs = [ lang.lower() for lang in self.current_repo.get_languages() ]
+
+        for language in module.LANGUAGES:
+            if language.lower() in repo_langs:
+                return True
+        return False
+
+
     def run_module(
         self,
         errors_object: DICTLIST,
@@ -169,6 +196,19 @@ class GithubLinter:
         module: ModuleType,
     ) -> bool:
         """ runs a given module """
+
+        if not self.current_repo:
+            raise RepositoryNotSet
+
+        if "LANGUAGES" in dir(module):
+            if not self.module_language_check(module):
+                logger.debug(
+                    "Module not required for module {}, module langs: {}, repo langs: {}",
+                    module.LANGUAGES,
+                    self.current_repo.get_languages(),
+                    module,
+                    )
+                return False
 
         for check in dir(module):
             if check.startswith("check_"):
