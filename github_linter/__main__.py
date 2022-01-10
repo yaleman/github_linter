@@ -1,93 +1,18 @@
 """ cli bits """
 
 from typing import List, Dict, Any
-from inspect import ismodule
 
 import click
 
-# import github
-# from github.ContentFile import ContentFile
 from github.Repository import Repository
 
-# from github.GithubException import UnknownObjectException
 from loguru import logger
 
 from . import GithubLinter
+from .tests import MODULES
 
-# from .utils import check_files_to_remove
-from .types import DICTLIST
+# from .types import DICTLIST
 
-# all the tests
-#
-# from .tests.pyproject import check_pyproject_toml
-from .tests import generic, dependabot, issues, pylintrc, pyproject
-
-MODULES = {
-    "dependabot": dependabot,
-    "generic": generic,
-    "issues": issues,
-    "pylintrc": pylintrc,
-    "pyproject": pyproject,
-}
-
-
-def run_module(
-    github_object: GithubLinter,
-    repo_object: Repository,
-    errors_object: DICTLIST,
-    warnings_object: DICTLIST,
-    module: str,
-) -> bool:
-    """ runs a module after checking what it is """
-    if module not in MODULES:
-        logger.error("Module not found: {}", module)
-        return False
-    if not ismodule(MODULES[module]):
-        raise TypeError(f"Found type {type(MODULES[module])} while running module.")
-    for check in dir(MODULES[module]):
-        if check.startswith("check_"):
-            logger.debug("Running {}", check)
-            getattr(MODULES[module], check)(
-                github_object, repo_object, errors_object, warnings_object
-            )
-    return True
-
-
-def handle_repo(
-    github_object: GithubLinter,
-    repo: Repository,
-    enabled_modules: List[str],
-):
-    """ does things """
-    # logger.info("owner: {}", repo.owner)
-    logger.debug(repo.full_name)
-    if repo.archived:
-        logger.warning("Repository is archived!")
-    # logger.info("Blobs URL: {}", repo.blobs_url)
-
-    errors: DICTLIST = {}
-    warnings: DICTLIST = {}
-    if repo.parent:
-        logger.warning("Parent: {}", repo.parent.full_name)
-
-    if not enabled_modules:
-        enabled_modules = list(MODULES.keys())
-    for module in enabled_modules:
-        run_module(github_object, repo, errors, warnings, module)
-
-    # check_pyproject_toml(github_object, repo, errors, warnings)
-    # check_dependabot_config(github_object, repo, errors, warnings)
-    # if errors:
-    #     logger.error(json.dumps(errors, indent=4, ensure_ascii=False))
-    # if warnings:
-    #     logger.warning(json.dumps(warnings, indent=4, ensure_ascii=False))
-
-    if not errors or warnings:
-        logger.debug("{} all good", repo.full_name)
-    github_object.report[repo.full_name] = {
-        "errors": errors,
-        "warnings": warnings,
-    }
 
 
 # TODO: sanity check... stuff?
@@ -153,25 +78,25 @@ def cli(**kwargs):
     """ Github linter for checking your repositories for various things. """
     github = GithubLinter()
 
-    logger.debug("Getting repos")
-    repos = search_repos(github, kwargs)
-
-    if "module" in kwargs:
-        module: List[str] = kwargs["module"]
+    if "module" in kwargs and len(kwargs["module"]) > 0:
+        for module in kwargs["module"]:
+            github.add_module(module, MODULES[module])
     else:
-        module = list(MODULES.keys())
+        logger.debug("Running all available modules.")
+        for module in MODULES:
+            github.add_module(module, MODULES[module])
 
     user = github.github.get_user()
 
-    if github.config.get("check_forks"):
-        logger.debug("Checking forks")
+    logger.debug("Getting repos")
+    repos = search_repos(github, kwargs)
 
     for repo in repos:
         if not repo.parent:
-            handle_repo(github, repo, module)
+            github.handle_repo(repo)
         # if it's a fork and you're checking them
         elif repo.parent.owner.login != user.login and github.config.get("check_forks"):
-            handle_repo(github, repo, module)
+            github.handle_repo(repo)
         else:
             logger.warning(
                 "check_forks is true and {} is a fork, skipping.", repo.full_name

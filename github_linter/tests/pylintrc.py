@@ -5,7 +5,9 @@ from typing import Optional
 
 from configparser import ConfigParser
 
-# from loguru import logger
+import json5 as json
+
+from loguru import logger
 from github.Repository import Repository
 
 # import yaml
@@ -19,6 +21,14 @@ from ..utils import add_result, get_file_from_repo
 CATEGORY = "pylintrc"
 
 LANGUAGES = ["python"]
+
+# https://pylint.pycqa.org/en/latest/user_guide/run.html
+PYLINTRC_LOCATIONS = [
+    "pylintrc",
+    ".pylintrc",
+    # "pyproject.toml" # providing it has at least one tool.pylint. section
+    # "setup.cfg" # needs pylint.*
+]
 
 
 def load_pylintrc(repo: Repository) -> Optional[ConfigParser]:
@@ -40,10 +50,14 @@ def check_max_line_length_configured(
     warnings_object: DICTLIST,
 ):
     """ checks for the max-line-length setting in .pylintrc """
-    config = load_pylintrc(repo)
+    config: Optional[ConfigParser] = load_pylintrc(repo)
+
     if not config:
         add_result(warnings_object, CATEGORY, ".pylintrc not found")
         return False
+    if "MASTER" not in config.sections():
+        logger.debug("Can't find MASTER entry, dumping config")
+        logger.debug(json.dumps(config, indent=4, default=str, ensure_ascii=False))
     linelength = config.get("MASTER", "max-line-length")
 
     if not linelength:
