@@ -77,7 +77,7 @@
 #     }
 #     errors_object = {}
 #     warnings_object = {}
-#     result = validate_readme_configured(TestGithub, TestRepoFoo, testproject, errors_object, warnings_object)
+#     result = validate_readme_configured(TestGithub, testproject, errors_object, warnings_object)
 #     assert not errors_object
 #     assert not warnings_object
 #     assert result

@@ -42,43 +42,24 @@ jobs:
           python -m pip install --quiet --no-cache-dir --upgrade flit
           FLIT_ROOT_INSTALL=1 python -m flit install
           ./run_mypy.sh
-  pytest:
-    runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
-      - name: Set up Python 3
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
-      - name: Installing Flit and PIP
-        run: |
-          python -m pip install --quiet --no-cache-dir --upgrade flit
-      - name: Installing Dependencies
-        run: |
-          FLIT_ROOT_INSTALL=1 python -m flit install
-      - name: Running pytest
-        run: |
-          python -m pytest
-  # notify:
+  # pytest:
   #   runs-on: ubuntu-latest
   #   concurrency:
   #     group: ${{ github.workflow }}-${{ github.ref }}
-  #   needs:
-  #     - mypy
-  #     - pylint
-  #     -
-  # TODO: Make this run after everything else
-      # - name: pushover-actions
-      #   uses: umahmood/pushover-actions@main
-      #   env:
-      #     PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_TOKEN }}
-      #     PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
-      #   with:
-      #     status: ${{ job.status }}
-      #     title: 'Github Actions Result'
-      #     message: 'DNS deployment finished!'
-      #   if: ${{ always() }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
+  #     - name: Set up Python 3
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: '3.9'
+  #     - name: Installing Flit and PIP
+  #       run: |
+  #         python -m pip install --quiet --no-cache-dir --upgrade flit
+  #     - name: Installing Dependencies
+  #       run: |
+  #         FLIT_ROOT_INSTALL=1 python -m flit install
+  #     - name: Running pytest
+  #       run: |
+  #         python -m pytest
