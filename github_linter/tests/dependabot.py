@@ -11,6 +11,7 @@ import yaml
 from github_linter import GithubLinter
 
 # from . import GithubLinter
+from ..exceptions import RepositoryNotSet
 from ..types import DICTLIST
 from ..utils import add_result, get_file_from_repo
 
@@ -184,14 +185,17 @@ def load_file(
 
 
 def check_dependabot_config(
-    _: GithubLinter,
-    repo: Repository,
+    github_object: GithubLinter,
+
     errors_object: DICTLIST,
     warnings_object: DICTLIST,
 ):
     """ checks for dependabot config """
 
-    dependabot_config = load_file(repo, errors_object, warnings_object)
+    if not github_object.current_repo:
+        raise RepositoryNotSet
+
+    dependabot_config = load_file(github_object.current_repo, errors_object, warnings_object)
 
     # TODO: this only matters if there's languages that dependabot supports
     # if not dependabot_config:
@@ -204,5 +208,5 @@ def check_dependabot_config(
         )
 
         validate_updates_for_langauges(
-            repo, dependabot_config["updates"], errors_object, warnings_object
+            github_object.current_repo, dependabot_config["updates"], errors_object, warnings_object
         )

@@ -4,6 +4,7 @@ from github.ContentFile import ContentFile
 
 
 from .. import GithubLinter
+from ..exceptions import RepositoryNotSet
 from ..types import DICTLIST
 from ..utils import add_result
 
@@ -16,12 +17,13 @@ CATEGORY = "generic"
 
 def check_files_to_remove(
     github_object: GithubLinter,
-    repo,
     errors_object: DICTLIST,
     _: DICTLIST,  # warnings_object
 ) -> None:
     """ check for files to remove """
-    contents = repo.get_contents("")
+    if not github_object.current_repo:
+        raise RepositoryNotSet
+    contents = github_object.current_repo.get_contents("")
     if isinstance(contents, ContentFile):
         contents = [contents]
 
@@ -30,5 +32,5 @@ def check_files_to_remove(
             add_result(
                 errors_object,
                 CATEGORY,
-                f"File '{content_file.name}' needs to be removed from {repo.full_name}.",
+                f"File '{content_file.name}' needs to be removed from {github_object.current_repo.full_name}.",
             )

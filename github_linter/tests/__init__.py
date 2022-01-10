@@ -1,6 +1,6 @@
 """ test modules """
 
-from . import generic, dependabot, issues, pylintrc, pyproject
+from . import generic, dependabot, issues, pylintrc, pyproject, testing
 
 MODULES = {
     "dependabot": dependabot,
@@ -8,4 +8,5 @@ MODULES = {
     "issues": issues,
     "pylintrc": pylintrc,
     "pyproject": pyproject,
+    "testing" : testing,
 }

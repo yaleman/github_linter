@@ -1,4 +1,4 @@
 [MASTER]
 max-line-length=200
 
-disable=W0511,consider-using-dict-items
+disable=W0511,consider-using-dict-items,duplicate-code

@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import time
 from types import ModuleType
-from typing import Union, Dict
+from typing import Union, Dict, Optional
 
 import json5 as json
 from loguru import logger
@@ -18,7 +18,7 @@ from .types import DICTLIST
 
 __version__ = "0.0.1"
 
-def load_config() -> Union[Dict[str, str], bool]:
+def load_config() -> Optional[Dict[str, str]]:
     """ loads config """
     for configfile in [
         Path("./github_linter.json"),
@@ -33,7 +33,7 @@ def load_config() -> Union[Dict[str, str], bool]:
         except JSONDecodeError as json_error:
             logger.error("Failed to load {}: {}", configfile.as_posix(), json_error)
     logger.error("Failed to find config file")
-    return False
+    return None
 
 RATELIMIT_TYPES = {
     "core" : {
@@ -61,6 +61,7 @@ class GithubLinter:
         if not self.config:
             self.config = {}
 
+        self.current_repo: Optional[Repository] = None
         self.report = {}
         self.modules: Dict[str, ModuleType] = {}
 
@@ -135,7 +136,8 @@ class GithubLinter:
         repo: Repository,
     ):
         """ Runs modules against the given repo """
-        time.sleep(self.check_rate_limits())
+
+        self.current_repo = repo
 
         logger.debug(repo.full_name)
         if repo.archived:
@@ -148,7 +150,7 @@ class GithubLinter:
 
         logger.debug("Enabled modules: {}", self.modules)
         for module in self.modules:
-            self.run_module(repo, errors, warnings, self.modules[module])
+            self.run_module(errors, warnings, self.modules[module])
 
         if not errors or warnings:
             logger.debug("{} all good", repo.full_name)
@@ -157,9 +159,11 @@ class GithubLinter:
             "warnings": warnings,
         }
 
+        time.sleep(self.check_rate_limits())
+
+
     def run_module(
         self,
-        repo_object: Repository,
         errors_object: DICTLIST,
         warnings_object: DICTLIST,
         module: ModuleType,
@@ -170,6 +174,6 @@ class GithubLinter:
             if check.startswith("check_"):
                 logger.debug("Running {}", check)
                 getattr(module, check)(
-                    self, repo_object, errors_object, warnings_object
+                    self, errors_object, warnings_object
                 )
         return True

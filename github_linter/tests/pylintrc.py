@@ -8,13 +8,14 @@ from configparser import ConfigParser
 import json5 as json
 
 from loguru import logger
-from github.Repository import Repository
+# from github.Repository import Repository
 
 # import yaml
 
 from github_linter import GithubLinter
 
 # from . import GithubLinter
+from ..exceptions import RepositoryNotSet
 from ..types import DICTLIST
 from ..utils import add_result, get_file_from_repo
 
@@ -31,26 +32,31 @@ PYLINTRC_LOCATIONS = [
 ]
 
 
-def load_pylintrc(repo: Repository) -> Optional[ConfigParser]:
+def load_pylintrc(github_object: GithubLinter) -> Optional[ConfigParser]:
     """ grabs the .pylintrc file from the repository """
-    contents = get_file_from_repo(repo, ".pylintrc")
-    if not contents:
-        return None
-    config = ConfigParser()
-    if not contents.content:
-        return None
-    config.read_string(contents.decoded_content.decode("utf-8"))
-    return config
+    if not github_object.current_repo:
+        raise RepositoryNotSet
 
+    for filepath in PYLINTRC_LOCATIONS:
+        contents = get_file_from_repo(github_object.current_repo, filepath)
+        if not contents:
+            continue
+
+        config = ConfigParser()
+        if not contents.content:
+            return None
+        config.read_string(contents.decoded_content.decode("utf-8"))
+        logger.debug("Successfully loaded {}", filepath)
+        return config
+    return None
 
 def check_max_line_length_configured(
     github: GithubLinter,
-    repo: Repository,
     errors_object: DICTLIST,  #
     warnings_object: DICTLIST,
 ):
     """ checks for the max-line-length setting in .pylintrc """
-    config: Optional[ConfigParser] = load_pylintrc(repo)
+    config: Optional[ConfigParser] = load_pylintrc(github)
 
     if not config:
         add_result(warnings_object, CATEGORY, ".pylintrc not found")
@@ -77,14 +83,15 @@ def check_max_line_length_configured(
 
 
 def check_pylintrc(
-    _: GithubLinter,
-    repo: Repository,
-    __: DICTLIST,  #
+    github_object: GithubLinter,
+    _: DICTLIST,  #
     warnings_object: DICTLIST,
 ):
     """ checks for .pylintrc config """
 
-    pylintrc = get_file_from_repo(repo, ".pylintrc")
+    if not github_object.current_repo:
+        raise RepositoryNotSet
+    pylintrc = get_file_from_repo(github_object.current_repo, ".pylintrc")
 
     if not pylintrc:
         add_result(warnings_object, CATEGORY, ".pylintrc not found")

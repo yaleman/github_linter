@@ -4,12 +4,13 @@ import json
 
 # from typing import List, Dict
 
-from github.Repository import Repository
+# from github.Repository import Repository
 
 from loguru import logger
 import tomli
 
 from .. import GithubLinter
+from ..exceptions import RepositoryNotSet
 from ..types import DICTLIST
 from ..utils import add_result, get_file_from_repo
 
@@ -19,7 +20,6 @@ LANGUAGES = ["python"]
 
 def validate_pyproject_authors(
     github_object: GithubLinter,
-    _: Repository,
     project_object: dict,
     errors_object: DICTLIST,
     warnings_object: DICTLIST,
@@ -44,12 +44,15 @@ def validate_pyproject_authors(
 # pylint: disable=unused-argument
 def validate_project_name(
     github_object: GithubLinter,
-    repo_object: Repository,
     project_object: dict,
     errors_object: DICTLIST,
     warnings_object: DICTLIST,
 ) -> bool:
     """ validates that the project name matches the repo name """
+
+    if not github_object.current_repo:
+        raise RepositoryNotSet
+
     if "name" not in project_object:
         add_result(
             errors_object, CATEGORY, "No 'name' field in [project] section of config"
@@ -57,23 +60,22 @@ def validate_project_name(
         return False
 
     project_name = project_object["name"]
-    if project_name != repo_object.name:
+    if project_name != github_object.current_repo.name:
         add_result(
             errors_object,
             CATEGORY,
-            f"Project name doesn't match repo name repo: {repo_object.name} project: {project_name}.",
+            f"Project name doesn't match repo name repo: {github_object.current_repo.name} project: {project_name}.",
         )
         return False
     return True
 
 
-# pylint: disable=unused-argument
+
 def validate_readme_configured(
     github_object: GithubLinter,
-    repo_object: Repository,
     project_object: dict,
     errors_object: DICTLIST,
-    warnings_object: DICTLIST,
+    _: DICTLIST,
 ) -> bool:
     """ validates that the project has a readme configured """
     if "readme" not in project_object:
@@ -103,12 +105,14 @@ def validate_readme_configured(
 
 def validate_scripts(
     github_object: GithubLinter,
-    repo_object: Repository,
     project_object: dict,
     errors_object: DICTLIST,
     warnings_object: DICTLIST,
 ) -> bool:
     """ validates that the project has a readme configured """
+
+    if not github_object.current_repo:
+        raise RepositoryNotSet
     if "scripts" not in project_object:
         # add_result(errors_object, CATEGORY, "No 'readme' field in [project] section of config")
         logger.debug("No scripts configured in pyproject.toml")
@@ -117,11 +121,11 @@ def validate_scripts(
     for script in project_object["scripts"]:
         script_def = project_object["scripts"][script]
         script_def_module = script_def.split(".")[0]
-        if script_def_module != repo_object.name:
+        if script_def_module != github_object.current_repo.name:
             add_result(
                 errors_object,
                 CATEGORY,
-                f"Script has invalid module: expected {repo_object.name}, found {script_def_module}",
+                f"Script has invalid module: expected {github_object.current_repo.name}, found {script_def_module}",
             )
         # check it's pulling from __main__
         if len(script_def_module.split(".") > 1):
@@ -137,12 +141,15 @@ def validate_scripts(
 
 def check_pyproject_toml(
     github_object: GithubLinter,
-    repo_object: Repository,
     errors_object: DICTLIST,
     warnings_object: DICTLIST,
 ) -> None:
     """ checks the data for the pyproject.toml file """
-    fileresult = get_file_from_repo(repo_object, "pyproject.toml")
+
+    if not github_object.current_repo:
+        raise RepositoryNotSet
+
+    fileresult = get_file_from_repo(github_object.current_repo, "pyproject.toml")
     if not fileresult:
         return
 
@@ -152,7 +159,7 @@ def check_pyproject_toml(
         parsed = tomli.loads(fileresult.decoded_content.decode("utf-8"))
     except tomli.TOMLDecodeError as tomli_error:
         logger.debug(
-            "Failed to parse {}/pyproject.toml: {}", repo_object.full_name, tomli_error
+            "Failed to parse {}/pyproject.toml: {}", github_object.current_repo.full_name, tomli_error
         )
         add_result(
             errors_object, CATEGORY, f"Failed to parse pyproject.toml: {tomli_error}"
@@ -167,10 +174,10 @@ def check_pyproject_toml(
 
         # check the authors are expected
         validate_pyproject_authors(
-            github_object, repo_object, project, errors_object, warnings_object
+            github_object, project, errors_object, warnings_object
         )
         validate_project_name(
-            github_object, repo_object, project, errors_object, warnings_object
+            github_object, project, errors_object, warnings_object
         )
 
         for url in project.get("urls"):
