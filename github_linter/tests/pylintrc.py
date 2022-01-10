@@ -1,20 +1,13 @@
 """ checks for dependabot config """
 
-# import json
+from configparser import ConfigParser
 from typing import Optional
 
-from configparser import ConfigParser
-
 import json5 as json
-
 from loguru import logger
-# from github.Repository import Repository
-
-# import yaml
 
 from github_linter import GithubLinter
 
-# from . import GithubLinter
 from ..exceptions import RepositoryNotSet
 from ..types import DICTLIST
 from ..utils import add_result, get_file_from_repo
