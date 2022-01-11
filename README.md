@@ -2,7 +2,9 @@
 
 This is mainly for me, but it's a way of going through the Github repositories that you have access to, to check all the things you'd usually expect.
 
-Mainly because I've got like ~100 repos and keep changing how I do things.
+Because I've got like ~100 repos and keep changing how I do things, and it annoys me to work on an old one and hit all the weird edge cases I've fixed elsewhere.
+
+![build](https://github.com/yaleman/github_linter/actions/workflows/testing.yml/badge.svg)
 
 ## Current tests
 
