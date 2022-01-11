@@ -137,12 +137,12 @@ class GithubLinter:
             if "errors" in repo and repo["errors"]:
                 for category in repo["errors"]:
                     if repo["errors"][category]:
-                        errors = [f" - {error}" for error in repo["errors"][category]]
+                        errors = [f"{category} - {error}" for error in repo["errors"][category]]
             if "warnings" in repo and repo["warnings"]:
                 for category in repo["warnings"]:
                     if repo["warnings"][category]:
                         warnings = [
-                            f" - {warning}" for warning in repo["warnings"][category]
+                            f"{category} - {warning}" for warning in repo["warnings"][category]
                         ]
             if errors or warnings:
                 logger.info("Report for {}", repo_name)

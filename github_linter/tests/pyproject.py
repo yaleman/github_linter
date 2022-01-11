@@ -138,6 +138,22 @@ def validate_scripts(
                 retval = False
     return retval
 
+def load_pyproject(github_object):
+    """ loads the pyproject.toml file """
+
+    fileresult = github_object.cached_get_file("pyproject.toml")
+    if not fileresult:
+        return
+
+    try:
+        return tomli.loads(fileresult.decoded_content.decode("utf-8"))
+    except tomli.TOMLDecodeError as tomli_error:
+        logger.debug(
+            "Failed to parse {}/pyproject.toml: {}", github_object.current_repo.full_name, tomli_error
+        )
+
+    return
+    # logger.debug(json.dumps(parsed, indent=4, ensure_ascii=False))
 
 def check_pyproject_toml(
     github_object: GithubLinter,
@@ -149,24 +165,15 @@ def check_pyproject_toml(
     if not github_object.current_repo:
         raise RepositoryNotSet
 
-    fileresult = github_object.cached_get_file("pyproject.toml")
-    if not fileresult:
-        return
 
     # config_expected = github_object.config.get(CATEGORY)
 
-    try:
-        parsed = tomli.loads(fileresult.decoded_content.decode("utf-8"))
-    except tomli.TOMLDecodeError as tomli_error:
-        logger.debug(
-            "Failed to parse {}/pyproject.toml: {}", github_object.current_repo.full_name, tomli_error
-        )
+    parsed = load_pyproject(github_object)
+    if not parsed:
         add_result(
-            errors_object, CATEGORY, f"Failed to parse pyproject.toml: {tomli_error}"
+            errors_object, CATEGORY, f"Failed to parse pyproject.toml"
         )
         return
-    logger.debug(json.dumps(parsed, indent=4, ensure_ascii=False))
-
     if not parsed.get("project"):
         add_result(errors_object, CATEGORY, "No Project Section in file?")
     else:
@@ -183,3 +190,58 @@ def check_pyproject_toml(
         for url in project.get("urls"):
             logger.debug("URL: {} - {}", url, project["urls"][url])
     return
+
+# need to check for file exclusions so flit doesn't package things
+
+
+def check_sdist_exclude_list(
+    github_object: GithubLinter,
+    errors_object: DICTLIST,
+    warnings_object: DICTLIST,
+) -> None:
+    """ check for file exclusions so flit doesn't package things it shouldn't """
+    if not github_object.current_repo:
+        raise RepositoryNotSet
+
+    pyproject = load_pyproject(github_object)
+
+    sdist_exclude_list = [
+        "requirements*.txt",
+        ".gitignore",
+        ".pylintrc",
+        "*.json.example*",
+        "test_*.py",
+        "*.sh",
+        ".github/",
+        ".vscode/",
+        "*.json",
+        "mypy.ini",
+    ]
+
+
+    if "tool" not in pyproject:
+        add_result(errors_object, CATEGORY, "tool section not in config")
+        return
+    if "flit" not in pyproject["tool"]:
+        add_result(errors_object, CATEGORY, "tool.flit section not in config")
+        return
+    if "sdist" not in pyproject["tool"]["flit"]:
+        add_result(errors_object, CATEGORY, "tool.flit.sdist.exclude section not in config")
+        return
+    if "exclude" not in pyproject["tool"]["flit"]["sdist"]:
+        add_result(errors_object, CATEGORY, "tool.flit.sdist.exclude section not in config")
+        return
+
+    flit_exclude_list = pyproject["tool"]["flit"]["sdist"]["exclude"]
+
+    logger.debug(json.dumps(flit_exclude_list, indent=4, default=str, ensure_ascii=False))
+
+
+    for entry in sdist_exclude_list:
+        if entry not in flit_exclude_list:
+            add_result(
+                errors_object,
+                CATEGORY,
+                f"tool.flit.sdist section missing '{entry}' entry.")
+    return
+

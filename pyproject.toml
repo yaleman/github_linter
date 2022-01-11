@@ -55,4 +55,7 @@ exclude = [
     "*.json.example*",
     "test_*.py",
     "*.sh",
+    ".github/",
+    "*.json",
+    "mypy.ini",
 ]
