@@ -28,18 +28,19 @@ def check_shellcheck(
     if not testfile:
         # covered by check_testing_yml_exists
         return
-    if not testfile.content:
+    if not testfile.decoded_content:
         # covered by check_testing_yml_exists
         return
 
     shellcheck_action = "ludeeus/action-shellcheck@master"
     if "testing" in github.config and "shellcheck_action" in github.config["testing"]:
         shellcheck_action = github.config["testing"]["shellcheck_action"]
-    if shellcheck_action not in testfile.content:
+
+    if shellcheck_action not in testfile.decoded_content.decode("utf-8"):
         add_result(
             errors_object,
             CATEGORY,
-            "Shellcheck action string missing, expected {shellcheck_action}",
+            f"Shellcheck action string missing, expected {shellcheck_action}",
             )
 
 def check_testing_yml_exists(
