@@ -23,7 +23,7 @@ dependencies = [
     "loguru",
     "json5",
     "pytz",
-    "hcl2", # terraform
+    "python-hcl2", # terraform
     "semver>=3.0.0.dev2",
 ]
 
