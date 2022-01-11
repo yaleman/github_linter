@@ -142,6 +142,10 @@ def load_pyproject(github_object):
     """ loads the pyproject.toml file """
 
     fileresult = github_object.cached_get_file("pyproject.toml")
+    if not fileresult:
+        logger.debug("No content for pyproject.toml")
+        return None
+
     try:
         return tomli.loads(fileresult.decoded_content.decode("utf-8"))
     except tomli.TOMLDecodeError as tomli_error:

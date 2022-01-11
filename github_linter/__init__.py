@@ -150,17 +150,18 @@ class GithubLinter:
             if "errors" in repo and repo["errors"]:
                 for category in repo["errors"]:
                     map(
+                        errors.append,
                         [f"{category} - {error}" for error in repo["errors"].get(category)],
-                        errors.append
                     )
             if "warnings" in repo and repo["warnings"]:
                 for category in repo["warnings"]:
                     map(
+                        warnings.append,
                         [f"{category} - {warning}" for warning in repo["warnings"].get(category)],
-                        warnings.append)
+                        )
             if errors or warnings:
                 logger.info("Report for {}", repo_name)
-                map(errors, logger.error)
+                map(logger.error, errors)
                 map(logger.warning, warnings)
             else:
                 logger.info("Repository {} checks out OK", repo_name)
