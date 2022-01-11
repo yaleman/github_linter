@@ -49,6 +49,7 @@ github_linter = "github_linter.__main__:cli"
 
 [tool.flit.sdist]
 exclude = [
+    ".vscode/",
     "requirements*.txt",
     ".gitignore",
     ".pylintrc",
