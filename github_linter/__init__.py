@@ -4,10 +4,10 @@ from datetime import datetime
 from json.decoder import JSONDecodeError
 import os
 from pathlib import Path
-import sys
+# import sys
 import time
 from types import ModuleType
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple, Union
 
 import json5 as json
 from loguru import logger
@@ -49,6 +49,19 @@ RATELIMIT_TYPES = {
         "minlimit" : 1,
     },
 }
+
+def get_filtered_checks(checklist: List[str], check_filter: Optional[Tuple]) -> List[str]:
+    """ filters the checks """
+
+    if not check_filter:
+        return list(checklist)
+    checks = []
+    for check in checklist:
+        for filterstr in check_filter:
+            if check.startswith(filterstr):
+                checks.append(check)
+                continue
+    return checks
 
 # pylint: disable=too-few-public-methods
 class GithubLinter:
@@ -136,26 +149,26 @@ class GithubLinter:
             warnings = []
             if "errors" in repo and repo["errors"]:
                 for category in repo["errors"]:
-                    if repo["errors"][category]:
-                        errors = [f"{category} - {error}" for error in repo["errors"][category]]
+                    map(
+                        [f"{category} - {error}" for error in repo["errors"].get(category)],
+                        errors.append
+                    )
             if "warnings" in repo and repo["warnings"]:
                 for category in repo["warnings"]:
-                    if repo["warnings"][category]:
-                        warnings = [
-                            f"{category} - {warning}" for warning in repo["warnings"][category]
-                        ]
+                    map(
+                        [f"{category} - {warning}" for warning in repo["warnings"].get(category)],
+                        warnings.append)
             if errors or warnings:
                 logger.info("Report for {}", repo_name)
-                for error in errors:
-                    logger.error(error)
-                for warning in warnings:
-                    logger.warning(warning)
+                map(errors, logger.error)
+                map(logger.warning, warnings)
             else:
                 logger.info("Repository {} checks out OK", repo_name)
 
     def handle_repo(
         self,
         repo: Repository,
+        check: Optional[Tuple]
     ):
         """ Runs modules against the given repo """
 
@@ -172,7 +185,7 @@ class GithubLinter:
 
         logger.debug("Enabled modules: {}", self.modules)
         for module in self.modules:
-            self.run_module(errors, warnings, self.modules[module])
+            self.run_module(errors, warnings, self.modules[module], check)
 
         if not errors or warnings:
             logger.debug("{} all good", repo.full_name)
@@ -225,11 +238,14 @@ class GithubLinter:
         repo_cache[filepath] = get_file_from_repo(self.current_repo, filepath)
         return repo_cache[filepath]
 
+
+
     def run_module(
         self,
         errors_object: DICTLIST,
         warnings_object: DICTLIST,
         module: ModuleType,
+        check_filter: Optional[Tuple]
     ) -> bool:
         """ runs a given module """
 
@@ -246,9 +262,10 @@ class GithubLinter:
                     )
                 return False
 
-        for check in dir(module):
+
+        for check in get_filtered_checks(dir(module), check_filter):
             if check.startswith("check_"):
-                logger.debug("Running {}", check)
+                logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
                 getattr(module, check)(
                     self, errors_object, warnings_object
                 )

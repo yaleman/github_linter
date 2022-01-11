@@ -1,6 +1,7 @@
 """ utility functions """
 
 from typing import Union
+
 from loguru import logger
 
 from github.GithubException import UnknownObjectException
@@ -16,6 +17,7 @@ def add_result(result_object: DICTLIST, category: str, value: str) -> None:
         result_object[category] = []
     if value not in result_object[category]:
         result_object[category].append(value)
+    logger.debug("{} - {}", category, value)
 
 
 def get_file_from_repo(

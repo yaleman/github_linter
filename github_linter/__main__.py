@@ -75,6 +75,7 @@ def search_repos(
     type=click.Choice(list(MODULES.keys())),
     help="Specify which modules to run",
 )
+@click.option("--check", "-k", multiple=True, help="Filter by check name, eg check_example")
 def cli(**kwargs):
     """ Github linter for checking your repositories for various things. """
     github = GithubLinter()
@@ -94,10 +95,10 @@ def cli(**kwargs):
 
     for repo in repos:
         if not repo.parent:
-            github.handle_repo(repo)
+            github.handle_repo(repo, kwargs.get("check"))
         # if it's a fork and you're checking them
         elif repo.parent.owner.login != user.login and github.config.get("check_forks"):
-            github.handle_repo(repo)
+            github.handle_repo(repo, kwargs.get("check"))
         else:
             logger.warning(
                 "check_forks is true and {} is a fork, skipping.", repo.full_name

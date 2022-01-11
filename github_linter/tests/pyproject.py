@@ -142,18 +142,14 @@ def load_pyproject(github_object):
     """ loads the pyproject.toml file """
 
     fileresult = github_object.cached_get_file("pyproject.toml")
-    if not fileresult:
-        return
-
     try:
         return tomli.loads(fileresult.decoded_content.decode("utf-8"))
     except tomli.TOMLDecodeError as tomli_error:
         logger.debug(
             "Failed to parse {}/pyproject.toml: {}", github_object.current_repo.full_name, tomli_error
         )
-
-    return
-    # logger.debug(json.dumps(parsed, indent=4, ensure_ascii=False))
+        return None
+    return None
 
 def check_pyproject_toml(
     github_object: GithubLinter,
@@ -164,33 +160,26 @@ def check_pyproject_toml(
 
     if not github_object.current_repo:
         raise RepositoryNotSet
-
-
     # config_expected = github_object.config.get(CATEGORY)
 
     parsed = load_pyproject(github_object)
     if not parsed:
-        add_result(
-            errors_object, CATEGORY, f"Failed to parse pyproject.toml"
-        )
-        return
+        return add_result(errors_object, CATEGORY, "Failed to parse pyproject.toml")
     if not parsed.get("project"):
-        add_result(errors_object, CATEGORY, "No Project Section in file?")
-    else:
-        project = parsed["project"]
+        return add_result(errors_object, CATEGORY, "No Project Section in file?")
+    project = parsed["project"]
 
-        # check the authors are expected
-        validate_pyproject_authors(
-            github_object, project, errors_object, warnings_object
-        )
-        validate_project_name(
-            github_object, project, errors_object, warnings_object
-        )
+    # check the authors are expected
+    validate_pyproject_authors(
+        github_object, project, errors_object, warnings_object
+    )
+    validate_project_name(
+        github_object, project, errors_object, warnings_object
+    )
 
-        for url in project.get("urls"):
-            logger.debug("URL: {} - {}", url, project["urls"][url])
-    return
-
+    for url in project.get("urls"):
+        logger.debug("URL: {} - {}", url, project["urls"][url])
+    return None
 # need to check for file exclusions so flit doesn't package things
 
 
@@ -205,6 +194,14 @@ def check_sdist_exclude_list(
 
     pyproject = load_pyproject(github_object)
 
+    if not pyproject:
+        add_result(
+            errors_object,
+            CATEGORY,
+            "Failed to load pyproject.toml",
+        )
+        logger.error("Failed to find pyproject.toml")
+        return
     sdist_exclude_list = [
         "requirements*.txt",
         ".gitignore",
@@ -244,4 +241,3 @@ def check_sdist_exclude_list(
                 CATEGORY,
                 f"tool.flit.sdist section missing '{entry}' entry.")
     return
-

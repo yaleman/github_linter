@@ -2,11 +2,13 @@
 """ Terraform-related tests """
 from typing import Dict
 
-
 from loguru import logger
 import hcl2 # type: ignore
 import json5 as json
-# from github.Repository import Repository
+import semver # type: ignore
+
+
+
 from .. import GithubLinter
 from ..exceptions import RepositoryNotSet
 from ..utils import DICTLIST, add_result
@@ -121,3 +123,7 @@ def check_providers_for_modules(
         )
         return
     logger.debug("Found providers")
+
+    version = semver.parse("1.2.3")
+    logger.debug(version)
+    # TODO: use semver
