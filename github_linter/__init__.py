@@ -1,5 +1,7 @@
 """ goes through your repos and checks for things """
 
+from collections import deque
+
 from datetime import datetime
 from json.decoder import JSONDecodeError
 import os
@@ -149,20 +151,15 @@ class GithubLinter:
             warnings = []
             if "errors" in repo and repo["errors"]:
                 for category in repo["errors"]:
-                    map(
-                        errors.append,
-                        [f"{category} - {error}" for error in repo["errors"].get(category)],
-                    )
+                    deque(map(errors.append, [f"{category} - {error}" for error in repo["errors"].get(category)]))
             if "warnings" in repo and repo["warnings"]:
                 for category in repo["warnings"]:
-                    map(
-                        warnings.append,
-                        [f"{category} - {warning}" for warning in repo["warnings"].get(category)],
-                        )
+                    deque(map(warnings.append, [f"{category} - {warning}" for warning in repo["warnings"].get(category)]))
             if errors or warnings:
                 logger.info("Report for {}", repo_name)
-                map(logger.error, errors)
-                map(logger.warning, warnings)
+                # deque forces map to just run
+                deque(map(logger.error, errors))
+                deque(map(logger.warning, warnings))
             else:
                 logger.info("Repository {} checks out OK", repo_name)
 

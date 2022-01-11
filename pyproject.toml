@@ -24,6 +24,7 @@ dependencies = [
     "json5",
     "pytz",
     "hcl2", # terraform
+    "semver>=3.0.0.dev2",
 ]
 
 keywords = [

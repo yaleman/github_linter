@@ -1,5 +1,13 @@
 {
     "check_forks" : false,
+    "files_to_remove" : [
+        "Pipfile",
+        "Pipfile.lock",
+        ".DS_Store",
+        ".drone.yml",
+        "setup.py",
+        "distutils.cfg"
+    ],
     "pyproject.toml" : {
         "readme" : "README.md",
         "authors" : [
@@ -16,12 +24,7 @@
     "pylintrc" : {
         "max-line-length" : 200
     },
-    "files_to_remove" : [
-        "Pipfile",
-        "Pipfile.lock",
-        ".DS_Store",
-        ".drone.yml",
-        "setup.py",
-        "distutils.cfg"
-    ]
+    "terraform" : {
+        "required_version" : "0.15.0"
+    }
 }
