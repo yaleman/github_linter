@@ -56,18 +56,36 @@ class GithubLinter:
 
     def __init__(self):
         """ setup """
-        if os.getenv("GITHUB_TOKEN"):
-            logger.debug("Using GITHUB_TOKEN")
-            self.github = Github(os.getenv("GITHUB_TOKEN"))
-
         self.config = load_config()
         if not self.config:
             self.config = {}
+
+        self.do_login()
 
         self.current_repo: Optional[Repository] = None
         self.report = {}
         self.modules: Dict[str, ModuleType] = {}
         self.filecache: Dict[str, Dict[str,Optional[ContentFile]]] = {}
+
+    def do_login(self) -> None:
+        """ does the login/auth bit """
+
+        if "github" not in self.config:
+            if os.getenv("GITHUB_TOKEN"):
+                logger.debug("Using GITHUB_TOKEN environment variable for login.")
+                self.github = Github(os.getenv("GITHUB_TOKEN"))
+        else:
+            if "github" not in self.config:
+                raise ValueError("No 'github' key in config, and no GITHUB_TOKEN auth - cannot start up.")
+            if "ignore_auth" in self.config["github"] and self.config["github"]["ignore_auth"]:
+                self.github = Github()
+            elif "username" not in self.config["github"] or "password" not in self.config["github"]:
+                raise ValueError("No authentication details available - cannot start up.")
+            else:
+                self.github = Github(
+                    login_or_token=self.config["github"]["username"],
+                    password=self.config["github"]["password"],
+                )
 
     def add_module(self, module_name: str, module: ModuleType):
         """ adds a module to modules """

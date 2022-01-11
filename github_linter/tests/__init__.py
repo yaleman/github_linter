@@ -1,12 +1,15 @@
 """ test modules """
 
-from . import generic, dependabot, issues, pylintrc, pyproject, testing
+import sys
 
-MODULES = {
-    "dependabot": dependabot,
-    "generic": generic,
-    "issues": issues,
-    "pylintrc": pylintrc,
-    "pyproject": pyproject,
-    "testing" : testing,
-}
+from loguru import logger
+
+from . import generic, dependabot, issues, pylintrc, pyproject, testing, terraform
+
+MODULES = {}
+
+for module in sys.modules:
+    if hasattr(sys.modules[module], "CATEGORY") and module.startswith(__name__):
+        logger.debug("Adding module: {}", module)
+        module_name = module.replace(f"{__name__}.", "")
+        MODULES[module_name] = sys.modules[module]

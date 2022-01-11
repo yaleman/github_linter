@@ -11,6 +11,7 @@ from loguru import logger
 from . import GithubLinter
 from .tests import MODULES
 
+
 # from .types import DICTLIST
 
 
@@ -41,7 +42,7 @@ def search_repos(
             searchrepos = [f"user:{owner}" for owner in kwargs_object["owner"]]
         search = " OR ".join(searchrepos)
         logger.debug("Search string: '{}'", search)
-        search_result = github.github.search_repositories(query=search)
+        search_result = list(github.github.search_repositories(query=search))
 
         # filter search results by owner
         if kwargs_object.get("owner"):
@@ -51,17 +52,17 @@ def search_repos(
                 for repo in search_result
                 if repo.owner.login in kwargs_object["owner"]
             ]
-            search_result = filtered_result
+            search_result = list(filtered_result)
         # filter search results by repo name
         if kwargs_object.get("repo"):
             # logger.debug("Filtering based on repo: {}", kwargs_object["repo"])
             filtered_result = [
                 repo for repo in search_result if repo.name in kwargs_object["repo"]
             ]
-            search_result = filtered_result
+            return filtered_result
         return search_result
 
-    return github.github.get_user().get_repos()
+    return list(github.github.get_user().get_repos())
 
 
 @click.command()

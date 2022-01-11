@@ -29,6 +29,26 @@ Mainly because I've got like ~100 repos and keep changing how I do things.
 
 The config file is called `github_linter.json` - you can put it in the local dir or `~/.config/github_linter.json` - I've included my configuration in the repository.
 
+### Authentication
+
+1. Use the "GITHUB_TOKEN" auth method.
+2. Set the following in your config file:
+    
+    ```json
+    "github" : { 
+        "username" : "<your_username>", 
+        "password" : "<your_password>" 
+    }
+    ```
+
+3. Set the following in your config file to bypass auth and YOLO it.
+    
+    ```json
+    "github" : { 
+        "ignore_auth" : true 
+    }
+    ```
+
 ## Adding new test modules
 
 1. Add a module under `github_linter/tests/`
