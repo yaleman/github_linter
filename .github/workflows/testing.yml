@@ -42,6 +42,16 @@ jobs:
           python -m pip install --quiet --no-cache-dir --upgrade flit
           FLIT_ROOT_INSTALL=1 python -m flit install
           ./run_mypy.sh
+
+  shellcheck:
+    name: Shellcheck
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run ShellCheck
+      uses: ludeeus/action-shellcheck@master
+      env:
+        SHELLCHECK_OPTS: -e SC2148
   # pytest:
   #   runs-on: ubuntu-latest
   #   concurrency:
