@@ -7,17 +7,18 @@ from pathlib import Path
 import sys
 import time
 from types import ModuleType
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 import json5 as json
 from loguru import logger
 from github import Github
+from github.ContentFile import ContentFile
 from github.Repository import Repository
 import pytz
 from github_linter.exceptions import RepositoryNotSet
 
 from .types import DICTLIST
-from .utils import add_result
+from .utils import add_result, get_file_from_repo
 __version__ = "0.0.1"
 
 def load_config() -> Optional[Dict[str, str]]:
@@ -66,6 +67,7 @@ class GithubLinter:
         self.current_repo: Optional[Repository] = None
         self.report = {}
         self.modules: Dict[str, ModuleType] = {}
+        self.filecache: Dict[str, Dict[str,Optional[ContentFile]]] = {}
 
     def add_module(self, module_name: str, module: ModuleType):
         """ adds a module to modules """
@@ -163,9 +165,6 @@ class GithubLinter:
 
         time.sleep(self.check_rate_limits())
 
-
-    add_result = add_result
-
     def module_language_check(
         self,
         module : ModuleType,
@@ -188,6 +187,25 @@ class GithubLinter:
                 return True
         return False
 
+    def cached_get_file(
+        self,
+        filepath: str
+        ) -> Optional[ContentFile]:
+        """ checks if we've made a call looking for a file and grabs it if not
+        returns none if no file exists
+        """
+        if not self.current_repo:
+            raise RepositoryNotSet
+        if self.current_repo.full_name not in self.filecache:
+            self.filecache[self.current_repo.full_name] = {}
+        repo_cache = self.filecache[self.current_repo.full_name]
+
+        # cached call
+        if filepath in repo_cache:
+            return repo_cache[filepath]
+        # cache and then return
+        repo_cache[filepath] = get_file_from_repo(self.current_repo, filepath)
+        return repo_cache[filepath]
 
     def run_module(
         self,
@@ -203,10 +221,10 @@ class GithubLinter:
         if "LANGUAGES" in dir(module):
             if not self.module_language_check(module):
                 logger.debug(
-                    "Module not required for module {}, module langs: {}, repo langs: {}",
+                    "Module {} not required after language check, module langs: {}, repo langs: {}",
+                    module.__name__.split(".")[-1],
                     module.LANGUAGES,
                     self.current_repo.get_languages(),
-                    module,
                     )
                 return False
 

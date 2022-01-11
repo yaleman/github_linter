@@ -13,7 +13,7 @@ from github_linter import GithubLinter
 # from . import GithubLinter
 from ..exceptions import RepositoryNotSet
 from ..types import DICTLIST
-from ..utils import add_result, get_file_from_repo
+from ..utils import add_result
 
 # template = """
 # version: 2
@@ -162,12 +162,12 @@ def validate_update_config(
 
 
 def load_file(
-    repo: Repository,
+    github: GithubLinter,
     errors_object: DICTLIST,
     _: DICTLIST,
 ) -> Union[Dict, DEPENDABOT_CONFIG_FILE]:
     """ grabs the config file and loads it """
-    fileresult = get_file_from_repo(repo, ".github/dependabot.yml")
+    fileresult = github.cached_get_file(".github/dependabot.yml")
     if not fileresult:
         logger.debug("Couldn't find dependabot config.")
         return {}
@@ -195,7 +195,7 @@ def check_dependabot_config(
     if not github_object.current_repo:
         raise RepositoryNotSet
 
-    dependabot_config = load_file(github_object.current_repo, errors_object, warnings_object)
+    dependabot_config = load_file(github_object, errors_object, warnings_object)
 
     # TODO: this only matters if there's languages that dependabot supports
     # if not dependabot_config:

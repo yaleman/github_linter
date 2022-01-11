@@ -12,7 +12,7 @@ import tomli
 from .. import GithubLinter
 from ..exceptions import RepositoryNotSet
 from ..types import DICTLIST
-from ..utils import add_result, get_file_from_repo
+from ..utils import add_result
 
 CATEGORY = "pyproject.toml"
 LANGUAGES = ["python"]
@@ -149,7 +149,7 @@ def check_pyproject_toml(
     if not github_object.current_repo:
         raise RepositoryNotSet
 
-    fileresult = get_file_from_repo(github_object.current_repo, "pyproject.toml")
+    fileresult = github_object.cached_get_file("pyproject.toml")
     if not fileresult:
         return
 

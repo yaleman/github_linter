@@ -4,11 +4,43 @@ from loguru import logger
 # from github.Repository import Repository
 from .. import GithubLinter
 from ..exceptions import RepositoryNotSet
-from ..utils import DICTLIST, add_result, get_file_from_repo
+from ..utils import DICTLIST, add_result
 
 
 CATEGORY = "testing"
 LANGUAGES = ["all"]
+
+def check_shellcheck(
+    github: GithubLinter,
+    errors_object: DICTLIST,
+    _: DICTLIST,
+):
+    """ If 'Shell' exists in repo languages, check for a shellcheck action """
+    if not github.current_repo:
+        raise RepositoryNotSet
+
+    repo_langs = github.current_repo.get_languages()
+
+    if "Shell" not in repo_langs:
+        return
+
+    testfile = github.cached_get_file(".github/workflows/testing.yml")
+    if not testfile:
+        # covered by check_testing_yml_exists
+        return
+    if not testfile.content:
+        # covered by check_testing_yml_exists
+        return
+
+    shellcheck_action = "ludeeus/action-shellcheck@master"
+    if "testing" in github.config and "shellcheck_action" in github.config["testing"]:
+        shellcheck_action = github.config["testing"]["shellcheck_action"]
+    if shellcheck_action not in testfile.content:
+        add_result(
+            errors_object,
+            CATEGORY,
+            "Shellcheck action string missing, expected {shellcheck_action}",
+            )
 
 def check_testing_yml_exists(
     github: GithubLinter,
@@ -23,7 +55,7 @@ def check_testing_yml_exists(
         add_result(warnings_object, CATEGORY, "No languages identified, didn't check for automated testing config")
         return
 
-    testingyml = get_file_from_repo(github.current_repo, ".github/workflows/testing.yml")
+    testingyml = github.cached_get_file(".github/workflows/testing.yml")
 
     if not testingyml:
         add_result(errors_object, CATEGORY, "File .github/workflows/testing.yml missing")

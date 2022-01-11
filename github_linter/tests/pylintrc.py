@@ -10,7 +10,7 @@ from github_linter import GithubLinter
 
 from ..exceptions import RepositoryNotSet
 from ..types import DICTLIST
-from ..utils import add_result, get_file_from_repo
+from ..utils import add_result
 
 CATEGORY = "pylintrc"
 
@@ -31,7 +31,7 @@ def load_pylintrc(github_object: GithubLinter) -> Optional[ConfigParser]:
         raise RepositoryNotSet
 
     for filepath in PYLINTRC_LOCATIONS:
-        contents = get_file_from_repo(github_object.current_repo, filepath)
+        contents = github_object.cached_get_file(filepath)
         if not contents:
             continue
 
@@ -89,7 +89,7 @@ def check_pylintrc(
 
     if not github_object.current_repo:
         raise RepositoryNotSet
-    pylintrc = get_file_from_repo(github_object.current_repo, ".pylintrc")
+    pylintrc = github_object.cached_get_file(".pylintrc")
 
     if not pylintrc:
         add_result(warnings_object, CATEGORY, ".pylintrc not found")
