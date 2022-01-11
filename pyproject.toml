@@ -23,6 +23,7 @@ dependencies = [
     "loguru",
     "json5",
     "pytz",
+    "hcl2", # terraform
 ]
 
 keywords = [
