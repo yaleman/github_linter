@@ -9,7 +9,7 @@ from pathlib import Path
 # import sys
 import time
 from types import ModuleType
-from typing import Dict, Optional, List, Tuple, Union
+from typing import Any, Dict, Optional, List, Tuple, Union
 
 import json5 as json
 from loguru import logger
@@ -24,7 +24,7 @@ from .types import DICTLIST
 
 __version__ = "0.0.1"
 
-def load_config():
+def load_config() -> Dict[Optional[str],Any]:
     """ loads config """
     for configfile in [
         Path("./github_linter.json"),
