@@ -24,6 +24,6 @@ def check_files_to_remove(
         for content_file in contents:
 
             if content_file.name in repo.config["files_to_remove"]:
-                repo.add_error(CATEGORY,
+                repo.error(CATEGORY,
                     f"File '{content_file.name}' needs to be removed from {repo.repository.full_name}.",
                 )

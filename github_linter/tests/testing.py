@@ -30,7 +30,7 @@ def check_shellcheck(
         if "shellcheck_action" in testing:
             shellcheck_action = repo.config["testing"]["shellcheck_action"]
     if shellcheck_action not in testfile.decoded_content.decode("utf-8"):
-        repo.add_error(
+        repo.error(
             CATEGORY,
             f"Shellcheck action string missing, expected {shellcheck_action}",
             )
@@ -40,11 +40,11 @@ def check_testing_yml_exists(
 ):
     """ Checks that .github/workflows/testing.yml exists """
     if not repo.repository.get_languages():
-        repo.add_warning(CATEGORY, "No languages identified, didn't check for automated testing config")
+        repo.warning(CATEGORY, "No languages identified, didn't check for automated testing config")
         return
 
     testingyml = repo.cached_get_file(".github/workflows/testing.yml")
 
     if not testingyml:
-        repo.add_error(CATEGORY, "File .github/workflows/testing.yml missing")
+        repo.error(CATEGORY, "File .github/workflows/testing.yml missing")
     logger.debug("Found .github/workflows/testing.yml")

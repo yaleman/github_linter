@@ -64,7 +64,7 @@ def check_providers_tf_exists(
         hclfile = load_hclfile(repo, filename)
         if hclfile:
             return None
-    repo.add_error(CATEGORY,
+    repo.error(CATEGORY,
         f"Couldn't find a providers.tf file, looked in {','.join(PROVIDER_FILE_LIST)}"
     )
     return None
@@ -83,7 +83,7 @@ def check_providers_for_modules(
         logger.debug(json.dumps(hclfile, indent=4, default=str))
 
         if "terraform" not in hclfile:
-            repo.add_warning(
+            repo.warning(
                 CATEGORY,
                 f"Couldn't find 'terraform' section in {filename}...",
             )
@@ -96,7 +96,7 @@ def check_providers_for_modules(
                 break
 
         if not required_providers:
-            repo.add_warning(
+            repo.warning(
                 CATEGORY,
                 f"Couldn't find 'terraform.required_providers' section in {filename}...",
             )
@@ -111,7 +111,7 @@ def check_providers_for_modules(
             logger.debug(json.dumps(provider))
     logger.debug("Provider list: {}", provider_list)
     if not provider_list:
-        repo.add_warning(
+        repo.warning(
             CATEGORY,
             f"Found providers.tf files but no provider configuration was found. Files to check: {','.join(found_files)}",
         )
@@ -148,7 +148,7 @@ def check_terraform_version(
         logger.debug(json.dumps(hclfile, indent=4, default=str))
 
         if "terraform" not in hclfile:
-            repo.add_warning(
+            repo.warning(
                 CATEGORY,
                 f"Couldn't find 'terraform' section in {filename}...",
             )
@@ -176,10 +176,10 @@ def check_terraform_version(
             found_version = max([parsed_value, found_version])
 
     if not found_required_version:
-        return repo.add_error(CATEGORY, "required_version not found in terraform config")
+        return repo.error(CATEGORY, "required_version not found in terraform config")
 
     if found_version < required_version:
-        return repo.add_error(
+        return repo.error(
             CATEGORY,
             f"required version too low, wanted {required_version}, found {found_version}")
     logger.debug("Terraform required_version is OK")

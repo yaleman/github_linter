@@ -13,7 +13,7 @@ def check_open_issues(
 ) -> None:
     """ Adds a warning if there's open issues """
     if repo.repository.open_issues:
-        repo.add_warning(CATEGORY,
+        repo.warning(CATEGORY,
             f"There are {repo.repository.open_issues} open issues for {repo.repository.full_name}",
         )
 
@@ -32,4 +32,4 @@ def check_open_prs(
         )
         for pull in pulls.reversed[:10]:
             message = f"{repo_full_name} has an open PR: #{pull.number} - {pull.title} in {repo_full_name} (mergeable={pull.mergeable})"
-            repo.add_warning(CATEGORY, message)
+            repo.warning(CATEGORY, message)

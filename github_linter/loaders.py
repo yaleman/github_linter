@@ -23,5 +23,4 @@ def load_yaml_file(
         return filecontents
     except yaml.YAMLError as exc:
         logger.error("Failed to parse dependabot config: {}", exc)
-        # repo.add_error( "yaf"Failed to parse dependabot config: {exc}")
     return {}

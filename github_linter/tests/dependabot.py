@@ -88,10 +88,10 @@ def check_updates_for_languages(repo: RepoLinter):
 
     dependabot = load_file(repo)
     if not dependabot:
-        return repo.add_error(CATEGORY, "Dependabot file not found")
+        return repo.error(CATEGORY, "Dependabot file not found")
 
     if "updates" not in dependabot:
-        return repo.add_error(CATEGORY, "Updates config not found.")
+        return repo.error(CATEGORY, "Updates config not found.")
 
     updates = dependabot["updates"]
 
@@ -135,7 +135,7 @@ def check_updates_for_languages(repo: RepoLinter):
             for manager in required_package_managers
             if manager not in package_managers_covered
         ]:
-            repo.add_error(
+            repo.error(
                 CATEGORY,
                 f"Package manager needs to be configured for {manager}",
             )
@@ -168,7 +168,7 @@ def load_file(
         return dependabot_config
     except yaml.YAMLError as exc:
         logger.error("Failed to parse dependabot config: {}", exc)
-        repo.add_error(CATEGORY, f"Failed to parse dependabot config: {exc}")
+        repo.error(CATEGORY, f"Failed to parse dependabot config: {exc}")
     return {}
 
 def check_update_configs(
@@ -182,7 +182,7 @@ def check_update_configs(
         return
 
     if "updates" not in dependabot:
-        repo.add_error(
+        repo.error(
             CATEGORY,
             "No udpates config in dependabot.yml."
         )
@@ -191,17 +191,17 @@ def check_update_configs(
     for update in dependabot["updates"]:
         logger.debug(json.dumps(update, indent=4))
         if "package-ecosystem" not in update:
-            repo.add_error( CATEGORY, "package-ecosystem not set in an update")
+            repo.error( CATEGORY, "package-ecosystem not set in an update")
 
         elif update["package-ecosystem"] not in PACKAGE_ECOSYSTEM:
-            repo.add_error(
+            repo.error(
                 CATEGORY,
                 f"package-ecosystem set to invalid value: '{update['package-ecosystem']}'",
             )
         # checks there's a schedule and it has a valid timezone
         # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates
         if "schedule" not in update:
-            repo.add_error(
+            repo.error(
                 CATEGORY,
                 f"Schedule missing from update {json.dumps(update)}"
             )
@@ -209,7 +209,7 @@ def check_update_configs(
 
         schedule: Dict[str, str] = update["schedule"]
         if "interval" not in schedule:
-            repo.add_error(
+            repo.error(
                 CATEGORY,
                 f"Interval missing from schedule {json.dumps(schedule)}"
             )
@@ -221,7 +221,7 @@ def check_update_configs(
         if "timezone" in schedule:
             timezone: str = schedule["timezone"]
             if timezone not in pytz.common_timezones:
-                repo.add_error(
+                repo.error(
                     CATEGORY,
                     f"Update timezone's not valid? {timezone}",
                 )

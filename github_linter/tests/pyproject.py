@@ -24,16 +24,16 @@ def validate_pyproject_authors(
 
     config_expected = repo.config.get("pyproject.toml")
     if "authors" not in project_object:
-        repo.add_error( CATEGORY, "No authors in project definition.")
+        repo.error( CATEGORY, "No authors in project definition.")
 
     elif config_expected and config_expected.get("authors"):
         for author in project_object["authors"]:
             if author not in config_expected.get("authors"):
-                repo.add_error(CATEGORY, f"Project author not expected: {author}"
+                repo.error(CATEGORY, f"Project author not expected: {author}"
                 )
     else:
         for author in project_object["authors"]:
-            repo.add_warning(CATEGORY, f"Check author is expected: {author}")
+            repo.warning(CATEGORY, f"Check author is expected: {author}")
 
 
 # pylint: disable=unused-argument
@@ -44,13 +44,13 @@ def validate_project_name(
     """ validates that the project name matches the repo name """
 
     if "name" not in project_object:
-        repo.add_error(CATEGORY, "No 'name' field in [project] section of config"
+        repo.error(CATEGORY, "No 'name' field in [project] section of config"
         )
         return False
 
     project_name = project_object["name"]
     if project_name != repo.repository.name:
-        repo.add_error(CATEGORY,
+        repo.error(CATEGORY,
             f"Project name doesn't match repo name repo: {repo.repository.name} project: {project_name}.",
         )
         return False
@@ -64,7 +64,7 @@ def validate_readme_configured(
 ) -> bool:
     """ validates that the project has a readme configured """
     if "readme" not in project_object:
-        repo.add_error(CATEGORY, "No 'readme' field in [project] section of config"
+        repo.error(CATEGORY, "No 'readme' field in [project] section of config"
         )
         return False
 
@@ -78,7 +78,7 @@ def validate_readme_configured(
 
     project_readme = project_object["readme"]
     if project_readme != expected_readme:
-        repo.add_error(CATEGORY,
+        repo.error(CATEGORY,
             f"Readme invalid - should be {expected_readme}, is {project_readme}",
         )
         return False
@@ -92,7 +92,7 @@ def validate_scripts(
     """ validates that the project has a readme configured """
 
     if "scripts" not in project_object:
-        # repo.add_error( CATEGORY, "No 'readme' field in [project] section of config")
+        # repo.error( CATEGORY, "No 'readme' field in [project] section of config")
         logger.debug("No scripts configured in pyproject.toml")
         return False
     retval = True
@@ -100,14 +100,14 @@ def validate_scripts(
         script_def = project_object["scripts"][script]
         script_def_module = script_def.split(".")[0]
         if script_def_module != repo.repository.name:
-            repo.add_error(
+            repo.error(
                 CATEGORY,
                 f"Script has invalid module: expected {repo.repository.name}, found {script_def_module}",
             )
         # check it's pulling from __main__
         if len(script_def_module.split(".") > 1):
             if script_def_module.split(".")[1].split(":") != "__main__":
-                repo.add_error(
+                repo.error(
                     CATEGORY,
                     f"Script has invalid module: expected __main__, found {script_def_module}",
                 )
@@ -140,9 +140,9 @@ def check_pyproject_toml(
 
     parsed = load_pyproject(repo)
     if not parsed:
-        return repo.add_error(CATEGORY, "Failed to parse pyproject.toml")
+        return repo.error(CATEGORY, "Failed to parse pyproject.toml")
     if not parsed.get("project"):
-        return repo.add_error(CATEGORY, "No Project Section in file?")
+        return repo.error(CATEGORY, "No Project Section in file?")
     project = parsed["project"]
 
     # check the authors are expected
@@ -168,7 +168,7 @@ def check_sdist_exclude_list(
     pyproject = load_pyproject(repo)
 
     if not pyproject:
-        repo.add_error(CATEGORY,
+        repo.error(CATEGORY,
             "Failed to load pyproject.toml",
         )
         logger.error("Failed to find pyproject.toml")
@@ -188,16 +188,16 @@ def check_sdist_exclude_list(
 
 
     if "tool" not in pyproject:
-        repo.add_error(CATEGORY, "tool section not in config")
+        repo.error(CATEGORY, "tool section not in config")
         return
     if "flit" not in pyproject["tool"]:
-        repo.add_error(CATEGORY, "tool.flit section not in config")
+        repo.error(CATEGORY, "tool.flit section not in config")
         return
     if "sdist" not in pyproject["tool"]["flit"]:
-        repo.add_error(CATEGORY, "tool.flit.sdist.exclude section not in config")
+        repo.error(CATEGORY, "tool.flit.sdist.exclude section not in config")
         return
     if "exclude" not in pyproject["tool"]["flit"]["sdist"]:
-        repo.add_error(CATEGORY, "tool.flit.sdist.exclude section not in config")
+        repo.error(CATEGORY, "tool.flit.sdist.exclude section not in config")
         return
 
     flit_exclude_list = pyproject["tool"]["flit"]["sdist"]["exclude"]
@@ -207,6 +207,6 @@ def check_sdist_exclude_list(
 
     for entry in sdist_exclude_list:
         if entry not in flit_exclude_list:
-            repo.add_error(CATEGORY,
+            repo.error(CATEGORY,
                 f"tool.flit.sdist section missing '{entry}' entry.")
     return

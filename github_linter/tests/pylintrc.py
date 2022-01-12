@@ -44,7 +44,7 @@ def check_max_line_length_configured(repo: RepoLinter) -> None:
     config: Optional[ConfigParser] = load_pylintrc(repo)
 
     if not config:
-        repo.add_warning(CATEGORY, ".pylintrc not found")
+        repo.warning(CATEGORY, ".pylintrc not found")
         return
     if "MASTER" not in config.sections():
         logger.debug("Can't find MASTER entry, dumping config")
@@ -53,7 +53,7 @@ def check_max_line_length_configured(repo: RepoLinter) -> None:
     try:
         linelength = config.get("MASTER", "max-line-length")
     except NoOptionError:
-        repo.add_warning(CATEGORY, "max-line-length not configured")
+        repo.warning(CATEGORY, "max-line-length not configured")
         return
 
 
@@ -64,7 +64,7 @@ def check_max_line_length_configured(repo: RepoLinter) -> None:
             expected = repo.config[CATEGORY]["max-line-length"]
 
     if int(linelength) != int(expected):
-        repo.add_error(
+        repo.error(
             CATEGORY,
             f"max-line-length wrong, is {linelength}, should be {expected}",
             )
@@ -79,4 +79,4 @@ def check_pylintrc(
     pylintrc = repo.cached_get_file(".pylintrc")
 
     if not pylintrc:
-        repo.add_warning(CATEGORY, ".pylintrc not found")
+        repo.warning(CATEGORY, ".pylintrc not found")

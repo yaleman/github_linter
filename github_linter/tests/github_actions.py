@@ -23,9 +23,11 @@ def check_configuration_required_fields(
     filename = ".github/workflows/testing.yml"
     config_file = load_yaml_file(repo, filename)
 
+
+
     logger.debug(json.dumps(config_file, indent=4))
     if not config_file:
-        return repo.add_error(
+        return repo.error(
             CATEGORY,
             f"Couldn't find/load github actions file: {filename}"
         )
@@ -36,5 +38,5 @@ def check_configuration_required_fields(
         "jobs",
     ]:
         if required_key not in config_file:
-            repo.add_error(CATEGORY, f"Missing key in action config: {required_key}")
+            repo.error(CATEGORY, f"Missing key in action config: {required_key}")
     return None

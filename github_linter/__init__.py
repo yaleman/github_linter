@@ -66,7 +66,6 @@ def get_filtered_checks(checklist: List[str], check_filter: Optional[Tuple]) -> 
                 continue
     return checks
 
-# pylint: disable=too-few-public-methods
 class GithubLinter:
     """ does things """
 
@@ -112,7 +111,6 @@ class GithubLinter:
         rate_limits = self.github.get_rate_limit()
         logger.debug(json.dumps(rate_limits, indent=4, default=str, ensure_ascii=False))
         sleep_time = 0
-
 
         for rate_type in RATELIMIT_TYPES:
             if hasattr(rate_limits, rate_type):
@@ -178,14 +176,11 @@ class GithubLinter:
         if repolinter.repository.archived:
             logger.warning("Repository {} is archived!", repolinter.repository.full_name)
 
-        # errors: DICTLIST = {}
-        # warnings: DICTLIST = {}
         if repolinter.repository.parent:
             logger.warning("Parent: {}", repolinter.repository.parent.full_name)
 
         logger.debug("Enabled modules: {}", self.modules)
         for module in self.modules:
-            #pylint: disable=too-many-arguments
             repolinter.run_module(
                 module=self.modules[module],
                 check_filter=check,
@@ -200,91 +195,10 @@ class GithubLinter:
 
         time.sleep(self.check_rate_limits())
 
-    # def module_language_check(
-    #     self,
-    #     module : ModuleType,
-    # ) -> bool:
-    #     """ checks a repo + module for the exposed languages and makes sure they line up
-
-    #     returns True if any of the language modules is in the repo
-    #     """
-
-
-    #     if "all" in module.LANGUAGES:
-    #         return True
-
-    #     repo_langs = [ lang.lower() for lang in self.current_repo.get_languages() ]
-
-    #     for language in module.LANGUAGES:
-    #         if language.lower() in repo_langs:
-    #             return True
-    #     return False
-
-    # def cached_get_file(
-    #     self,
-    #     filepath: str,
-    #     repository: Optional[Repository] = None,
-    #     ) -> Optional[ContentFile]:
-    #     """ checks if we've made a call looking for a file and grabs it if not
-    #     returns none if no file exists, caches per-repository.
-    #     """
-    #     repo = self.current_repo
-    #     if repository:
-    #         repo = repository
-    #     if not repo:
-    #         raise RepositoryNotSet
-
-    #     if repo.full_name not in self.filecache:
-    #         self.filecache[repo.full_name] = {}
-    #     repo_cache = self.filecache[repo.full_name]
-
-    #     # cached call
-    #     if filepath in repo_cache:
-    #         return repo_cache[filepath]
-    #     # cache and then return
-    #     repo_cache[filepath] = get_file_from_repo(repo, filepath)
-    #     return repo_cache[filepath]
-
-    # def run_module(
-    #     self,
-    #     errors_object: DICTLIST,
-    #     warnings_object: DICTLIST,
-    #     module: ModuleType,
-    #     check_filter: Optional[Tuple],
-    #     repo: Repository = None,
-    # ) -> bool:
-    #     """ runs a given module """
-
-    #     if not repo:
-    #         repo = self.current_repo
-
-    #     if not repo:
-    #         raise RepositoryNotSet
-
-    #     if "LANGUAGES" in dir(module):
-    #         if not self.module_language_check(module):
-    #             logger.debug(
-    #                 "Module {} not required after language check, module langs: {}, repo langs: {}",
-    #                 module.__name__.split(".")[-1],
-    #                 module.LANGUAGES,
-    #                 repo.get_languages(),
-    #                 )
-    #             return False
-
-
-    #     for check in get_filtered_checks(dir(module), check_filter):
-    #         if check.startswith("check_"):
-    #             logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
-    #             getattr(module, check)(
-    #                 self, errors_object, warnings_object
-    #             )
-    #     return True
-
 class RepoLinter:
     """ handles the repository object, its parent and the report details """
     def __init__(self, repo: Repository):
-
-
+        """ startup things """
         self.config = load_config()
         if not self.config:
             self.config = {}
@@ -314,19 +228,51 @@ class RepoLinter:
         self.filecache[filepath] = self.get_file(filepath)
         return self.filecache[filepath]
 
+    # def cached_get_files(
+    #     self,
+    #     path: str,
+    #     ) -> Optional[ContentFile]:
+    #     """ checks if we've made a call looking for files and grabs them if not
+    #     returns none if no file exists, caches per-repository.
+    #     """
+    #     # cached call
+    #     files = []
+
+    #     for filename in path:
+    #         if not pathendswith()
+    #     if filepath in self.filecache:
+    #         return self.filecache[filepath]
+    #     # cache and then return
+    #     self.filecache[filepath] = self.get_file(filepath)
+    #     return self.filecache[filepath]
+
+    def get_files(self, path: str) -> Optional[List[ContentFile]]:
+        """ give it a path and it'll return the match(es). If it's a single file it'll get that, if it's a path it'll get up to 1000 files """
+        try:
+            fileresult = self.repository.get_contents(path)
+            if not fileresult:
+                logger.debug("Couldn't find files matching '{}'", path)
+                return None
+            if not isinstance(fileresult, list):
+                fileresult = [fileresult,]
+            return fileresult
+        except UnknownObjectException as exc:
+            logger.debug("UnknownObjectException calling get_contents({}): {}", path, exc)
+            return None
+
     def get_file(
         self,
         filename: str
     ) -> Optional[ContentFile]:
         """ looks for a file or returns none"""
         try:
-            fileresult = self.repository.get_contents(filename)
+            fileresult = self.get_files(filename)
             if not fileresult:
                 logger.debug("Couldn't find {}...?", filename)
                 return None
-            if isinstance(fileresult, list):
-                fileresult = fileresult[0]
-            return fileresult
+            if isinstance(fileresult, list) and len(fileresult):
+                return fileresult[0]
+            return None
         except UnknownObjectException:
             logger.debug(
                 "{} not found in {}",
@@ -364,11 +310,11 @@ class RepoLinter:
             result_object[category].append(value)
         logger.debug("{} - {}", category, value)
 
-    def add_error(self, category: str, value: str):
+    def error(self, category: str, value: str):
         """ adds an error """
         self.add_result(self.errors, category, value)
 
-    def add_warning(self, category: str, value: str):
+    def warning(self, category: str, value: str):
         """ adds a warning """
         self.add_result(self.warnings, category, value)
 
