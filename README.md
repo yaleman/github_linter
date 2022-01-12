@@ -12,17 +12,29 @@ Because I've got like ~100 repos and keep changing how I do things, and it annoy
     - Has a (valid-ish) config
 - Generic
     - Files you want gone
-- Issues
+- GitHub Actions
+    - Checks... something? TODO, fix this :P
+- (GitHub) Issues
     - Checks for open Issues
     - Checks for open Pull Requests
 - `pyproject.toml`
+
+Only runs if you've got Python.
+
     - Checks authors based on a list.
     - Check module name matches repo
     - TODO: Check for imports, maybe?
-- pylintrc
+- `pylintrc`
+
+Only runs if you've got python.
+
     - Checks it exists
     - Checks for max line length configuration
     - TODO: Checks for other things (typically I disable TODO's, IE W0501)
+- Terraform
+    - TODO: flesh this out
+    - Checks for provider versions
+    - Checks you have provider config for all your required providers.
 - Testing
     - Checks that `.github/workflows/testing.yml exists`
 
