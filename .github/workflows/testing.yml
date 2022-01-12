@@ -7,11 +7,11 @@ name: Build / Test
   pull_request:
 
 defaults:
-  - runs-on: ubuntu-latest
-  - concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+  runs-on: ubuntu-latest
 jobs:
   pylint:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - uses: actions/checkout@v2
         with:
