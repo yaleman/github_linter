@@ -44,3 +44,4 @@ def check_configuration_required_fields(
     ]:
         if required_key not in config_file:
             add_result(errors_list, CATEGORY, f"Missing key in action config: {required_key}")
+    return None
