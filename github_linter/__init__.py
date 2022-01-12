@@ -174,7 +174,7 @@ class GithubLinter:
 
         logger.debug(repo.full_name)
         if repo.archived:
-            logger.warning("Repository is archived!")
+            logger.warning("Repository {} is archived!", repo.full_name)
 
         errors: DICTLIST = {}
         warnings: DICTLIST = {}
@@ -246,11 +246,15 @@ class GithubLinter:
         errors_object: DICTLIST,
         warnings_object: DICTLIST,
         module: ModuleType,
-        check_filter: Optional[Tuple]
+        check_filter: Optional[Tuple],
+        repo: Repository = None,
     ) -> bool:
         """ runs a given module """
 
-        if not self.current_repo:
+        if not repo:
+            repo = self.current_repo
+
+        if not repo:
             raise RepositoryNotSet
 
         if "LANGUAGES" in dir(module):
@@ -259,7 +263,7 @@ class GithubLinter:
                     "Module {} not required after language check, module langs: {}, repo langs: {}",
                     module.__name__.split(".")[-1],
                     module.LANGUAGES,
-                    self.current_repo.get_languages(),
+                    repo.get_languages(),
                     )
                 return False
 
