@@ -4,7 +4,11 @@ import sys
 
 from loguru import logger
 
-from . import generic, dependabot, issues, pylintrc, pyproject, testing, terraform
+from . import dependabot, generic, github_actions, \
+    issues, \
+    pylintrc, pyproject, \
+    testing, \
+    terraform
 
 MODULES = {}
 

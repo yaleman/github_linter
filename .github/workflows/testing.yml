@@ -1,16 +1,17 @@
 name: Build / Test
 
-on:
+"on":
   push:
     branches:
       - main  # Set a branch to deploy
   pull_request:
 
+defaults:
+  runs-on: ubuntu-latest
+  concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
 jobs:
   pylint:
-    runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -25,9 +26,6 @@ jobs:
             FLIT_ROOT_INSTALL=1 python -m flit install
             ./run_pylint.sh
   mypy:
-    runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -44,8 +42,6 @@ jobs:
           ./run_mypy.sh
 
   shellcheck:
-    name: Shellcheck
-    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: Run ShellCheck

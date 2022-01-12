@@ -1,7 +1,6 @@
 """ checking for issues and PRs and things """
 
 from loguru import logger
-# from github.Repository import Repository
 from .. import GithubLinter
 from ..exceptions import RepositoryNotSet
 from ..utils import DICTLIST, add_result
