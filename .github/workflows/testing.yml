@@ -7,9 +7,9 @@ name: Build / Test
   pull_request:
 
 defaults:
-  runs-on: ubuntu-latest
-  concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
+  - runs-on: ubuntu-latest
+  - concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
 jobs:
   pylint:
     steps:
