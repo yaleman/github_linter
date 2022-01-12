@@ -6,11 +6,9 @@ from typing import Optional
 import json5 as json
 from loguru import logger
 
-from github_linter import GithubLinter
+from github_linter import RepoLinter
 
-from ..exceptions import RepositoryNotSet
-from ..types import DICTLIST
-from ..utils import add_result
+
 
 CATEGORY = "pylintrc"
 
@@ -25,13 +23,11 @@ PYLINTRC_LOCATIONS = [
 ]
 
 
-def load_pylintrc(github_object: GithubLinter) -> Optional[ConfigParser]:
+def load_pylintrc(repo: RepoLinter) -> Optional[ConfigParser]:
     """ grabs the .pylintrc file from the repository """
-    if not github_object.current_repo:
-        raise RepositoryNotSet
 
     for filepath in PYLINTRC_LOCATIONS:
-        contents = github_object.cached_get_file(filepath)
+        contents = repo.cached_get_file(filepath)
         if not contents:
             continue
 
@@ -43,16 +39,12 @@ def load_pylintrc(github_object: GithubLinter) -> Optional[ConfigParser]:
         return config
     return None
 
-def check_max_line_length_configured(
-    github: GithubLinter,
-    errors_object: DICTLIST,  #
-    warnings_object: DICTLIST,
-) -> None:
+def check_max_line_length_configured(repo: RepoLinter) -> None:
     """ checks for the max-line-length setting in .pylintrc """
-    config: Optional[ConfigParser] = load_pylintrc(github)
+    config: Optional[ConfigParser] = load_pylintrc(repo)
 
     if not config:
-        add_result(warnings_object, CATEGORY, ".pylintrc not found")
+        repo.add_warning(CATEGORY, ".pylintrc not found")
         return
     if "MASTER" not in config.sections():
         logger.debug("Can't find MASTER entry, dumping config")
@@ -61,19 +53,18 @@ def check_max_line_length_configured(
     try:
         linelength = config.get("MASTER", "max-line-length")
     except NoOptionError:
-        add_result(warnings_object, CATEGORY, "max-line-length not configured")
+        repo.add_warning(CATEGORY, "max-line-length not configured")
         return
 
 
     # default setting
     expected = 100
-    if "pylintrc" in github.config:
-        if "max-line-length" in github.config[CATEGORY]:
-            expected = github.config[CATEGORY]["max-line-length"]
+    if "pylintrc" in repo.config:
+        if "max-line-length" in repo.config[CATEGORY]:
+            expected = repo.config[CATEGORY]["max-line-length"]
 
     if int(linelength) != int(expected):
-        add_result(
-            errors_object,
+        repo.add_error(
             CATEGORY,
             f"max-line-length wrong, is {linelength}, should be {expected}",
             )
@@ -81,15 +72,11 @@ def check_max_line_length_configured(
 
 
 def check_pylintrc(
-    github_object: GithubLinter,
-    _: DICTLIST,  #
-    warnings_object: DICTLIST,
+    repo: RepoLinter,
 ):
     """ checks for .pylintrc config """
 
-    if not github_object.current_repo:
-        raise RepositoryNotSet
-    pylintrc = github_object.cached_get_file(".pylintrc")
+    pylintrc = repo.cached_get_file(".pylintrc")
 
     if not pylintrc:
-        add_result(warnings_object, CATEGORY, ".pylintrc not found")
+        repo.add_warning(CATEGORY, ".pylintrc not found")

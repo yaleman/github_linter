@@ -8,12 +8,7 @@ from loguru import logger
 import pytz
 import yaml
 
-from github_linter import GithubLinter
-
-# from . import GithubLinter
-from ..exceptions import RepositoryNotSet
-from ..types import DICTLIST
-from ..utils import add_result
+from github_linter import RepoLinter
 
 # template = """
 # version: 2
@@ -88,30 +83,22 @@ def find_language_in_ecosystem(language: str) -> Optional[str]:
 
 # TODO: base dependabot config on repo.get_languages() - ie {'Python': 22722, 'Shell': 328}
 
-def check_updates_for_langauges(
-    github_object: GithubLinter,
-    error_object: DICTLIST,
-    warnings_object: DICTLIST,
-):
+def check_updates_for_languages(repo: RepoLinter):
     """ ensures that for every known language/package ecosystem, there's a configured update task """
 
-    if not github_object.current_repo:
-        raise RepositoryNotSet
-
-
-    dependabot = load_file(github_object, error_object, warnings_object)
+    dependabot = load_file(repo)
     if not dependabot:
-        return add_result(error_object, CATEGORY, "Dependabot file not found")
+        return repo.add_error(CATEGORY, "Dependabot file not found")
 
     if "updates" not in dependabot:
-        return add_result(error_object, CATEGORY, "Updates config not found.")
+        return repo.add_error(CATEGORY, "Updates config not found.")
 
     updates = dependabot["updates"]
 
     required_package_managers = []
 
     # get the languages from the repo
-    languages = github_object.current_repo.get_languages()
+    languages = repo.repository.get_languages()
 
     # compare them to the ecosystem languages
     for language in languages:
@@ -148,14 +135,12 @@ def check_updates_for_langauges(
             for manager in required_package_managers
             if manager not in package_managers_covered
         ]:
-            return add_result(
-                error_object,
+            repo.add_error(
                 CATEGORY,
                 f"Package manager needs to be configured for {manager}",
             )
     else:
         # TODO: wot
-        logger.debug(warnings_object)
         return None
     return None
 
@@ -167,12 +152,10 @@ DEPENDABOT_SCHEDULR_INTERVALS = [
 ]
 
 def load_file(
-    github: GithubLinter,
-    errors_object: DICTLIST,
-    _: DICTLIST,
+    repo: RepoLinter,
 ) -> Union[Dict, DEPENDABOT_CONFIG_FILE]:
-    """ grabs the config file and loads it """
-    fileresult = github.cached_get_file(".github/dependabot.yml")
+    """ grabs the dependabot config file and loads it """
+    fileresult = repo.cached_get_file(".github/dependabot.yml")
     if not fileresult:
         logger.debug("Couldn't find dependabot config.")
         return {}
@@ -185,27 +168,21 @@ def load_file(
         return dependabot_config
     except yaml.YAMLError as exc:
         logger.error("Failed to parse dependabot config: {}", exc)
-        add_result(errors_object, CATEGORY, f"Failed to parse dependabot config: {exc}")
+        repo.add_error(CATEGORY, f"Failed to parse dependabot config: {exc}")
     return {}
 
 def check_update_configs(
-    github_object,
-    errors_object: DICTLIST,
-    warnings_object: DICTLIST,  # warnings_object
+    repo: RepoLinter,
 ):
     """ checks update config exists and is slightly valid """
 
-    if not github_object.current_repo:
-        raise RepositoryNotSet
-
-    dependabot = load_file(github_object, errors_object, warnings_object)
+    dependabot = load_file(repo)
     if not dependabot:
         logger.debug("Coudln't load dependabot config.")
         return
 
     if "updates" not in dependabot:
-        add_result(
-            errors_object,
+        repo.add_error(
             CATEGORY,
             "No udpates config in dependabot.yml."
         )
@@ -214,19 +191,17 @@ def check_update_configs(
     for update in dependabot["updates"]:
         logger.debug(json.dumps(update, indent=4))
         if "package-ecosystem" not in update:
-            add_result(errors_object, CATEGORY, "package-ecosystem not set in an update")
+            repo.add_error( CATEGORY, "package-ecosystem not set in an update")
 
         elif update["package-ecosystem"] not in PACKAGE_ECOSYSTEM:
-            add_result(
-                errors_object,
+            repo.add_error(
                 CATEGORY,
                 f"package-ecosystem set to invalid value: '{update['package-ecosystem']}'",
             )
         # checks there's a schedule and it has a valid timezone
         # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates
         if "schedule" not in update:
-            add_result(
-                errors_object,
+            repo.add_error(
                 CATEGORY,
                 f"Schedule missing from update {json.dumps(update)}"
             )
@@ -234,8 +209,7 @@ def check_update_configs(
 
         schedule: Dict[str, str] = update["schedule"]
         if "interval" not in schedule:
-            add_result(
-                errors_object,
+            repo.add_error(
                 CATEGORY,
                 f"Interval missing from schedule {json.dumps(schedule)}"
             )
@@ -247,44 +221,33 @@ def check_update_configs(
         if "timezone" in schedule:
             timezone: str = schedule["timezone"]
             if timezone not in pytz.common_timezones:
-                add_result(
-                    errors_object,
+                repo.add_error(
                     CATEGORY,
                     f"Update timezone's not valid? {timezone}",
                 )
 
 def check_updates_have_directory_set(
-    github_object: GithubLinter,
-    errors_object: DICTLIST,
-    warnings_object: DICTLIST,
+    repo: RepoLinter,
     ):
     """ checks that each update config has 'directory' set """
 
-    if not github_object.current_repo:
-        raise RepositoryNotSet
-
-    dependabot = load_file(github_object, errors_object, warnings_object)
+    dependabot = load_file(repo)
     if not dependabot:
         logger.debug("Coudln't load dependabot config.")
         return
 
 def check_dependabot_config(
-    github_object: GithubLinter,
-    errors_object: DICTLIST,
-    warnings_object: DICTLIST,
+    repo: RepoLinter,
 ):
     """ checks for dependabot config """
 
-    if not github_object.current_repo:
-        raise RepositoryNotSet
-
-    dependabot_config = load_file(github_object, errors_object, warnings_object)
+    dependabot_config = load_file(repo)
 
     if not dependabot_config:
         logger.debug("Didn't find a dependabot config.")
         return
 
-    # if "updates" in dependabot_config and github_object.current_repo:
+    # if "updates" in dependabot_config and repo.repository:
     #     validate_updates_for_langauges(
-    #         github_object.current_repo, dependabot_config["updates"], errors_object, warnings_object
+    #         repo.repository, dependabot_config["updates"], errors_object, warnings_object
     #     )

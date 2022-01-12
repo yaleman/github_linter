@@ -12,9 +12,8 @@ from semver.version import Version # type: ignore
 
 
 
-from .. import GithubLinter
-from ..exceptions import RepositoryNotSet
-from ..utils import DICTLIST, add_result
+from .. import RepoLinter
+
 
 
 CATEGORY = "terraform"
@@ -42,11 +41,11 @@ PROVIDER_FILE_LIST = [
 AWS_MIN_VERSION = "3.41.0"
 
 def load_hclfile(
-    github_object: GithubLinter,
+    repo: RepoLinter,
     filename: str,
     ):
     """ loads the given filename using hcl2 """
-    filecontent = github_object.cached_get_file(filename)
+    filecontent = repo.cached_get_file(filename)
     if not filecontent or not filecontent.decoded_content:
         logger.debug("Couldn't find file (or it was empty): {}", filename)
         return {}
@@ -57,43 +56,34 @@ def load_hclfile(
 
 
 def check_providers_tf_exists(
-    github_object: GithubLinter,
-    errors_list: DICTLIST,
-    _: DICTLIST,
+    repo: RepoLinter,
 ) -> None:
     """ checks the data for the pyproject.toml file """
-    if not github_object.current_repo:
-        raise RepositoryNotSet
 
     for filename in PROVIDER_FILE_LIST:
-        hclfile = load_hclfile(github_object, filename)
+        hclfile = load_hclfile(repo, filename)
         if hclfile:
             return None
-    add_result(
-        errors_list,
-        CATEGORY,
+    repo.add_error(CATEGORY,
         f"Couldn't find a providers.tf file, looked in {','.join(PROVIDER_FILE_LIST)}"
     )
     return None
 
 def check_providers_for_modules(
-    github_object: GithubLinter,
-    errors_list: DICTLIST,
-    warnings_list: DICTLIST,
+    repo: RepoLinter,
 ) -> None:
     """ Checks that there's providers listed under each "terraform" section in the providers.tf """
     provider_list = []
     found_files = []
 
     for filename in PROVIDER_FILE_LIST:
-        hclfile = load_hclfile(github_object, filename)
+        hclfile = load_hclfile(repo, filename)
         if not hclfile:
             continue
         logger.debug(json.dumps(hclfile, indent=4, default=str))
 
         if "terraform" not in hclfile:
-            add_result(
-                warnings_list,
+            repo.add_warning(
                 CATEGORY,
                 f"Couldn't find 'terraform' section in {filename}...",
             )
@@ -106,8 +96,7 @@ def check_providers_for_modules(
                 break
 
         if not required_providers:
-            add_result(
-                warnings_list,
+            repo.add_warning(
                 CATEGORY,
                 f"Couldn't find 'terraform.required_providers' section in {filename}...",
             )
@@ -122,8 +111,7 @@ def check_providers_for_modules(
             logger.debug(json.dumps(provider))
     logger.debug("Provider list: {}", provider_list)
     if not provider_list:
-        add_result(
-            errors_list,
+        repo.add_warning(
             CATEGORY,
             f"Found providers.tf files but no provider configuration was found. Files to check: {','.join(found_files)}",
         )
@@ -135,9 +123,7 @@ def check_providers_for_modules(
     # TODO: use semver
 
 def check_terraform_version(
-    github_object: GithubLinter,
-    errors_list: DICTLIST,
-    warnings_list: DICTLIST,
+    repo: RepoLinter,
 ) -> None:
     """ Checks that there's a 'required_version' setting in the terraform section of providers.tf, which sets a minimum version of terraform itself """
 
@@ -145,10 +131,10 @@ def check_terraform_version(
     found_version = Version.parse("0.0.0")
 
     required_version = DEFAULT_MIN_VERSION
-    if "terraform" in github_object.config:
-        if "required_version" in github_object.config["terraform"]:
+    if "terraform" in repo.config:
+        if "required_version" in repo.config["terraform"]:
             try:
-                required_version = Version.parse(github_object.config["terraform"]["required_version"])
+                required_version = Version.parse(repo.config["terraform"]["required_version"])
                 logger.debug("Configured required_version: {}", required_version)
             except ValueError as semver_parse_error:
                 logger.error("Failed to parse linter config terraform.required_version: {}. Bailing", semver_parse_error)
@@ -156,14 +142,13 @@ def check_terraform_version(
 
 
     for filename in PROVIDER_FILE_LIST:
-        hclfile = load_hclfile(github_object, filename)
+        hclfile = load_hclfile(repo, filename)
         if not hclfile:
             continue
         logger.debug(json.dumps(hclfile, indent=4, default=str))
 
         if "terraform" not in hclfile:
-            add_result(
-                warnings_list,
+            repo.add_warning(
                 CATEGORY,
                 f"Couldn't find 'terraform' section in {filename}...",
             )
@@ -191,11 +176,10 @@ def check_terraform_version(
             found_version = max([parsed_value, found_version])
 
     if not found_required_version:
-        return add_result(errors_list, CATEGORY, "required_version not found in terraform config")
+        return repo.add_error(CATEGORY, "required_version not found in terraform config")
 
     if found_version < required_version:
-        return add_result(
-            errors_list,
+        return repo.add_error(
             CATEGORY,
             f"required version too low, wanted {required_version}, found {found_version}")
     logger.debug("Terraform required_version is OK")

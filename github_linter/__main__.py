@@ -12,9 +12,6 @@ from . import GithubLinter
 from .tests import MODULES
 
 
-# from .types import DICTLIST
-
-
 
 # TODO: sanity check... stuff?
 

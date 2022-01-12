@@ -3,19 +3,16 @@
 from loguru import logger
 import yaml
 
-from . import GithubLinter
+from . import RepoLinter
 
-from .utils import DICTLIST
 
 def load_yaml_file(
-    github_object: GithubLinter,
+    repo: RepoLinter,
     filename: str,
-    _: DICTLIST,
-    __: DICTLIST,
     ):
     """ loads a YAML file into a dict """
 
-    fileresult = github_object.cached_get_file(filename)
+    fileresult = repo.cached_get_file(filename)
     if not fileresult:
         return {}
     try:
@@ -26,5 +23,5 @@ def load_yaml_file(
         return filecontents
     except yaml.YAMLError as exc:
         logger.error("Failed to parse dependabot config: {}", exc)
-        # add_result(errors_object , "yaf"Failed to parse dependabot config: {exc}")
+        # repo.add_error( "yaf"Failed to parse dependabot config: {exc}")
     return {}
