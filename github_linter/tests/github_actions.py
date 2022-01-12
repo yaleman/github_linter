@@ -31,11 +31,12 @@ def check_configuration_required_fields(
 
     logger.debug(json.dumps(config_file, indent=4))
     if not config_file:
-        add_result(
+        return add_result(
             errors_list,
             CATEGORY,
             f"Couldn't find/load github actions file: {filename}"
         )
+
     for required_key in [
         "name",
         "on",

@@ -218,25 +218,28 @@ class GithubLinter:
 
     def cached_get_file(
         self,
-        filepath: str
+        filepath: str,
+        repository: Optional[Repository] = None,
         ) -> Optional[ContentFile]:
         """ checks if we've made a call looking for a file and grabs it if not
-        returns none if no file exists
+        returns none if no file exists, caches per-repository.
         """
-        if not self.current_repo:
+        repo = self.current_repo
+        if repository:
+            repo = repository
+        if not repo:
             raise RepositoryNotSet
-        if self.current_repo.full_name not in self.filecache:
-            self.filecache[self.current_repo.full_name] = {}
-        repo_cache = self.filecache[self.current_repo.full_name]
+
+        if repo.full_name not in self.filecache:
+            self.filecache[repo.full_name] = {}
+        repo_cache = self.filecache[repo.full_name]
 
         # cached call
         if filepath in repo_cache:
             return repo_cache[filepath]
         # cache and then return
-        repo_cache[filepath] = get_file_from_repo(self.current_repo, filepath)
+        repo_cache[filepath] = get_file_from_repo(repo, filepath)
         return repo_cache[filepath]
-
-
 
     def run_module(
         self,
