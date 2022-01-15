@@ -155,8 +155,9 @@ def check_pyproject_toml(
         repo, project
     )
 
-    for url in project.get("urls"):
-        logger.debug("URL: {} - {}", url, project["urls"][url])
+    if "urls" in project:
+        for url in project["urls"]:
+            logger.debug("URL: {} - {}", url, project["urls"][url])
     return None
 # need to check for file exclusions so flit doesn't package things
 

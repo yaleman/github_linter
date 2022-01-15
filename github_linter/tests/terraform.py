@@ -176,7 +176,7 @@ def check_terraform_version(
             found_version = max([parsed_value, found_version])
 
     if not found_required_version:
-        return repo.error(CATEGORY, "required_version not found in terraform config")
+        return repo.error(CATEGORY, f"required_version not found in terraform config - set terraform.required_version to \">= {required_version}\"")
 
     if found_version < required_version:
         return repo.error(
