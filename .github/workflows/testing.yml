@@ -19,8 +19,8 @@ jobs:
           python-version: '3.9'
       - name: Running tests
         run: |
-            python -m pip install --no-cache-dir --quiet --upgrade flit
-            FLIT_ROOT_INSTALL=1 python -m flit install
+            python -m pip install --quiet --no-cache-dir --upgrade poetry
+            poetry install
             ./run_pylint.sh
   mypy:
     runs-on: ubuntu-latest
@@ -35,8 +35,8 @@ jobs:
       - name: Running mypy
         run: |
           python --version
-          python -m pip install --quiet --no-cache-dir --upgrade flit
-          FLIT_ROOT_INSTALL=1 python -m flit install
+          python -m pip install --quiet --no-cache-dir --upgrade poetry
+          poetry install
           ./run_mypy.sh
 
   shellcheck:

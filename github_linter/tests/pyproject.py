@@ -136,27 +136,28 @@ def load_pyproject(repo: RepoLinter):
         )
         return None
 
-def check_pyproject_build_backend(repo: RepoLinter) -> None:
+def check_pyproject_build_backend(repo: RepoLinter):
     """ gets the pyproject.toml file and looks for the key build-system.build-backend """
     pyproject = load_pyproject(repo)
 
     if not pyproject:
         logger.error("pyproject.toml not found")
+        return
 
     if "build-system" not in pyproject:
         logger.error("Can't find build_backend")
         logger.debug(json.dumps(pyproject, indent=4, ensure_ascii=False))
-        return None
+        return
     if "build-backend" not in pyproject["build-system"]:
         logger.error("Can't find build-system.build-backend.")
         logger.debug(json.dumps(pyproject["build-system"], indent=4, ensure_ascii=False))
-        return None
+        return
 
     backend = pyproject["build-system"]["build-backend"]
 
     logger.warning("Found build-backend.build-system in pyproject.toml: {}", backend)
     # logger.info()
-    return None
+    return
 
 def check_pyproject_toml(
     repo: RepoLinter,
