@@ -196,6 +196,7 @@ class RepoLinter:
         self,
         module: ModuleType,
         check_filter: Optional[Tuple],
+        do_fixes: bool,
     ) -> bool:
         """ runs a given module """
         self.load_module_config(module)
@@ -217,11 +218,12 @@ class RepoLinter:
                 getattr(module, check)(
                     repo=self,
                 )
-            if check.startswith("fix_"):
-                logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
-                getattr(module, check)(
-                    repo=self
-                )
+            if do_fixes:
+                if check.startswith("fix_"):
+                    logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
+                    getattr(module, check)(
+                        repo=self
+                    )
             # else:
                 # logger.debug("Skipping check: {}", check)
 

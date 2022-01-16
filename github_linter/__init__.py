@@ -139,7 +139,8 @@ class GithubLinter:
     def handle_repo(
         self,
         repo: Repository,
-        check: Optional[Tuple]
+        check: Optional[Tuple],
+        fix: bool,
     ):
         """ Runs modules against the given repo """
 
@@ -158,6 +159,7 @@ class GithubLinter:
             repolinter.run_module(
                 module=self.modules[module],
                 check_filter=check,
+                do_fixes=fix,
                 )
 
         if not repolinter.errors or repolinter.warnings:
@@ -169,3 +171,45 @@ class GithubLinter:
         }
 
         time.sleep(self.check_rate_limits())
+
+
+
+def search_repos(
+    github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]]
+) -> List[Repository]:
+    """ search repos based on cli input """
+    if kwargs_object.get("repo") or kwargs_object.get("owner"):
+        search = ""
+        searchrepos = []
+        if kwargs_object.get("repo"):
+            for repo in kwargs_object["repo"]:
+                if kwargs_object.get("owner"):
+                    for owner in kwargs_object["owner"]:
+                        searchrepos.append(f"{owner}/{repo}")
+                else:
+                    searchrepos.append(repo)
+        else:
+            searchrepos = [f"user:{owner}" for owner in kwargs_object["owner"]]
+        search = " OR ".join(searchrepos)
+        logger.debug("Search string: '{}'", search)
+        search_result = list(github.github.search_repositories(query=search))
+
+        # filter search results by owner
+        if kwargs_object.get("owner"):
+            # logger.debug("Filtering based on owner: {}", kwargs_object["owner"])
+            filtered_result = [
+                repo
+                for repo in search_result
+                if repo.owner.login in kwargs_object["owner"]
+            ]
+            search_result = list(filtered_result)
+        # filter search results by repo name
+        if kwargs_object.get("repo"):
+            # logger.debug("Filtering based on repo: {}", kwargs_object["repo"])
+            filtered_result = [
+                repo for repo in search_result if repo.name in kwargs_object["repo"]
+            ]
+            return filtered_result
+        return search_result
+
+    return list(github.github.get_user().get_repos())
