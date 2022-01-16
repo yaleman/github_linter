@@ -2,16 +2,27 @@
 
 from datetime import datetime
 from types import ModuleType
-from typing import Tuple, Optional, List, Dict
+from typing import Any, Dict, List, Optional, Tuple
 
 from github.ContentFile import ContentFile
 from github.GithubException import UnknownObjectException
 from github.Repository import Repository
+# import json5 as json
 from loguru import logger
+import wildcard_matcher
 
 from .types import DICTLIST
 from .utils import load_config
 
+def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]):
+    """ digs into a dict, shoving the defaults in """
+    for key in source:
+        if key not in dest:
+            dest[key] = source[key]
+            continue
+
+        if isinstance(dest[key], dict):
+            add_from_dict(source[key], dest[key])
 
 def get_filtered_commands(checklist: List[str], check_filter: Optional[Tuple]) -> List[str]:
     """ filters the checks """
@@ -20,7 +31,8 @@ def get_filtered_commands(checklist: List[str], check_filter: Optional[Tuple]) -
     checks = []
     for check in checklist:
         for filterstr in check_filter:
-            if check.startswith(filterstr) and check not in checks:
+            if (check.startswith(filterstr) or wildcard_matcher.match(check, filterstr)) \
+                and check not in checks:
                 checks.append(check)
                 continue
     return checks
@@ -163,6 +175,22 @@ class RepoLinter:
         """ adds a warning """
         self.add_result(self.warnings, category, value)
 
+    def load_module_config(
+        self,
+        module: ModuleType,
+    ):
+        """ mixes the config defaults in from the module with the config in the repository """
+        if not hasattr(module, "DEFAULT_CONFIG"):
+            return
+        module_name = module.__name__.split(".")[-1]
+        logger.error("Adding module-default config for {}", module_name)
+        if module_name not in self.config:
+            self.config[module_name] = {}
+
+        module_config = self.config[module_name]
+        # logger.debug(json.dumps(self.config, indent=4, default=str, ensure_ascii=False))
+        add_from_dict(module.DEFAULT_CONFIG, module_config)
+        # logger.debug(json.dumps(self.config, indent=4, default=str, ensure_ascii=False))
 
     def run_module(
         self,
@@ -170,6 +198,8 @@ class RepoLinter:
         check_filter: Optional[Tuple],
     ) -> bool:
         """ runs a given module """
+        self.load_module_config(module)
+
 
         if "LANGUAGES" in dir(module):
             if not self.module_language_check(module):

@@ -19,7 +19,10 @@ from .. import RepoLinter
 CATEGORY = "terraform"
 
 # this is the terraform version that linter recommends if you don't set it in config
-DEFAULT_MIN_VERSION = Version.parse("0.14.0")
+
+DEFAULT_CONFIG = {
+    "minimum_terraform_version" : "0.14.0"
+}
 
 LANGUAGES = [
     "HCL",
@@ -130,15 +133,19 @@ def check_terraform_version(
     found_required_version = False
     found_version = Version.parse("0.0.0")
 
-    required_version = DEFAULT_MIN_VERSION
-    if "terraform" in repo.config:
-        if "required_version" in repo.config["terraform"]:
-            try:
-                required_version = Version.parse(repo.config["terraform"]["required_version"])
-                logger.debug("Configured required_version: {}", required_version)
-            except ValueError as semver_parse_error:
-                logger.error("Failed to parse linter config terraform.required_version: {}. Bailing", semver_parse_error)
-                sys.exit(1)
+    required_version_str = repo.config[CATEGORY]["minimum_terraform_version"]
+    if not re.match(r"\d+\.\d+\.\d+", required_version_str):
+        if re.match(r"\d+\.\d+", required_version_str):
+            required_version_str = f"{required_version_str}.0"
+        else:
+            logger.error("{}.{} misconfigured, is '{}' should match Semver x.y.z pattern.", CATEGORY, "minimum_terraform_version", required_version_str)
+            sys.exit(1)
+    try:
+        required_version = Version.parse(required_version_str)
+        logger.debug("Configured required_version: {}", required_version)
+    except ValueError as semver_parse_error:
+        logger.error("Failed to parse linter config terraform.required_version: {}. Bailing", semver_parse_error)
+        sys.exit(1)
 
 
     for filename in PROVIDER_FILE_LIST:

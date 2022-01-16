@@ -43,6 +43,16 @@ Only runs if you've got python.
 
 The config file is called `github_linter.json` - you can put it in the local dir or `~/.config/github_linter.json` - I've included my configuration in the repository.
 
+Each test module has its defaults, in the `DEFAULT_CONFIG` attribute.
+
+For an example:
+
+``` python
+>>> import github_linter.tests.pyproject
+>>> print(github_linter.tests.pyproject.DEFAULT_CONFIG)
+{'build-system': ['flit_core.buildapi', 'poetry.core.masonry.api'], 'readme': 'README.md'}
+```
+
 ### Authentication
 
 1. Use the "GITHUB_TOKEN" auth method.

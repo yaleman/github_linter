@@ -1,15 +1,10 @@
 {
     "check_forks" : false,
-    "files_to_remove" : [
-        "Pipfile",
-        "Pipfile.lock",
-        ".DS_Store",
-        ".drone.yml",
-        "setup.py",
-        "distutils.cfg"
-    ],
+    "generic" : {
+
+    },
     "pyproject.toml" : {
-        "readme" : "README.md",
+
         "authors" : [
             {
                 "name" : "James Hodgkinson",
@@ -25,6 +20,6 @@
         "max-line-length" : 200
     },
     "terraform" : {
-        "required_version" : "0.15.0"
+        "minimum_terraform_version" : "0.15"
     }
 }

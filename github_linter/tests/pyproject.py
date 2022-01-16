@@ -2,8 +2,7 @@
 
 import json
 
-# from typing import List, Dict
-
+from typing import List, TypedDict
 # from github.Repository import Repository
 
 from loguru import logger
@@ -14,6 +13,21 @@ from .. import RepoLinter
 CATEGORY = "pyproject.toml"
 LANGUAGES = ["python"]
 
+# Config Defintiion
+DefaultConfig = TypedDict("DefaultConfig",
+{
+    "build-system": List[str],
+    "readme": str,
+
+})
+
+DEFAULT_CONFIG: DefaultConfig = {
+    "build-system" : [
+        "flit_core.buildapi",      # flit
+        "poetry.core.masonry.api", # poetry
+    ],
+    "readme" : "README.md",
+}
 
 def validate_pyproject_authors(
     repo: RepoLinter,
@@ -68,13 +82,7 @@ def validate_readme_configured(
         )
         return False
 
-    if (
-        "pyproject" not in repo.config
-        or "readme" not in repo.config["pyproject"]
-    ):
-        expected_readme = "README.md"
-    else:
-        expected_readme = repo.config["pyproject"]["readme"]
+    expected_readme = repo.config[CATEGORY]["readme"]
 
     project_readme = project_object["readme"]
     if project_readme != expected_readme:
@@ -84,7 +92,6 @@ def validate_readme_configured(
         return False
     return True
 
-
 def validate_scripts(
     repo: RepoLinter,
     project_object: dict,
@@ -92,7 +99,6 @@ def validate_scripts(
     """ validates that the project has a readme configured """
 
     if "scripts" not in project_object:
-        # repo.error( CATEGORY, "No 'readme' field in [project] section of config")
         logger.debug("No scripts configured in pyproject.toml")
         return False
     retval = True
@@ -129,6 +135,27 @@ def load_pyproject(repo: RepoLinter):
             "Failed to parse {}/pyproject.toml: {}", repo.repository.full_name, tomli_error
         )
         return None
+
+def check_pyproject_build_backend(repo: RepoLinter) -> None:
+    """ gets the pyproject.toml file and looks for the key build-system.build-backend """
+    pyproject = load_pyproject(repo)
+
+    if not pyproject:
+        logger.error("pyproject.toml not found")
+
+    if "build-system" not in pyproject:
+        logger.error("Can't find build_backend")
+        logger.debug(json.dumps(pyproject, indent=4, ensure_ascii=False))
+        return None
+    if "build-backend" not in pyproject["build-system"]:
+        logger.error("Can't find build-system.build-backend.")
+        logger.debug(json.dumps(pyproject["build-system"], indent=4, ensure_ascii=False))
+        return None
+
+    backend = pyproject["build-system"]["build-backend"]
+
+    logger.warning("Found build-backend.build-system in pyproject.toml: {}", backend)
+    # logger.info()
     return None
 
 def check_pyproject_toml(
