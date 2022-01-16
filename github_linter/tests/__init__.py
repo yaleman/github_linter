@@ -5,6 +5,7 @@ import sys
 from loguru import logger
 
 from . import dependabot, generic, github_actions, \
+    homebrew, \
     issues, \
     pylintrc, pyproject, \
     testing, \
