@@ -14,7 +14,7 @@ CATEGORY = "homebrew"
 LANGUAGES = ["Ruby"]
 
 def should_this_run(func):
-    """ if the name doesn't match then don't run """
+    """ if the repo name doesn't match then don't run """
     def inner(repo: RepoLinter):
         if not repo.repository.name.startswith("homebrew-"):
             logger.debug("Not a homebrew repo, skipping")
