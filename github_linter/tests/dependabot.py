@@ -29,6 +29,11 @@ LANGUAGES = [
     "all",
 ]
 
+class DefaultConfig(TypedDict):
+    """ config typing for module config """
+
+DEFAULT_CONFIG: DefaultConfig = {}
+
 # CONFIG = {
 #     "version": "2",
 #     "updates": [

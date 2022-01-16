@@ -1,11 +1,20 @@
 """ checking for issues and PRs and things """
 
+from typing import TypedDict
+
 from loguru import logger
+
 from .. import RepoLinter
 
 
 CATEGORY = "testing"
 LANGUAGES = ["all"]
+
+class DefaultConfig(TypedDict):
+    """ config object """
+
+DEFAULT_CONFIG: DefaultConfig = {
+}
 
 def check_shellcheck(
     repo: RepoLinter

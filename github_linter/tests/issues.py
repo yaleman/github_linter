@@ -1,11 +1,20 @@
 """ checking for issues and PRs and things """
 
+from typing import TypedDict
+
 from loguru import logger
 
 from .. import RepoLinter
 
 CATEGORY = "issues"
 LANGUAGES = ["all"]
+
+
+class DefaultConfig(TypedDict):
+    """ config typing for module config """
+
+DEFAULT_CONFIG: DefaultConfig = {
+}
 
 # pylint: disable=unused-argument
 def check_open_issues(

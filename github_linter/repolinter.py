@@ -183,7 +183,7 @@ class RepoLinter:
         if not hasattr(module, "DEFAULT_CONFIG"):
             return
         module_name = module.__name__.split(".")[-1]
-        logger.error("Adding module-default config for {}", module_name)
+        logger.debug("Adding module-default config for {}", module_name)
         if module_name not in self.config:
             self.config[module_name] = {}
 

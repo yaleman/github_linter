@@ -62,3 +62,27 @@ exclude = [
     "*.json",
     "mypy.ini",
 ]
+
+[tool.poetry]
+name = "github_linter"
+version = "0.0.1"
+description = "A curiously complex tool to fit up things in my github repos."
+authors = [
+    "James Hodgkinson <james@terminaloutcomes.com>"
+]
+classifiers = ["License :: OSI Approved :: MIT License"]
+
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+click = "^8.0.3"
+loguru = "^0.5.3"
+PyGithub = "^1.55"
+requests = "^2.27.1"
+PyYAML = "^6.0"
+json5 = "^0.9.6"
+pytz = "^2021.3"
+python-hcl2 = "^3.0.1"
+wildcard-matcher = "^0.0.3"
+semver = ">=3.0.0.dev2"

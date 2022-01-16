@@ -1,32 +1,39 @@
 """ checks for dependabot config """
 
 from configparser import ConfigParser, NoOptionError #, NoSectionError
-from typing import Optional
+from typing import List, Optional, TypedDict
 
 import json5 as json
 from loguru import logger
 
 from github_linter import RepoLinter
 
-
-
 CATEGORY = "pylintrc"
 
 LANGUAGES = ["python"]
 
-# https://pylint.pycqa.org/en/latest/user_guide/run.html
-PYLINTRC_LOCATIONS = [
-    "pylintrc",
-    ".pylintrc",
-    # "pyproject.toml" # providing it has at least one tool.pylint. section
-    # "setup.cfg" # needs pylint.*
-]
+# TODO: look in "/<repo.name>/.pylintrc"
+
+class DefaultConfig(TypedDict):
+    """ config typing for module config """
+    # https://pylint.pycqa.org/en/latest/user_guide/run.html
+    pylintrc_locations: List[str]
+
+DEFAULT_CONFIG: DefaultConfig = {
+    "pylintrc_locations" : [
+        "pylintrc",
+        ".pylintrc",
+        # "pyproject.toml" # providing it has at least one tool.pylint. section
+        # "setup.cfg" # needs pylint.*
+    ]
+}
+
 
 
 def load_pylintrc(repo: RepoLinter) -> Optional[ConfigParser]:
     """ grabs the .pylintrc file from the repository """
 
-    for filepath in PYLINTRC_LOCATIONS:
+    for filepath in repo.config[CATEGORY]["pylintrc_locations"]:
         contents = repo.cached_get_file(filepath)
         if not contents:
             continue

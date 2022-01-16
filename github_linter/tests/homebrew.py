@@ -1,6 +1,7 @@
 """ checks for homebrew things """
 
 import sys
+from typing import List, TypedDict
 
 from loguru import logger
 
@@ -9,6 +10,18 @@ from ..utils import get_fix_file_path
 CATEGORY = "homebrew"
 
 LANGUAGES = ["Ruby"]
+
+
+class DefaultConfig(TypedDict):
+    """ config typing for module config """
+    required_files: List[str]
+
+DEFAULT_CONFIG: DefaultConfig = {
+    "required_files" : [
+        "homebrew_check_latest_release.sh",
+        ".github/workflows/homebrew_check_updates.yml",
+    ]
+}
 
 def should_this_run(func):
     """ if the repo name doesn't match then don't run """
@@ -20,17 +33,13 @@ def should_this_run(func):
         return func(repo)
     return inner
 
-REQUIRED_FILES = {
-    "homebrew_check_latest_release.sh",
-    ".github/workflows/homebrew_check_updates.yml",
-}
 
 @should_this_run
 def check_update_files_exist(
     repo: RepoLinter
 ) -> None:
     """ checks that the required files exist """
-    for filename in REQUIRED_FILES:
+    for filename in repo.config[CATEGORY]["required_files"]:
         filecontents = repo.cached_get_file(filename)
         if not filecontents:
             repo.error(CATEGORY, f"Missing homebrew file file: {filename}")
@@ -42,7 +51,7 @@ def fix_update_files_exist(
 ):
     """ updates the homebrew files from the templates """
 
-    for filename in REQUIRED_FILES:
+    for filename in repo.config[CATEGORY]["required_files"]:
 
         updatefile = get_fix_file_path(CATEGORY, filename)
         if not updatefile.exists():
