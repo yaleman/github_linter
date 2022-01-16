@@ -8,6 +8,17 @@ CATEGORY = "homebrew"
 
 LANGUAGES = ["Ruby"]
 
+def should_this_run(func):
+    """ if the name doesn't match then don't run """
+    def inner(repo: RepoLinter):
+        if not repo.repository.name.startswith("homebrew-"):
+            logger.debug("Not a homebrew repo, skipping")
+            return None
+        logger.debug("Name checks out: {}", repo.repository.name)
+        return func(repo)
+    return inner
+
+@should_this_run
 def check_update_files_exist(
     repo: RepoLinter
 ) -> None:
