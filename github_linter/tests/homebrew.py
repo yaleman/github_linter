@@ -1,8 +1,5 @@
 """ checks for homebrew things """
 
-from hashlib import sha256
-
-# from pathlib import Path
 import sys
 
 from loguru import logger
@@ -43,35 +40,36 @@ def check_update_files_exist(
 def fix_update_files_exist(
     repo: RepoLinter
 ):
-    """ copies the files up from the templates """
+    """ updates the homebrew files from the templates """
 
     for filename in REQUIRED_FILES:
-        filecontents = repo.cached_get_file(filepath=filename, clear_cache=True)
-        logger.debug("{} : {}", filename, filecontents )
-        if filecontents:
-            logger.debug("Filename already exists: {}", filename)
-            continue
 
-        # load the file
         updatefile = get_fix_file_path(CATEGORY, filename)
         if not updatefile.exists():
             logger.error("Running fix, can't find fix file {}!", updatefile.as_posix())
             sys.exit(1)
 
-        filehash = sha256(updatefile.read_bytes()).hexdigest()
+        filecontents = repo.cached_get_file(filepath=filename, clear_cache=True)
+
+        logger.debug("{} : {}", filename, filecontents )
+        if filecontents:
+            if filecontents.decoded_content == updatefile.read_bytes():
+                logger.debug("File content is up to date for {}", filename)
+                continue
+            blobsha = filecontents.sha
+        else:
+            blobsha = ""
 
         result = repo.repository.update_file(
             path=filename,
             message=f"github_linter.homebrew.fix_update_file_exists({filename})",
             content = updatefile.read_bytes(),
-            sha = filehash,
+            sha = blobsha,
             branch = repo.repository.default_branch
             )
         commit = result["commit"]
-        if not hasattr(commit, "commit"):
-            continue
         # Log it
         repo.fix(
             CATEGORY,
-            f"Updated {filename} in commit {getattr(commit,'html_url')}",
+            f"Updated {filename} in commit {getattr(commit,'html_url', '')}",
         )

@@ -5,26 +5,17 @@ on:
   push:
 jobs:
   check_updates:
+    name: "Homebrew spec update checker"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      # - name: Check for updates
-      #   run: |
-      #     LATEST=$(./check_latest_release)
-      #     if [ -z "${LATEST}" ]; then
-      #       echo "::set-env name=LATEST::${LATEST}"
-      #     else
-      #       exit 1
-      #     fi
-
-      # - name: test script
-      #   run: |
-      #     ./check_latest_release.sh
+      - name: Run the check script
+        run: bash homebrew_check_latest_release.sh
 
       - name: Update homebrew spec file
         uses: technote-space/create-pr-action@v2
         with:
-          EXECUTE_COMMANDS: ./homebrew_check_latest_release.sh
+          EXECUTE_COMMANDS: bash homebrew_check_latest_release.sh
           ONLY_DEFAULT_BRANCH: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMIT_MESSAGE: 'Updated version automagically for ref: ${PR_HEAD_REF}'

@@ -25,6 +25,7 @@ dependencies = [
     "pytz",
     "python-hcl2", # terraform
     "semver>=3.0.0.dev2",
+    "wildcard-matcher",
 ]
 
 keywords = [
