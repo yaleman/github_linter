@@ -53,15 +53,14 @@ RATELIMIT_TYPES = {
     },
 }
 
-def get_filtered_checks(checklist: List[str], check_filter: Optional[Tuple]) -> List[str]:
+def get_filtered_commands(checklist: List[str], check_filter: Optional[Tuple]) -> List[str]:
     """ filters the checks """
-
     if not check_filter:
         return list(checklist)
     checks = []
     for check in checklist:
         for filterstr in check_filter:
-            if check.startswith(filterstr):
+            if check.startswith(filterstr) and check not in checks:
                 checks.append(check)
                 continue
     return checks
@@ -148,17 +147,22 @@ class GithubLinter:
                 logger.warning("Empty report for {}, skipping", repo_name)
             errors = []
             warnings = []
+            fixes = []
             if "errors" in repo and repo["errors"]:
                 for category in repo["errors"]:
                     deque(map(errors.append, [f"{category} - {error}" for error in repo["errors"].get(category)]))
             if "warnings" in repo and repo["warnings"]:
                 for category in repo["warnings"]:
                     deque(map(warnings.append, [f"{category} - {warning}" for warning in repo["warnings"].get(category)]))
-            if errors or warnings:
+            if "fixes" in repo and repo["fixes"]:
+                for category in repo["fixes"]:
+                    deque(map(fixes.append, [f"{category} - {fix}" for fix in repo["fixes"].get(category)]))
+            if errors or warnings or fixes:
                 logger.info("Report for {}", repo_name)
                 # deque forces map to just run
                 deque(map(logger.error, errors))
                 deque(map(logger.warning, warnings))
+                deque(map(logger.info, fixes))
             else:
                 logger.info("Repository {} checks out OK", repo_name)
 
@@ -191,6 +195,7 @@ class GithubLinter:
         self.report[repolinter.repository.full_name] = {
             "errors": repolinter.errors,
             "warnings": repolinter.warnings,
+            "fixes" : repolinter.fixes,
         }
 
         time.sleep(self.check_rate_limits())
@@ -212,17 +217,28 @@ class RepoLinter:
 
         self.errors: DICTLIST = {}
         self.warnings: DICTLIST = {}
+        self.fixes: DICTLIST = {}
         self.filecache: Dict[str,Optional[ContentFile]] = {}
+
+    def clear_file_cache(self, filepath: str) -> bool:
+        """ removes a file from the file cache, returns bool if it was in there """
+        if filepath in self.filecache:
+            del self.filecache[filepath]
+            return True
+        return False
 
     def cached_get_file(
         self,
         filepath: str,
+        clear_cache: bool = False
         ) -> Optional[ContentFile]:
         """ checks if we've made a call looking for a file and grabs it if not
         returns none if no file exists, caches per-repository.
         """
-        # cached call
-        if filepath in self.filecache:
+
+        if clear_cache:
+            self.clear_file_cache(filepath)
+        elif filepath in self.filecache:
             return self.filecache[filepath]
         # cache and then return
         self.filecache[filepath] = self.get_file(filepath)
@@ -314,6 +330,10 @@ class RepoLinter:
         """ adds an error """
         self.add_result(self.errors, category, value)
 
+    def fix(self, category: str, value: str):
+        """ adds a fixed item """
+        self.add_result(self.fixes, category, value)
+
     def warning(self, category: str, value: str):
         """ adds a warning """
         self.add_result(self.warnings, category, value)
@@ -336,10 +356,18 @@ class RepoLinter:
                     )
                 return False
 
-        for check in get_filtered_checks(dir(module), check_filter):
+        for check in sorted(get_filtered_commands(dir(module), check_filter)):
             if check.startswith("check_"):
                 logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
                 getattr(module, check)(
                     repo=self,
                 )
+            if check.startswith("fix_"):
+                logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
+                getattr(module, check)(
+                    repo=self
+                )
+            # else:
+                # logger.debug("Skipping check: {}", check)
+
         return True

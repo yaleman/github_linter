@@ -1,36 +1,12 @@
 """ utility functions """
 
-# from typing import Union
+from pathlib import Path
 
-# from loguru import logger
-# import yaml
-
-
-# from .types import DICTLIST
-
-
-# def add_result(result_object: DICTLIST, category: str, value: str) -> None:
-#     """ adds an result to the target object"""
-#     if category not in result_object:
-#         result_object[category] = []
-#     if value not in result_object[category]:
-#         result_object[category].append(value)
-#     logger.debug("{} - {}", category, value)
-
-
-# def get_file_from_repo(
-#     repo_object: Repository,
-#     filename: str
-# ) -> Union[ContentFile, None]:
-#     """ looks for a file or returns none"""
-#     try:
-#         fileresult = repo_object.get_contents(filename)
-#         if not fileresult:
-#             logger.debug("Couldn't find {}...?", filename)
-#             return None
-#         if isinstance(fileresult, list):
-#             fileresult = fileresult[0]
-#         return fileresult
-#     except UnknownObjectException:
-#         logger.debug("{} not found in {}", filename, repo_object.full_name)
-#     return None
+def get_fix_file_path(category: str, filename: str) -> Path:
+    """ gets a Path object for a filename within the fixes dir for the given category """
+    module_parent = Path(__file__).parent
+    fixes_path = module_parent / f"fixes/{category}/{filename}"
+    if not fixes_path.exists():
+        base_filename = Path(filename).name
+        fixes_path = module_parent / f"fixes/{category}/{base_filename}"
+    return fixes_path
