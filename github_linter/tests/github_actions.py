@@ -28,7 +28,7 @@ def check_workflow_dir_exists(repo: RepoLinter):
         repo.error(CATEGORY, ".github dir not found")
         return
 
-    filename = '.github/workflows/'
+    filename = '.github/workflows'
     result = repo.cached_get_file(filename, clear_cache=True)
 
     if not result:
