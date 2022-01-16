@@ -1,9 +1,9 @@
 """ github actions tests """
 
-# import yaml
+from typing import TypedDict
+
 import json5 as json
 from loguru import logger
-from typing import TypedDict
 
 from .. import RepoLinter
 
