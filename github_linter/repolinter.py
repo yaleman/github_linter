@@ -11,6 +11,8 @@ from github.Repository import Repository
 from loguru import logger
 import wildcard_matcher
 
+from .exceptions import SkipOnArchived
+
 from .types import DICTLIST
 from .utils import load_config
 
@@ -192,6 +194,11 @@ class RepoLinter:
         add_from_dict(module.DEFAULT_CONFIG, module_config)
         # logger.debug(json.dumps(self.config, indent=4, default=str, ensure_ascii=False))
 
+    def skip_on_archived(self):
+        """ Add this to a check to skip it if the repository is archived. """
+        if self.repository.archived:
+            raise SkipOnArchived("This repository is archived so this test doesn't need to run.")
+
     def run_module(
         self,
         module: ModuleType,
@@ -215,15 +222,21 @@ class RepoLinter:
         for check in sorted(get_filtered_commands(dir(module), check_filter)):
             if check.startswith("check_"):
                 logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
-                getattr(module, check)(
-                    repo=self,
-                )
+                try:
+                    getattr(module, check)(
+                        repo=self,
+                    )
+                except SkipOnArchived:
+                    pass
             if do_fixes:
                 if check.startswith("fix_"):
                     logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
-                    getattr(module, check)(
-                        repo=self
-                    )
+                    try:
+                        getattr(module, check)(
+                            repo=self
+                        )
+                    except SkipOnArchived:
+                        pass
             # else:
                 # logger.debug("Skipping check: {}", check)
 

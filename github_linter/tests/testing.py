@@ -48,6 +48,8 @@ def check_testing_yml_exists(
     repo: RepoLinter
 ):
     """ Checks that .github/workflows/testing.yml exists """
+    repo.skip_on_archived()
+
     if not repo.repository.get_languages():
         repo.warning(CATEGORY, "No languages identified, didn't check for automated testing config")
         return
