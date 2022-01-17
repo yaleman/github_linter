@@ -256,3 +256,24 @@ def check_dependabot_config(
     #     validate_updates_for_langauges(
     #         repo.repository, dependabot_config["updates"], errors_object, warnings_object
     #     )
+
+def check_dependabot_vulnerability_enabled(
+    repo: RepoLinter,
+):
+    """ checks for dependabot config """
+    if not repo.repository.get_vulnerability_alert():
+        repo.error(CATEGORY, "Vulnerability reports on repository are not enabled.")
+
+def fix_enable_vulnerability_alert(repo: RepoLinter):
+    """ enables vulnerability alerts on a repository """
+    if repo.repository.enable_vulnerability_alert():
+        repo.fix(CATEGORY, "Enabled vulnerability reports on repository.")
+    else:
+        repo.error(CATEGORY, "Failed to enable vulnerability reports on repository.")
+
+def fix_enable_automated_security_fixes(repo: RepoLinter):
+    """ enables dependabot on a repository """
+    if repo.repository.enable_automated_security_fixes():
+        repo.fix(CATEGORY, "Enabled automated security fixes on repository.")
+    else:
+        repo.error(CATEGORY, "Failed to enable automated security fixes.")
