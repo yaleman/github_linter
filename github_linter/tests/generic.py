@@ -4,7 +4,7 @@ from io import StringIO
 
 from typing import Any, Dict, List, Optional, TypedDict, Union
 
-import ruamel.yaml
+import ruamel.yaml # type: ignore
 
 from github.ContentFile import ContentFile
 

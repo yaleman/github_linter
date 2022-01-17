@@ -24,6 +24,7 @@ from .tests import MODULES
     type=click.Choice(list(MODULES.keys())),
     help="Specify which modules to run",
 )
+@click.option("--no-progress", is_flag=True, default=False, help="Hide progress if more than three repos to handle.")
 @click.option("--fix", "-f", is_flag=True, default=False, help="Take actions to fix things.")
 @click.option("--check", "-k", multiple=True, help="Filter by check name, eg check_example")
 def cli(**kwargs):
@@ -43,7 +44,8 @@ def cli(**kwargs):
     logger.debug("Getting repos")
     repos = search_repos(github, kwargs)
 
-    for repo in repos:
+
+    for index, repo in enumerate(repos):
         if not repo.parent:
             github.handle_repo(repo, check=kwargs.get("check"), fix=kwargs["fix"])
         # if it's a fork and you're checking them
@@ -53,6 +55,13 @@ def cli(**kwargs):
             logger.warning(
                 "check_forks is false and {} is a fork, skipping.", repo.full_name
             )
+        if len(repos) > 3 and not kwargs.get("no_progress"):
+            pct_done = round((index/len(repos)*100),1)
+            logger.info("Completed {}, {}% ({}/{})",
+                repo.full_name,
+                pct_done,
+                index+1,
+                len(repos))
     github.display_report()
 
 
