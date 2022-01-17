@@ -4,6 +4,7 @@ from json import JSONDecodeError
 from typing import Dict, Optional, Any
 import os.path
 from pathlib import Path
+import sys
 
 import json5 as json
 from loguru import logger
@@ -15,6 +16,9 @@ def get_fix_file_path(category: str, filename: str) -> Path:
     if not fixes_path.exists():
         base_filename = Path(filename).name
         fixes_path = module_parent / f"fixes/{category}/{base_filename}"
+        if not fixes_path.exists():
+            logger.error("Fix file {} in category {} not found, bailing.", filename, category)
+            sys.exit(1)
     return fixes_path
 
 

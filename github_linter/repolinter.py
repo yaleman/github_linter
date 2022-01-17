@@ -1,6 +1,7 @@
 """ repolinter class """
 
 from datetime import datetime
+from pathlib import Path
 from types import ModuleType
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -82,6 +83,41 @@ class RepoLinter:
         # cache and then return
         self.filecache[filepath] = self.get_file(filepath)
         return self.filecache[filepath]
+
+
+    def create_or_update_file(
+        self,
+        filepath: str,
+        newfile: Path,
+        oldfile: Optional[ContentFile],
+        message: Optional[str],
+        ) -> Optional[str]:
+        """ create or update a file in the repository """
+
+        if not message:
+            message = f"Update file: {filepath}"
+
+        newfile_contents = newfile.read_bytes()
+
+        if oldfile:
+            if oldfile.decoded_content == newfile_contents:
+                logger.debug("File content is up to date for {}", filepath)
+                return None
+            blobsha = oldfile.sha
+        else:
+            blobsha = ""
+
+        commit_result = self.repository.update_file(
+            path=filepath,
+            message=message,
+            content = newfile_contents,
+            sha = blobsha,
+            branch = self.repository.default_branch
+            )
+        if "commit" not in commit_result:
+            return "Unkown Commit URL"
+
+        return getattr(commit_result["commit"],'html_url', '')
 
     # def cached_get_files(
     #     self,

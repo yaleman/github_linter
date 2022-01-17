@@ -60,25 +60,14 @@ def fix_update_files_exist(
 
         filecontents = repo.cached_get_file(filepath=filename, clear_cache=True)
 
-        logger.debug("{} : {}", filename, filecontents )
-        if filecontents:
-            if filecontents.decoded_content == updatefile.read_bytes():
-                logger.debug("File content is up to date for {}", filename)
-                continue
-            blobsha = filecontents.sha
-        else:
-            blobsha = ""
-
-        result = repo.repository.update_file(
-            path=filename,
-            message=f"github_linter.homebrew.fix_update_file_exists({filename})",
-            content = updatefile.read_bytes(),
-            sha = blobsha,
-            branch = repo.repository.default_branch
-            )
-        commit = result["commit"]
-        # Log it
-        repo.fix(
-            CATEGORY,
-            f"Updated {filename} in commit {getattr(commit,'html_url', '')}",
+        result = repo.create_or_update_file(
+            filename,
+            updatefile,
+            filecontents,
+            f"github_linter.homebrew updating {filename}",
         )
+        if result is not None:
+            repo.fix(
+                CATEGORY,
+                f"Updated {filename} in commit {result}",
+            )
