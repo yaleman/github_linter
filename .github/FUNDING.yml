@@ -1,3 +1,4 @@
-# These are supported funding model platforms
-
+# Documentation for this file format is here: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
 github: yaleman
+custom:
+- http://buymeacoffee.com/yaleman
