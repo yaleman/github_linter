@@ -34,9 +34,6 @@ def check_workflow_dir_exists(repo: RepoLinter):
     if not result:
         repo.error(CATEGORY, f"Workflows dir ({filename}) missing.")
         return
-    if not result.type == "directory":
-        repo.error(CATEGORY, f"Type is wrong for {filename}, should be directory, is {result.type}")
-
 
 def check_configuration_required_fields(
     repo: RepoLinter

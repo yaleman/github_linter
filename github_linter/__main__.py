@@ -51,7 +51,7 @@ def cli(**kwargs):
             github.handle_repo(repo, check=kwargs.get("check"), fix=kwargs["fix"])
         else:
             logger.warning(
-                "check_forks is true and {} is a fork, skipping.", repo.full_name
+                "check_forks is false and {} is a fork, skipping.", repo.full_name
             )
     github.display_report()
 
