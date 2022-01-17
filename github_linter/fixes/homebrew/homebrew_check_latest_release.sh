@@ -5,7 +5,7 @@
 
 # get_latest_release from here https://gist.github.com/lukechilds/a83e1d7127b78fef38c2914c4ececc3c
 get_latest_release() {
-  curl --silent "$1" | grep '"tag_name"'| sed -E 's/.*\"([^\"]+)\",/\1/'
+  curl --silent "$1" | grep -E '"(tag_name|name)\"' | head -n1 | sed -E 's/.*\"([^\"]+)\",/\1/'
 }
 
 SPECFILE=$(find "$(pwd)" -type f -name '*.rb' | head -n1)
@@ -35,6 +35,14 @@ if [ -z "${LATEST}" ]; then
 else
     # echo "::set-env name=LATEST::${LATEST}"
     echo "Latest version ${LATEST}"
+fi
+CURRENT=$(grep -E 'version \"+' "${SPECFILE}" | awk '{print $NF}' | tr -d '"')
+
+if [ "${CURRENT}" == "${LATEST}" ]; then
+    echo "No change in version, quitting."
+    exit 1
+else
+    echo "Version going from '${CURRENT}' to '${LATEST}'"
 fi
 
 # pull the download url from the spec file and update it
