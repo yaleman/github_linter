@@ -3,7 +3,7 @@
 from datetime import datetime
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from github.ContentFile import ContentFile
 from github.GithubException import UnknownObjectException
@@ -88,16 +88,21 @@ class RepoLinter:
     def create_or_update_file(
         self,
         filepath: str,
-        newfile: Path,
-        oldfile: Optional[ContentFile],
-        message: Optional[str],
+        newfile: Union[Path, str, bytes],
+        oldfile: Optional[ContentFile] = None,
+        message: Optional[str] = None,
         ) -> Optional[str]:
         """ create or update a file in the repository """
 
         if not message:
             message = f"Update file: {filepath}"
 
-        newfile_contents = newfile.read_bytes()
+        if isinstance(newfile, bytes):
+            newfile_contents = newfile
+        elif isinstance(newfile, str):
+            newfile_contents = newfile.encode("utf-8")
+        else:
+            newfile_contents = newfile.read_bytes()
 
         if oldfile:
             if oldfile.decoded_content == newfile_contents:

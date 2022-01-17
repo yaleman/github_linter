@@ -2,6 +2,7 @@
 
 from loguru import logger
 import yaml
+# TODO: replace this with ruamel.yaml so we only have one cursed dependency
 
 from . import RepoLinter
 

@@ -6,6 +6,7 @@ from typing import Dict, List, Union, TypedDict, Optional
 from loguru import logger
 # from github.Repository import Repository
 import pytz
+# TODO: replace this with ruamel.yaml so we only have one cursed dependency
 import yaml
 
 from github_linter import RepoLinter

@@ -1,7 +1,10 @@
 {
     "check_forks" : false,
     "generic" : {
-
+        "funding" : {
+            "github" : "yaleman",
+            "custom" : ["http://buymeacoffee.com/yaleman"]
+        }
     },
     "pyproject.toml" : {
 
