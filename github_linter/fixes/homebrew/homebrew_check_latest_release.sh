@@ -40,7 +40,7 @@ CURRENT=$(grep -E 'version \"+' "${SPECFILE}" | awk '{print $NF}' | tr -d '"')
 
 if [ "${CURRENT}" == "${LATEST}" ]; then
     echo "No change in version, quitting."
-    exit 1
+    exit
 else
     echo "Version going from '${CURRENT}' to '${LATEST}'"
 fi
@@ -76,3 +76,8 @@ if [ "${DIFF_LINES}" -ne 0 ]; then
 else
     echo "No changes required."
 fi
+
+echo "New script below"
+echo "#####################################################"
+cat "${SPECFILE}"
+echo "#####################################################"
