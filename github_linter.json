@@ -1,5 +1,11 @@
 {
-    "check_forks" : false,
+    "linter" : {
+        "owner_list" : [
+            "yaleman",
+            "terminaloutcomes"
+        ],
+        "check_forks" : false
+    },
     "generic" : {
         "funding" : {
             "github" : "yaleman",

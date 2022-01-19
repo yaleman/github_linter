@@ -178,6 +178,9 @@ def search_repos(
     github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]]
 ) -> List[Repository]:
     """ search repos based on cli input """
+
+    config = load_config()
+
     if kwargs_object.get("repo") or kwargs_object.get("owner"):
         search = ""
         searchrepos = []
@@ -196,12 +199,21 @@ def search_repos(
 
         # filter search results by owner
         if kwargs_object.get("owner"):
-            # logger.debug("Filtering based on owner: {}", kwargs_object["owner"])
+            logger.debug("Filtering based on owner: {}", kwargs_object["owner"])
             filtered_result = [
                 repo
                 for repo in search_result
                 if repo.owner.login in kwargs_object["owner"]
             ]
+            search_result = list(filtered_result)
+        # if you're not specifying it on the command line, filter the list by the config
+        elif config["linter"]["owner_list"]:
+            filtered_result = [
+                repo
+                for repo in search_result
+                if repo.owner.login in config["linter"]["owner_list"]
+            ]
+            logger.warning("Filtering by owner list in linter config")
             search_result = list(filtered_result)
         # filter search results by repo name
         if kwargs_object.get("repo"):
@@ -209,7 +221,29 @@ def search_repos(
             filtered_result = [
                 repo for repo in search_result if repo.name in kwargs_object["repo"]
             ]
-            return filtered_result
-        return search_result
+            search_result = filtered_result
 
-    return list(github.github.get_user().get_repos())
+    logger.debug("Pulling all repositories accessible to user.")
+    repolist = list(github.github.get_user().get_repos())
+    if config["linter"]["owner_list"]:
+        logger.debug(
+            "Filtering by owner list in linter config: {}",
+            ",".join(config["linter"]["owner_list"]),
+            )
+        filtered_result = [
+            repo
+            for repo in repolist
+            if repo.owner.login in config["linter"]["owner_list"]
+        ]
+        search_result = list(filtered_result)
+
+
+    if not config["linter"]["check_forks"]:
+        logger.debug("Filtering out forks")
+        filtered_by_forks = [
+            repo for repo in search_result
+            if repo.fork is False
+        ]
+        search_result = list(filtered_by_forks)
+
+    return search_result
