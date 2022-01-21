@@ -14,6 +14,8 @@ from .tests import MODULES
 # TODO: check for .github/workflows/ dir
 # TODO: check for .github/dependabot.yml config
 
+MODULE_CHOICES = [key for key in list(MODULES.keys()) if not key.startswith("github_linter")]
+
 @click.command()
 @click.option("--repo", "-r", multiple=True, help="Filter repos")
 @click.option("--owner", "-o", multiple=True, help="Filter owners")
@@ -21,7 +23,7 @@ from .tests import MODULES
     "--module",
     "-m",
     multiple=True,
-    type=click.Choice(list(MODULES.keys())),
+    type=click.Choice(MODULE_CHOICES),
     help="Specify which modules to run",
 )
 @click.option("--no-progress", is_flag=True, default=False, help="Hide progress if more than three repos to handle.")

@@ -19,6 +19,8 @@ from .utils import load_config
 
 def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]):
     """ digs into a dict, shoving the defaults in """
+    if not source:
+        return
     for key in source:
         if key not in dest:
             dest[key] = source[key]
@@ -92,7 +94,9 @@ class RepoLinter:
         oldfile: Optional[ContentFile] = None,
         message: Optional[str] = None,
         ) -> Optional[str]:
-        """ create or update a file in the repository """
+        """ Create or update a file in the repository.
+        The message variable is what's put into the commit message
+        """
 
         if not message:
             message = f"Update file: {filepath}"

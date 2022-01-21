@@ -172,7 +172,23 @@ class GithubLinter:
 
         time.sleep(self.check_rate_limits())
 
+def get_all_user_repos(github: GithubLinter) -> List[Repository]:
+    """ simpler filtered listing """
+    config = load_config()
 
+    logger.debug("Pulling all repositories accessible to user.")
+    repolist = list(github.github.get_user().get_repos())
+    if config["linter"]["owner_list"]:
+        logger.debug(
+            "Filtering by owner list in linter config: {}",
+            ",".join(config["linter"]["owner_list"]),
+            )
+        return [
+            repo
+            for repo in repolist
+            if repo.owner.login in config["linter"]["owner_list"]
+        ]
+    return repolist
 
 def search_repos(
     github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]]
@@ -181,24 +197,25 @@ def search_repos(
 
     config = load_config()
 
-    if kwargs_object.get("repo") or kwargs_object.get("owner"):
+    if "repo" in kwargs_object or "owner" in kwargs_object:
         search = ""
         searchrepos = []
-        if kwargs_object.get("repo"):
+        if "repo" in kwargs_object:
             for repo in kwargs_object["repo"]:
-                if kwargs_object.get("owner"):
+                if "owner" in kwargs_object:
                     for owner in kwargs_object["owner"]:
                         searchrepos.append(f"{owner}/{repo}")
                 else:
                     searchrepos.append(repo)
         else:
+            logger.warning("Filtering on owner alone")
             searchrepos = [f"user:{owner}" for owner in kwargs_object["owner"]]
         search = " OR ".join(searchrepos)
         logger.debug("Search string: '{}'", search)
         search_result = list(github.github.search_repositories(query=search))
 
         # filter search results by owner
-        if kwargs_object.get("owner"):
+        if "owner" in  kwargs_object:
             logger.debug("Filtering based on owner: {}", kwargs_object["owner"])
             filtered_result = [
                 repo
@@ -216,26 +233,15 @@ def search_repos(
             logger.warning("Filtering by owner list in linter config")
             search_result = list(filtered_result)
         # filter search results by repo name
-        if kwargs_object.get("repo"):
+        if "repo" in kwargs_object:
             # logger.debug("Filtering based on repo: {}", kwargs_object["repo"])
             filtered_result = [
                 repo for repo in search_result if repo.name in kwargs_object["repo"]
             ]
             search_result = filtered_result
 
-    logger.debug("Pulling all repositories accessible to user.")
-    repolist = list(github.github.get_user().get_repos())
-    if config["linter"]["owner_list"]:
-        logger.debug(
-            "Filtering by owner list in linter config: {}",
-            ",".join(config["linter"]["owner_list"]),
-            )
-        filtered_result = [
-            repo
-            for repo in repolist
-            if repo.owner.login in config["linter"]["owner_list"]
-        ]
-        search_result = list(filtered_result)
+    else:
+        search_result = get_all_user_repos(github)
 
 
     if not config["linter"]["check_forks"]:
@@ -246,4 +252,5 @@ def search_repos(
         ]
         search_result = list(filtered_by_forks)
 
+    logger.debug("Search result: {}", search_result)
     return search_result

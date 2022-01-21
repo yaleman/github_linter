@@ -2,7 +2,8 @@
     "linter" : {
         "owner_list" : [
             "yaleman",
-            "terminaloutcomes"
+            "terminaloutcomes",
+            "drinkz-org"
         ],
         "check_forks" : false
     },
@@ -10,6 +11,9 @@
         "funding" : {
             "github" : "yaleman",
             "custom" : ["http://buymeacoffee.com/yaleman"]
+        },
+        "codeowners" : {
+            "*" : "@yaleman"
         }
     },
     "pyproject.toml" : {
