@@ -12,6 +12,8 @@ Because I've got like ~100 repos and keep changing how I do things, and it annoy
     - Has a (valid-ish) config
 - Generic
     - Files you want gone
+    - CODEOWNERS generation
+    - generation of .github/FUNDINg.yml
 - GitHub Actions
     - Checks... something? TODO, fix this :P
 - (GitHub) Issues

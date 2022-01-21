@@ -142,10 +142,10 @@ def fix_codeowners_exists(repo: RepoLinter) -> None:
     if not repo.config[CATEGORY]["codeowners"]:
         logger.warning("Skipping fix as codeowners aren't configured.")
 
-    for filepath in repo.config[CATEGORY]["codeowners"]:
-        filecontents += f"{filepath} "
-        if repo.config[CATEGORY]["codeowners"][filepath] is not None:
-            owner = repo.config[CATEGORY]["codeowners"][filepath]
+    for codeowner_path in repo.config[CATEGORY]["codeowners"]:
+        filecontents += f"{codeowner_path} "
+        if repo.config[CATEGORY]["codeowners"][codeowner_path] is not None:
+            owner = repo.config[CATEGORY]["codeowners"][codeowner_path]
             if isinstance(owner, str):
                 filecontents += f"{owner}\n"
             else:
