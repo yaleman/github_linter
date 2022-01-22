@@ -123,6 +123,10 @@ def fix_funding_file(repo: RepoLinter) -> None:
     print(expected_file)
 
     filecontents = repo.cached_get_file(filename)
+    if filecontents and expected_file == filecontents.decoded_content.decode("utf-8"):
+        logger.debug("Don't need to update {}, already good.", filename)
+        return
+
     result = repo.create_or_update_file(filename, expected_file, oldfile=filecontents)
     if result:
         repo.fix(CATEGORY, f"Updated .github/FUNDING.yml file, commit URL {result}")

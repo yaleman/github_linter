@@ -36,8 +36,8 @@ DEFAULT_CONFIG: DefaultConfig = {
     # documentation for list of locations
     # https://pylint.pycqa.org/en/latest/user_guide/run.html?highlight=pylintrc#command-line-options
     "pylintrc_locations": [
-        "pylintrc",
         ".pylintrc",
+        "pylintrc",
         # "pyproject.toml" # providing it has at least one tool.pylint. section
         # "setup.cfg" # needs pylint.*
     ],
