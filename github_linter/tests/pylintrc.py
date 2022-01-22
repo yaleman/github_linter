@@ -64,6 +64,13 @@ def load_pylintrc(repo: RepoLinter) -> Optional[ConfigParser]:
 
 def check_max_line_length_configured(repo: RepoLinter) -> None:
     """ checks for the max-line-length setting in .pylintrc """
+
+    # default setting
+    if "pylintrc" in repo.config:
+        if "max_line_length" not in repo.config[CATEGORY]:
+            logger.debug("max_line_length not set in config, no need to run.")
+            return
+
     config: Optional[ConfigParser] = load_pylintrc(repo)
 
     if not config:
@@ -78,12 +85,7 @@ def check_max_line_length_configured(repo: RepoLinter) -> None:
     except NoOptionError:
         repo.warning(CATEGORY, "max-line-length not configured")
         return
-
-    # default setting
-    expected = 100
-    if "pylintrc" in repo.config:
-        if "max-line-length" in repo.config[CATEGORY]:
-            expected = repo.config[CATEGORY]["max-line-length"]
+    expected = repo.config[CATEGORY]["max_line_length"]
 
     if int(linelength) != int(expected):
         repo.error(
