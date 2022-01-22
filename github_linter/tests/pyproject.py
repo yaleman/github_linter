@@ -334,6 +334,7 @@ def fix_copy_poetry_to_project(repo: RepoLinter):
     ]:
         transfer_poetry_field(repo, field, poetry, project)
 
+    # TODO: maintainers, similar to authors
     if "authors" in poetry:
         transfer_poetry_authors(repo, poetry, project)
 
@@ -353,4 +354,9 @@ def fix_copy_poetry_to_project(repo: RepoLinter):
         logger.debug("pyproject.toml is up to date")
 
 
-    # TODO: copy scripts around
+    # TODO: copy the scripts settings around
+    # [tool.poetry.scripts]
+    # poetry = 'poetry.console:run'
+    # TODO: include and exclude fields from poetry should match sdist from flit?
+
+    # TODO: tools.poetry.urls (arbitrary URLs) https://python-poetry.org/docs/pyproject/#urls
