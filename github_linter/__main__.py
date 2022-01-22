@@ -14,7 +14,10 @@ from .tests import MODULES
 # TODO: check for .github/workflows/ dir
 # TODO: check for .github/dependabot.yml config
 
-MODULE_CHOICES = [key for key in list(MODULES.keys()) if not key.startswith("github_linter")]
+MODULE_CHOICES = [
+    key for key in list(MODULES.keys()) if not key.startswith("github_linter")
+]
+
 
 @click.command()
 @click.option("--repo", "-r", multiple=True, help="Filter repos")
@@ -26,9 +29,18 @@ MODULE_CHOICES = [key for key in list(MODULES.keys()) if not key.startswith("git
     type=click.Choice(MODULE_CHOICES),
     help="Specify which modules to run",
 )
-@click.option("--no-progress", is_flag=True, default=False, help="Hide progress if more than three repos to handle.")
-@click.option("--fix", "-f", is_flag=True, default=False, help="Take actions to fix things.")
-@click.option("--check", "-k", multiple=True, help="Filter by check name, eg check_example")
+@click.option(
+    "--no-progress",
+    is_flag=True,
+    default=False,
+    help="Hide progress if more than three repos to handle.",
+)
+@click.option(
+    "--fix", "-f", is_flag=True, default=False, help="Take actions to fix things."
+)
+@click.option(
+    "--check", "-k", multiple=True, help="Filter by check name, eg check_example"
+)
 def cli(**kwargs):
     """ Github linter for checking your repositories for various things. """
     github = GithubLinter()
@@ -46,7 +58,6 @@ def cli(**kwargs):
     logger.debug("Getting repos")
     repos = search_repos(github, kwargs)
 
-
     for index, repo in enumerate(repos):
         if not repo.parent:
             github.handle_repo(repo, check=kwargs.get("check"), fix=kwargs["fix"])
@@ -58,12 +69,14 @@ def cli(**kwargs):
                 "check_forks is false and {} is a fork, skipping.", repo.full_name
             )
         if len(repos) > 3 and not kwargs.get("no_progress"):
-            pct_done = round((index/len(repos)*100),1)
-            logger.info("Completed {}, {}% ({}/{})",
+            pct_done = round((index / len(repos) * 100), 1)
+            logger.info(
+                "Completed {}, {}% ({}/{})",
                 repo.full_name,
                 pct_done,
-                index+1,
-                len(repos))
+                index + 1,
+                len(repos),
+            )
     github.display_report()
 
 

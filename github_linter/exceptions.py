@@ -2,6 +2,7 @@
 
 from loguru import logger
 
+
 class SkipOnArchived(Exception):
     """ skip a test if the repo's archived """
 

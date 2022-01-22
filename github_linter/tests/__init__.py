@@ -5,12 +5,17 @@ from typing import Any, Dict
 
 from loguru import logger
 
-from . import dependabot, generic, github_actions, \
-    homebrew, \
-    issues, \
-    pylintrc, pyproject, \
-    testing, \
-    terraform
+from . import (
+    dependabot,
+    generic,
+    github_actions,
+    homebrew,
+    issues,
+    pylintrc,
+    pyproject,
+    testing,
+    terraform,
+)
 
 MODULES = {}
 CATEGORY = "tests"
@@ -27,9 +32,15 @@ for module in sys.modules:
             logger.warning("Module {} doesn't have a CATEGORY attribute.", module)
 
         if not hasattr(sys.modules[module], "DEFAULT_CONFIG"):
-            logger.warning("Module {} doesn't have a DEFAULT_CONFIG attribute, weirdness may occur.", module)
+            logger.warning(
+                "Module {} doesn't have a DEFAULT_CONFIG attribute, weirdness may occur.",
+                module,
+            )
         # else:
-            # logger.warning("DEFAULT_CONFIG Type: {}", type(sys.modules[module].DEFAULT_CONFIG))
+        # logger.warning("DEFAULT_CONFIG Type: {}", type(sys.modules[module].DEFAULT_CONFIG))
 
         if not hasattr(sys.modules[module], "LANGUAGES"):
-            logger.warning("Module {} doesn't have a LANGUAGES attribute, weirdness may occur.", module)
+            logger.warning(
+                "Module {} doesn't have a LANGUAGES attribute, weirdness may occur.",
+                module,
+            )

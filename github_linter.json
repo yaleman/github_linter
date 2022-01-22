@@ -30,7 +30,12 @@
         ]
     },
     "pylintrc" : {
-        "max-line-length" : 200
+        "pylintrc" : {
+            "max_line_length" : 200,
+            "disable" : [
+                "W0511"
+            ]
+        }
     },
     "terraform" : {
         "minimum_terraform_version" : "0.15"

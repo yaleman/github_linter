@@ -5,7 +5,7 @@ from io import StringIO
 from typing import Any, Dict, List, Optional, TypedDict, Union
 
 from loguru import logger
-import ruamel.yaml # type: ignore
+import ruamel.yaml  # type: ignore
 
 from github.ContentFile import ContentFile
 
@@ -21,9 +21,11 @@ CATEGORY = "generic"
 
 OptionalListOrStr = Optional[Union[List[str], str]]
 
+
 class FundingDict(TypedDict):
-    """ typing object for the funding section
-based on https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository """
+    """typing object for the funding section
+    based on https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository"""
+
     community_bridge: Optional[str]
     custom: OptionalListOrStr
     github: OptionalListOrStr
@@ -35,13 +37,17 @@ based on https://docs.github.com/en/repositories/managing-your-repositorys-setti
     patreon: Optional[str]
     tidelift: Optional[str]
 
+
 class DefaultConfig(TypedDict):
     """ config object """
+
     files_to_remove: List[str]
     funding: FundingDict
-    codeowners: Optional[Dict[str, Union[List[str],str]]]
+    codeowners: Optional[Dict[str, Union[List[str], str]]]
+
+
 DEFAULT_CONFIG: DefaultConfig = {
-    "files_to_remove" : [
+    "files_to_remove": [
         "Pipfile",
         "Pipfile.lock",
         ".DS_Store",
@@ -49,25 +55,27 @@ DEFAULT_CONFIG: DefaultConfig = {
         "setup.py",
         "distutils.cfg",
     ],
-    "funding" : {
-        "community_bridge" : None,
-        "custom" : None,
-        "github" : None,
-        "issuehunt" : None,
-        "ko_fi" : None,
-        "liberapay" : None,
-        "open_collective" : None,
-        "otechie" : None,
-        "patreon" : None,
-        "tidelift" : None,
+    "funding": {
+        "community_bridge": None,
+        "custom": None,
+        "github": None,
+        "issuehunt": None,
+        "ko_fi": None,
+        "liberapay": None,
+        "open_collective": None,
+        "otechie": None,
+        "patreon": None,
+        "tidelift": None,
     },
-    "codeowners" : None,
+    "codeowners": None,
 }
+
 
 def parse_funding_file(input_string: Union[str, bytes]) -> FundingDict:
     """ parses the FUNDING.yml file into a FundingDict """
     parsed_data: FundingDict = ruamel.yaml.YAML(pure=True).load(input_string)
     return parsed_data
+
 
 def generate_funding_file(input_data: Dict[str, Any]):
     """ generates a bytes object of a funding file based on a FundingDict """
@@ -76,7 +84,6 @@ def generate_funding_file(input_data: Dict[str, Any]):
     for key in input_data.keys():
         if input_data[key] is not None:
             output_data[key] = input_data[key]
-
 
     yaml = ruamel.yaml.YAML(pure=True)
     yaml.brace_single_entry_mapping_in_flow_sequence = True
@@ -91,6 +98,7 @@ def generate_funding_file(input_data: Dict[str, Any]):
     result = outputio.read()
     return result
 
+
 def check_files_to_remove(
     repo: RepoLinter,
 ) -> None:
@@ -101,9 +109,11 @@ def check_files_to_remove(
 
     for content_file in contents:
         if content_file.name in repo.config[CATEGORY]["files_to_remove"]:
-            repo.error(CATEGORY,
+            repo.error(
+                CATEGORY,
                 f"File '{content_file.name}' needs to be removed from {repo.repository.full_name}.",
             )
+
 
 def fix_funding_file(repo: RepoLinter) -> None:
     """ updates the funding file """
@@ -112,7 +122,6 @@ def fix_funding_file(repo: RepoLinter) -> None:
     expected_file = generate_funding_file(repo.config[CATEGORY]["funding"])
     print(expected_file)
 
-
     filecontents = repo.cached_get_file(filename)
     result = repo.create_or_update_file(filename, expected_file, oldfile=filecontents)
     if result:
@@ -120,9 +129,10 @@ def fix_funding_file(repo: RepoLinter) -> None:
     else:
         repo.error(CATEGORY, "Failed to update .github/FUNDING.yml file.")
 
+
 def check_codeowners_exists(repo: RepoLinter) -> None:
-    """ checks that CODEOWNERS exists in the root of the repo
-        after checking that you require it by setting it in the config """
+    """checks that CODEOWNERS exists in the root of the repo
+    after checking that you require it by setting it in the config"""
 
     if not repo.config[CATEGORY]["codeowners"]:
         logger.warning("Skipping check as codeowners aren't configured.")
@@ -130,6 +140,7 @@ def check_codeowners_exists(repo: RepoLinter) -> None:
     filecontents = repo.cached_get_file("CODEOWNERS")
     if not filecontents:
         repo.error(CATEGORY, "CODEOWNERS file doesn't exist.")
+
 
 def fix_codeowners_exists(repo: RepoLinter) -> None:
     """ makes a basic CODEOWNERS file based on the input """
@@ -151,7 +162,6 @@ def fix_codeowners_exists(repo: RepoLinter) -> None:
             else:
                 filecontents += f" {','.join(owner)}\n"
 
-
     if oldfile is not None and oldfile.decoded_content.decode("utf-8") == filecontents:
         logger.debug("Don't need to update {}", filepath)
         return
@@ -161,4 +171,4 @@ def fix_codeowners_exists(repo: RepoLinter) -> None:
         newfile=filecontents,
         oldfile=oldfile,
         message="github-linter updated CODEOWNERS file.",
-        )
+    )

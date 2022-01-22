@@ -13,10 +13,12 @@ LANGUAGES = ["all"]
 
 class DefaultConfig(TypedDict):
     """ config typing for module config """
+
     stale_file: str
 
+
 DEFAULT_CONFIG: DefaultConfig = {
-    "stale_file" : ".github/stale.yml",
+    "stale_file": ".github/stale.yml",
 }
 
 # pylint: disable=unused-argument
@@ -25,7 +27,8 @@ def check_open_issues(
 ) -> None:
     """ Adds a warning if there's open issues """
     if repo.repository.open_issues:
-        repo.warning(CATEGORY,
+        repo.warning(
+            CATEGORY,
             f"There are {repo.repository.open_issues} open issues for {repo.repository.full_name}",
         )
 
@@ -61,6 +64,7 @@ def check_stale_yml(
         return
     return
 
+
 def fix_stale_yml(
     repo: RepoLinter,
 ) -> None:
@@ -72,8 +76,12 @@ def fix_stale_yml(
 
     fix_file = get_fix_file_path(CATEGORY, "stale.yml")
 
-
     if filecontents is None or (filecontents.decoded_content != fix_file.read_bytes()):
-        result = repo.create_or_update_file(filename, fix_file, filecontents, "github_linter.issues updating .github/stale.yml")
+        result = repo.create_or_update_file(
+            filename,
+            fix_file,
+            filecontents,
+            "github_linter.issues updating .github/stale.yml",
+        )
         if result:
             repo.fix(CATEGORY, f"Updated {fix_file.name} - commit URL: {result}")

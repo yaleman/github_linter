@@ -23,14 +23,14 @@ __version__ = "0.0.1"
 
 
 RATELIMIT_TYPES = {
-    "core" : {
-        "minlimit" : 50,
+    "core": {
+        "minlimit": 50,
     },
-    "graphql" : {
-        "minlimit" : 5,
+    "graphql": {
+        "minlimit": 5,
     },
-    "search" : {
-        "minlimit" : 1,
+    "search": {
+        "minlimit": 1,
     },
 }
 
@@ -49,7 +49,7 @@ class GithubLinter:
         self.current_repo: Optional[Repository] = None
         self.report = {}
         self.modules: Dict[str, ModuleType] = {}
-        self.filecache: Dict[str, Dict[str,Optional[ContentFile]]] = {}
+        self.filecache: Dict[str, Dict[str, Optional[ContentFile]]] = {}
 
     def do_login(self) -> None:
         """ does the login/auth bit """
@@ -60,11 +60,21 @@ class GithubLinter:
                 self.github = Github(os.getenv("GITHUB_TOKEN"))
         else:
             if "github" not in self.config:
-                raise ValueError("No 'github' key in config, and no GITHUB_TOKEN auth - cannot start up.")
-            if "ignore_auth" in self.config["github"] and self.config["github"]["ignore_auth"]:
+                raise ValueError(
+                    "No 'github' key in config, and no GITHUB_TOKEN auth - cannot start up."
+                )
+            if (
+                "ignore_auth" in self.config["github"]
+                and self.config["github"]["ignore_auth"]
+            ):
                 self.github = Github()
-            elif "username" not in self.config["github"] or "password" not in self.config["github"]:
-                raise ValueError("No authentication details available - cannot start up.")
+            elif (
+                "username" not in self.config["github"]
+                or "password" not in self.config["github"]
+            ):
+                raise ValueError(
+                    "No authentication details available - cannot start up."
+                )
             else:
                 self.github = Github(
                     login_or_token=self.config["github"]["username"],
@@ -96,7 +106,7 @@ class GithubLinter:
                             reset,
                             now,
                             wait_time.seconds,
-                            )
+                        )
                     if wait_time.seconds > sleep_time:
                         sleep_time = wait_time.seconds
                 else:
@@ -120,13 +130,37 @@ class GithubLinter:
             fixes = []
             if "errors" in repo and repo["errors"]:
                 for category in repo["errors"]:
-                    deque(map(errors.append, [f"{category} - {error}" for error in repo["errors"].get(category)]))
+                    deque(
+                        map(
+                            errors.append,
+                            [
+                                f"{category} - {error}"
+                                for error in repo["errors"].get(category)
+                            ],
+                        )
+                    )
             if "warnings" in repo and repo["warnings"]:
                 for category in repo["warnings"]:
-                    deque(map(warnings.append, [f"{category} - {warning}" for warning in repo["warnings"].get(category)]))
+                    deque(
+                        map(
+                            warnings.append,
+                            [
+                                f"{category} - {warning}"
+                                for warning in repo["warnings"].get(category)
+                            ],
+                        )
+                    )
             if "fixes" in repo and repo["fixes"]:
                 for category in repo["fixes"]:
-                    deque(map(fixes.append, [f"{category} - {fix}" for fix in repo["fixes"].get(category)]))
+                    deque(
+                        map(
+                            fixes.append,
+                            [
+                                f"{category} - {fix}"
+                                for fix in repo["fixes"].get(category)
+                            ],
+                        )
+                    )
             if errors or warnings or fixes:
                 logger.info("Report for {}", repo_name)
                 # deque forces map to just run
@@ -147,9 +181,11 @@ class GithubLinter:
         repolinter = RepoLinter(repo)
         self.current_repo = repolinter.repository
 
-        logger.debug(repo.full_name)
+        logger.debug("Current repo: {}", repo.full_name)
         if repolinter.repository.archived:
-            logger.warning("Repository {} is archived!", repolinter.repository.full_name)
+            logger.warning(
+                "Repository {} is archived!", repolinter.repository.full_name
+            )
 
         if repolinter.repository.parent:
             logger.warning("Parent: {}", repolinter.repository.parent.full_name)
@@ -160,17 +196,18 @@ class GithubLinter:
                 module=self.modules[module],
                 check_filter=check,
                 do_fixes=fix,
-                )
+            )
 
         if not repolinter.errors or repolinter.warnings:
             logger.debug("{} all good", repolinter.repository.full_name)
         self.report[repolinter.repository.full_name] = {
             "errors": repolinter.errors,
             "warnings": repolinter.warnings,
-            "fixes" : repolinter.fixes,
+            "fixes": repolinter.fixes,
         }
 
         time.sleep(self.check_rate_limits())
+
 
 def get_all_user_repos(github: GithubLinter) -> List[Repository]:
     """ simpler filtered listing """
@@ -182,13 +219,14 @@ def get_all_user_repos(github: GithubLinter) -> List[Repository]:
         logger.debug(
             "Filtering by owner list in linter config: {}",
             ",".join(config["linter"]["owner_list"]),
-            )
+        )
         return [
             repo
             for repo in repolist
             if repo.owner.login in config["linter"]["owner_list"]
         ]
     return repolist
+
 
 def search_repos(
     github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]]
@@ -215,7 +253,7 @@ def search_repos(
         search_result = list(github.github.search_repositories(query=search))
 
         # filter search results by owner
-        if "owner" in  kwargs_object:
+        if "owner" in kwargs_object:
             logger.debug("Filtering based on owner: {}", kwargs_object["owner"])
             filtered_result = [
                 repo
@@ -243,13 +281,9 @@ def search_repos(
     else:
         search_result = get_all_user_repos(github)
 
-
     if not config["linter"]["check_forks"]:
         logger.debug("Filtering out forks")
-        filtered_by_forks = [
-            repo for repo in search_result
-            if repo.fork is False
-        ]
+        filtered_by_forks = [repo for repo in search_result if repo.fork is False]
         search_result = list(filtered_by_forks)
 
     logger.debug("Search result: {}", search_result)

@@ -3,6 +3,7 @@
 import json
 
 from typing import List, TypedDict
+
 # from github.Repository import Repository
 
 from loguru import logger
@@ -14,37 +15,37 @@ CATEGORY = "pyproject.toml"
 LANGUAGES = ["python"]
 
 # Config Defintiion
-DefaultConfig = TypedDict("DefaultConfig",
-{
-    "build-system": List[str],
-    "readme": str,
-
-})
+DefaultConfig = TypedDict(
+    "DefaultConfig",
+    {
+        "build-system": List[str],
+        "readme": str,
+    },
+)
 
 DEFAULT_CONFIG: DefaultConfig = {
-    "build-system" : [
-        "flit_core.buildapi",      # flit
-        "poetry.core.masonry.api", # poetry
+    "build-system": [
+        "flit_core.buildapi",  # flit
+        "poetry.core.masonry.api",  # poetry
     ],
-    "readme" : "README.md",
+    "readme": "README.md",
 }
+
 
 def validate_pyproject_authors(
     repo: RepoLinter,
     project_object: dict,
-
 ) -> None:
     """ checks the authors exist and are valid """
 
     config_expected = repo.config.get("pyproject.toml")
     if "authors" not in project_object:
-        repo.error( CATEGORY, "No authors in project definition.")
+        repo.error(CATEGORY, "No authors in project definition.")
 
     elif config_expected and config_expected.get("authors"):
         for author in project_object["authors"]:
             if author not in config_expected.get("authors"):
-                repo.error(CATEGORY, f"Project author not expected: {author}"
-                )
+                repo.error(CATEGORY, f"Project author not expected: {author}")
     else:
         for author in project_object["authors"]:
             repo.warning(CATEGORY, f"Check author is expected: {author}")
@@ -58,18 +59,17 @@ def validate_project_name(
     """ validates that the project name matches the repo name """
 
     if "name" not in project_object:
-        repo.error(CATEGORY, "No 'name' field in [project] section of config"
-        )
+        repo.error(CATEGORY, "No 'name' field in [project] section of config")
         return False
 
     project_name = project_object["name"]
     if project_name != repo.repository.name:
-        repo.error(CATEGORY,
+        repo.error(
+            CATEGORY,
             f"Project name doesn't match repo name repo: {repo.repository.name} project: {project_name}.",
         )
         return False
     return True
-
 
 
 def validate_readme_configured(
@@ -78,19 +78,20 @@ def validate_readme_configured(
 ) -> bool:
     """ validates that the project has a readme configured """
     if "readme" not in project_object:
-        repo.error(CATEGORY, "No 'readme' field in [project] section of config"
-        )
+        repo.error(CATEGORY, "No 'readme' field in [project] section of config")
         return False
 
     expected_readme = repo.config[CATEGORY]["readme"]
 
     project_readme = project_object["readme"]
     if project_readme != expected_readme:
-        repo.error(CATEGORY,
+        repo.error(
+            CATEGORY,
             f"Readme invalid - should be {expected_readme}, is {project_readme}",
         )
         return False
     return True
+
 
 def validate_scripts(
     repo: RepoLinter,
@@ -120,6 +121,7 @@ def validate_scripts(
                 retval = False
     return retval
 
+
 def load_pyproject(repo: RepoLinter):
     """ loads the pyproject.toml file """
 
@@ -132,9 +134,12 @@ def load_pyproject(repo: RepoLinter):
         return tomli.loads(fileresult.decoded_content.decode("utf-8"))
     except tomli.TOMLDecodeError as tomli_error:
         logger.debug(
-            "Failed to parse {}/pyproject.toml: {}", repo.repository.full_name, tomli_error
+            "Failed to parse {}/pyproject.toml: {}",
+            repo.repository.full_name,
+            tomli_error,
         )
         return None
+
 
 def check_pyproject_build_backend(repo: RepoLinter):
     """ gets the pyproject.toml file and looks for the key build-system.build-backend """
@@ -150,7 +155,9 @@ def check_pyproject_build_backend(repo: RepoLinter):
         return
     if "build-backend" not in pyproject["build-system"]:
         logger.error("Can't find build-system.build-backend.")
-        logger.debug(json.dumps(pyproject["build-system"], indent=4, ensure_ascii=False))
+        logger.debug(
+            json.dumps(pyproject["build-system"], indent=4, ensure_ascii=False)
+        )
         return
 
     backend = pyproject["build-system"]["build-backend"]
@@ -158,6 +165,7 @@ def check_pyproject_build_backend(repo: RepoLinter):
     logger.warning("Found build-backend.build-system in pyproject.toml: {}", backend)
     # logger.info()
     return
+
 
 def check_pyproject_toml(
     repo: RepoLinter,
@@ -175,18 +183,16 @@ def check_pyproject_toml(
 
     # check the authors are expected
     # TODO: make this its own check
-    validate_pyproject_authors(
-        repo, project
-    )
+    validate_pyproject_authors(repo, project)
     # TODO: make this its own check
-    validate_project_name(
-        repo, project
-    )
+    validate_project_name(repo, project)
 
     if "urls" in project:
         for url in project["urls"]:
             logger.debug("URL: {} - {}", url, project["urls"][url])
     return None
+
+
 # need to check for file exclusions so flit doesn't package things
 
 
@@ -197,7 +203,8 @@ def check_sdist_exclude_list(
     pyproject = load_pyproject(repo)
 
     if not pyproject:
-        repo.error(CATEGORY,
+        repo.error(
+            CATEGORY,
             "Failed to load pyproject.toml",
         )
         logger.error("Failed to find pyproject.toml")
@@ -215,7 +222,6 @@ def check_sdist_exclude_list(
         "mypy.ini",
     ]
 
-
     if "tool" not in pyproject:
         repo.error(CATEGORY, "tool section not in config")
         return
@@ -231,11 +237,11 @@ def check_sdist_exclude_list(
 
     flit_exclude_list = pyproject["tool"]["flit"]["sdist"]["exclude"]
 
-    logger.debug(json.dumps(flit_exclude_list, indent=4, default=str, ensure_ascii=False))
-
+    logger.debug(
+        json.dumps(flit_exclude_list, indent=4, default=str, ensure_ascii=False)
+    )
 
     for entry in sdist_exclude_list:
         if entry not in flit_exclude_list:
-            repo.error(CATEGORY,
-                f"tool.flit.sdist section missing '{entry}' entry.")
+            repo.error(CATEGORY, f"tool.flit.sdist section missing '{entry}' entry.")
     return

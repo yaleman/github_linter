@@ -6,23 +6,19 @@ import re
 import sys
 
 from loguru import logger
-import hcl2 # type: ignore
+import hcl2  # type: ignore
 import json5 as json
-from semver.version import Version # type: ignore
-
+from semver.version import Version  # type: ignore
 
 
 from .. import RepoLinter
-
 
 
 CATEGORY = "terraform"
 
 # this is the terraform version that linter recommends if you don't set it in config
 
-DEFAULT_CONFIG = {
-    "minimum_terraform_version" : "0.14.0"
-}
+DEFAULT_CONFIG = {"minimum_terraform_version": "0.14.0"}
 
 LANGUAGES = [
     "HCL",
@@ -43,10 +39,11 @@ PROVIDER_FILE_LIST = [
 
 AWS_MIN_VERSION = "3.41.0"
 
+
 def load_hclfile(
     repo: RepoLinter,
     filename: str,
-    ):
+):
     """ loads the given filename using hcl2 """
     filecontent = repo.cached_get_file(filename)
     if not filecontent or not filecontent.decoded_content:
@@ -67,10 +64,12 @@ def check_providers_tf_exists(
         hclfile = load_hclfile(repo, filename)
         if hclfile:
             return None
-    repo.error(CATEGORY,
-        f"Couldn't find a providers.tf file, looked in {','.join(PROVIDER_FILE_LIST)}"
+    repo.error(
+        CATEGORY,
+        f"Couldn't find a providers.tf file, looked in {','.join(PROVIDER_FILE_LIST)}",
     )
     return None
+
 
 def check_providers_for_modules(
     repo: RepoLinter,
@@ -92,7 +91,7 @@ def check_providers_for_modules(
             )
             continue
 
-        required_providers: Dict[str, Dict[str,str]] = {}
+        required_providers: Dict[str, Dict[str, str]] = {}
         for entry in hclfile["terraform"]:
             if "required_providers" in entry:
                 required_providers = entry["required_providers"]
@@ -125,6 +124,7 @@ def check_providers_for_modules(
     logger.debug(version)
     # TODO: use semver
 
+
 def check_terraform_version(
     repo: RepoLinter,
 ) -> None:
@@ -138,15 +138,22 @@ def check_terraform_version(
         if re.match(r"\d+\.\d+", required_version_str):
             required_version_str = f"{required_version_str}.0"
         else:
-            logger.error("{}.{} misconfigured, is '{}' should match Semver x.y.z pattern.", CATEGORY, "minimum_terraform_version", required_version_str)
+            logger.error(
+                "{}.{} misconfigured, is '{}' should match Semver x.y.z pattern.",
+                CATEGORY,
+                "minimum_terraform_version",
+                required_version_str,
+            )
             sys.exit(1)
     try:
         required_version = Version.parse(required_version_str)
         logger.debug("Configured required_version: {}", required_version)
     except ValueError as semver_parse_error:
-        logger.error("Failed to parse linter config terraform.required_version: {}. Bailing", semver_parse_error)
+        logger.error(
+            "Failed to parse linter config terraform.required_version: {}. Bailing",
+            semver_parse_error,
+        )
         sys.exit(1)
-
 
     for filename in PROVIDER_FILE_LIST:
         hclfile = load_hclfile(repo, filename)
@@ -161,7 +168,6 @@ def check_terraform_version(
             )
             continue
 
-
         for tf_config in hclfile["terraform"]:
 
             if "required_version" not in tf_config:
@@ -171,7 +177,6 @@ def check_terraform_version(
             found_required_version = True
             tmp_value = tf_config["required_version"].split(" ")[-1]
             logger.debug("Found required_version in {}: {}", filename, tmp_value)
-
 
             # add the trailing .0 that semver likes
             if not re.match(pattern=r"\d+\.\d+\.\d+", string=tmp_value):
@@ -183,11 +188,15 @@ def check_terraform_version(
             found_version = max([parsed_value, found_version])
 
     if not found_required_version:
-        return repo.error(CATEGORY, f"required_version not found in terraform config - set terraform.required_version to \">= {required_version}\"")
+        return repo.error(
+            CATEGORY,
+            f'required_version not found in terraform config - set terraform.required_version to ">= {required_version}"',
+        )
 
     if found_version < required_version:
         return repo.error(
             CATEGORY,
-            f"required version too low, wanted {required_version}, found {found_version}")
+            f"required version too low, wanted {required_version}, found {found_version}",
+        )
     logger.debug("Terraform required_version is OK")
     return None

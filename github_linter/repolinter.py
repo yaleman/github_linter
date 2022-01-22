@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from github.ContentFile import ContentFile
 from github.GithubException import UnknownObjectException
 from github.Repository import Repository
+
 # import json5 as json
 from loguru import logger
 import wildcard_matcher
@@ -16,6 +17,7 @@ from .exceptions import SkipOnArchived
 
 from .types import DICTLIST
 from .utils import load_config
+
 
 def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]):
     """ digs into a dict, shoving the defaults in """
@@ -29,21 +31,27 @@ def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]):
         if isinstance(dest[key], dict):
             add_from_dict(source[key], dest[key])
 
-def get_filtered_commands(checklist: List[str], check_filter: Optional[Tuple]) -> List[str]:
+
+def get_filtered_commands(
+    checklist: List[str], check_filter: Optional[Tuple]
+) -> List[str]:
     """ filters the checks """
     if not check_filter:
         return list(checklist)
     checks = []
     for check in checklist:
         for filterstr in check_filter:
-            if (check.startswith(filterstr) or wildcard_matcher.match(check, filterstr)) \
-                and check not in checks:
+            if (
+                check.startswith(filterstr) or wildcard_matcher.match(check, filterstr)
+            ) and check not in checks:
                 checks.append(check)
                 continue
     return checks
 
+
 class RepoLinter:
     """ handles the repository object, its parent and the report details """
+
     def __init__(self, repo: Repository):
         """ startup things """
         self.config = load_config()
@@ -53,14 +61,14 @@ class RepoLinter:
         self.repository = repo
 
         self.timings = {
-            "start_time" : datetime.now(),
-            "end_time" : None,
+            "start_time": datetime.now(),
+            "end_time": None,
         }
 
         self.errors: DICTLIST = {}
         self.warnings: DICTLIST = {}
         self.fixes: DICTLIST = {}
-        self.filecache: Dict[str,Optional[ContentFile]] = {}
+        self.filecache: Dict[str, Optional[ContentFile]] = {}
 
     def clear_file_cache(self, filepath: str) -> bool:
         """ removes a file from the file cache, returns bool if it was in there """
@@ -70,11 +78,9 @@ class RepoLinter:
         return False
 
     def cached_get_file(
-        self,
-        filepath: str,
-        clear_cache: bool = False
-        ) -> Optional[ContentFile]:
-        """ checks if we've made a call looking for a file and grabs it if not
+        self, filepath: str, clear_cache: bool = False
+    ) -> Optional[ContentFile]:
+        """checks if we've made a call looking for a file and grabs it if not
         returns none if no file exists, caches per-repository.
         """
 
@@ -86,20 +92,19 @@ class RepoLinter:
         self.filecache[filepath] = self.get_file(filepath)
         return self.filecache[filepath]
 
-
     def create_or_update_file(
         self,
         filepath: str,
         newfile: Union[Path, str, bytes],
         oldfile: Optional[ContentFile] = None,
         message: Optional[str] = None,
-        ) -> Optional[str]:
-        """ Create or update a file in the repository.
+    ) -> Optional[str]:
+        """Create or update a file in the repository.
         The message variable is what's put into the commit message
         """
 
         if not message:
-            message = f"Update file: {filepath}"
+            message = f"github-linter updating file: {filepath}"
 
         if isinstance(newfile, bytes):
             newfile_contents = newfile
@@ -119,14 +124,14 @@ class RepoLinter:
         commit_result = self.repository.update_file(
             path=filepath,
             message=message,
-            content = newfile_contents,
-            sha = blobsha,
-            branch = self.repository.default_branch
-            )
+            content=newfile_contents,
+            sha=blobsha,
+            branch=self.repository.default_branch,
+        )
         if "commit" not in commit_result:
             return "Unkown Commit URL"
 
-        return getattr(commit_result["commit"],'html_url', '')
+        return getattr(commit_result["commit"], "html_url", "")
 
     # def cached_get_files(
     #     self,
@@ -154,16 +159,17 @@ class RepoLinter:
                 logger.debug("Couldn't find files matching '{}'", path)
                 return None
             if not isinstance(fileresult, list):
-                fileresult = [fileresult,]
+                fileresult = [
+                    fileresult,
+                ]
             return fileresult
         except UnknownObjectException as exc:
-            logger.debug("UnknownObjectException calling get_contents({}): {}", path, exc)
+            logger.debug(
+                "UnknownObjectException calling get_contents({}): {}", path, exc
+            )
             return None
 
-    def get_file(
-        self,
-        filename: str
-    ) -> Optional[ContentFile]:
+    def get_file(self, filename: str) -> Optional[ContentFile]:
         """ looks for a file or returns none"""
         try:
             fileresult = self.get_files(filename)
@@ -183,9 +189,9 @@ class RepoLinter:
 
     def module_language_check(
         self,
-        module : ModuleType,
+        module: ModuleType,
     ) -> bool:
-        """ checks a repo + module for the exposed languages and makes sure they line up
+        """checks a repo + module for the exposed languages and makes sure they line up
 
         returns True if any of the language modules is in the repo
         """
@@ -193,13 +199,12 @@ class RepoLinter:
         if "all" in module.LANGUAGES:
             return True
 
-        repo_langs = [ lang.lower() for lang in self.repository.get_languages() ]
+        repo_langs = [lang.lower() for lang in self.repository.get_languages()]
 
         for language in module.LANGUAGES:
             if language.lower() in repo_langs:
                 return True
         return False
-
 
     @classmethod
     def add_result(cls, result_object: DICTLIST, category: str, value: str) -> None:
@@ -242,7 +247,9 @@ class RepoLinter:
     def skip_on_archived(self):
         """ Add this to a check to skip it if the repository is archived. """
         if self.repository.archived:
-            raise SkipOnArchived("This repository is archived so this test doesn't need to run.")
+            raise SkipOnArchived(
+                "This repository is archived so this test doesn't need to run."
+            )
 
     def run_module(
         self,
@@ -253,7 +260,6 @@ class RepoLinter:
         """ runs a given module """
         self.load_module_config(module)
 
-
         if "LANGUAGES" in dir(module):
             if not self.module_language_check(module):
                 logger.debug(
@@ -261,7 +267,7 @@ class RepoLinter:
                     module.__name__.split(".")[-1],
                     module.LANGUAGES,
                     self.repository.get_languages(),
-                    )
+                )
                 return False
 
         for check in sorted(get_filtered_commands(dir(module), check_filter)):
@@ -277,12 +283,10 @@ class RepoLinter:
                 if check.startswith("fix_"):
                     logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
                     try:
-                        getattr(module, check)(
-                            repo=self
-                        )
+                        getattr(module, check)(repo=self)
                     except SkipOnArchived:
                         pass
             # else:
-                # logger.debug("Skipping check: {}", check)
+            # logger.debug("Skipping check: {}", check)
 
         return True

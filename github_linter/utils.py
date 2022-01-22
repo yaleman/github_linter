@@ -11,6 +11,7 @@ from loguru import logger
 
 from .defaults import DEFAULT_LINTER_CONFIG
 
+
 def get_fix_file_path(category: str, filename: str) -> Path:
     """ gets a Path object for a filename within the fixes dir for the given category """
     module_parent = Path(__file__).parent
@@ -19,12 +20,14 @@ def get_fix_file_path(category: str, filename: str) -> Path:
         base_filename = Path(filename).name
         fixes_path = module_parent / f"fixes/{category}/{base_filename}"
         if not fixes_path.exists():
-            logger.error("Fix file {} in category {} not found, bailing.", filename, category)
+            logger.error(
+                "Fix file {} in category {} not found, bailing.", filename, category
+            )
             sys.exit(1)
     return fixes_path
 
 
-def load_config() -> Dict[Optional[str],Any]:
+def load_config() -> Dict[Optional[str], Any]:
     """ loads config """
     for configfile in [
         Path("./github_linter.json"),
@@ -44,7 +47,7 @@ def load_config() -> Dict[Optional[str],Any]:
 
         for key in DEFAULT_LINTER_CONFIG:
             if key not in config:
-                config[key] = DEFAULT_LINTER_CONFIG[key] # type: ignore
+                config[key] = DEFAULT_LINTER_CONFIG[key]  # type: ignore
 
     logger.error("Failed to find config file")
     return {}

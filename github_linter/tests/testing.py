@@ -10,15 +10,15 @@ from .. import RepoLinter
 CATEGORY = "testing"
 LANGUAGES = ["all"]
 
+
 class DefaultConfig(TypedDict):
     """ config object """
 
-DEFAULT_CONFIG: DefaultConfig = {
-}
 
-def check_shellcheck(
-    repo: RepoLinter
-):
+DEFAULT_CONFIG: DefaultConfig = {}
+
+
+def check_shellcheck(repo: RepoLinter):
     """ If 'Shell' exists in repo languages, check for a shellcheck action """
     repo_langs = repo.repository.get_languages()
 
@@ -42,16 +42,18 @@ def check_shellcheck(
         repo.error(
             CATEGORY,
             f"Shellcheck action string missing, expected {shellcheck_action}",
-            )
+        )
 
-def check_testing_yml_exists(
-    repo: RepoLinter
-):
+
+def check_testing_yml_exists(repo: RepoLinter):
     """ Checks that .github/workflows/testing.yml exists """
     repo.skip_on_archived()
 
     if not repo.repository.get_languages():
-        repo.warning(CATEGORY, "No languages identified, didn't check for automated testing config")
+        repo.warning(
+            CATEGORY,
+            "No languages identified, didn't check for automated testing config",
+        )
         return
 
     testingyml = repo.cached_get_file(".github/workflows/testing.yml")

@@ -4,8 +4,10 @@ import json
 from typing import Dict, List, Union, TypedDict, Optional
 
 from loguru import logger
+
 # from github.Repository import Repository
 import pytz
+
 # TODO: replace this with ruamel.yaml so we only have one cursed dependency
 import yaml
 
@@ -30,8 +32,10 @@ LANGUAGES = [
     "all",
 ]
 
+
 class DefaultConfig(TypedDict):
     """ config typing for module config """
+
 
 DEFAULT_CONFIG: DefaultConfig = {}
 
@@ -89,6 +93,7 @@ def find_language_in_ecosystem(language: str) -> Optional[str]:
 
 # TODO: base dependabot config on repo.get_languages() - ie {'Python': 22722, 'Shell': 328}
 
+
 def check_updates_for_languages(repo: RepoLinter):
     """ ensures that for every known language/package ecosystem, there's a configured update task """
 
@@ -122,7 +127,6 @@ def check_updates_for_languages(repo: RepoLinter):
     )
     package_managers_covered = []
 
-
     # check the update configs
     for update in updates:
         if "package-ecosystem" in update:
@@ -153,9 +157,10 @@ def check_updates_for_languages(repo: RepoLinter):
 
 DEPENDABOT_SCHEDULR_INTERVALS = [
     "daily",
-    "weekly", # monday by default, or schedule.day if you want to change it
-    "monthly", # first of the month
+    "weekly",  # monday by default, or schedule.day if you want to change it
+    "monthly",  # first of the month
 ]
+
 
 def load_file(
     repo: RepoLinter,
@@ -177,6 +182,7 @@ def load_file(
         repo.error(CATEGORY, f"Failed to parse dependabot config: {exc}")
     return {}
 
+
 def check_update_configs(
     repo: RepoLinter,
 ):
@@ -188,16 +194,13 @@ def check_update_configs(
         return
 
     if "updates" not in dependabot:
-        repo.error(
-            CATEGORY,
-            "No udpates config in dependabot.yml."
-        )
+        repo.error(CATEGORY, "No udpates config in dependabot.yml.")
         return
 
     for update in dependabot["updates"]:
         logger.debug(json.dumps(update, indent=4))
         if "package-ecosystem" not in update:
-            repo.error( CATEGORY, "package-ecosystem not set in an update")
+            repo.error(CATEGORY, "package-ecosystem not set in an update")
 
         elif update["package-ecosystem"] not in PACKAGE_ECOSYSTEM:
             repo.error(
@@ -207,19 +210,14 @@ def check_update_configs(
         # checks there's a schedule and it has a valid timezone
         # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates
         if "schedule" not in update:
-            repo.error(
-                CATEGORY,
-                f"Schedule missing from update {json.dumps(update)}"
-            )
+            repo.error(CATEGORY, f"Schedule missing from update {json.dumps(update)}")
             return
 
         schedule: Dict[str, str] = update["schedule"]
         if "interval" not in schedule:
             repo.error(
-                CATEGORY,
-                f"Interval missing from schedule {json.dumps(schedule)}"
+                CATEGORY, f"Interval missing from schedule {json.dumps(schedule)}"
             )
-
 
         # not mandatory, but needs to be valid -
         # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#scheduletimezone
@@ -232,15 +230,17 @@ def check_update_configs(
                     f"Update timezone's not valid? {timezone}",
                 )
 
+
 def check_updates_have_directory_set(
     repo: RepoLinter,
-    ):
+):
     """ checks that each update config has 'directory' set """
 
     dependabot = load_file(repo)
     if not dependabot:
         logger.debug("Coudln't load dependabot config.")
         return
+
 
 def check_dependabot_config(
     repo: RepoLinter,
@@ -258,6 +258,7 @@ def check_dependabot_config(
     #         repo.repository, dependabot_config["updates"], errors_object, warnings_object
     #     )
 
+
 def check_dependabot_vulnerability_enabled(
     repo: RepoLinter,
 ):
@@ -265,12 +266,14 @@ def check_dependabot_vulnerability_enabled(
     if not repo.repository.get_vulnerability_alert():
         repo.error(CATEGORY, "Vulnerability reports on repository are not enabled.")
 
+
 def fix_enable_vulnerability_alert(repo: RepoLinter):
     """ enables vulnerability alerts on a repository """
     if repo.repository.enable_vulnerability_alert():
         repo.fix(CATEGORY, "Enabled vulnerability reports on repository.")
     else:
         repo.error(CATEGORY, "Failed to enable vulnerability reports on repository.")
+
 
 def fix_enable_automated_security_fixes(repo: RepoLinter):
     """ enables dependabot on a repository """
