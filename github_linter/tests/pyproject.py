@@ -193,55 +193,53 @@ def check_pyproject_toml(
     return None
 
 
-# need to check for file exclusions so flit doesn't package things
+# TODO: moving away from flit, don't need this
+# def check_sdist_exclude_list(
+#     repo: RepoLinter,
+# ) -> None:
+#     """ check for file exclusions so flit doesn't package things it shouldn't """
+#     pyproject = load_pyproject(repo)
 
+#     if not pyproject:
+#         repo.error(
+#             CATEGORY,
+#             "Failed to load pyproject.toml",
+#         )
+#         logger.error("Failed to find pyproject.toml")
+#         return
+#     sdist_exclude_list = [
+#         "requirements*.txt",
+#         ".gitignore",
+#         ".pylintrc",
+#         "*.json.example*",
+#         "test_*.py",
+#         "*.sh",
+#         ".github/",
+#         ".vscode/",
+#         "*.json",
+#         "mypy.ini",
+#     ]
 
-def check_sdist_exclude_list(
-    repo: RepoLinter,
-) -> None:
-    """ check for file exclusions so flit doesn't package things it shouldn't """
-    pyproject = load_pyproject(repo)
+#     if "tool" not in pyproject:
+#         repo.error(CATEGORY, "tool section not in config")
+#         return
+#     if "flit" not in pyproject["tool"]:
+#         repo.error(CATEGORY, "tool.flit section not in config")
+#         return
+#     if "sdist" not in pyproject["tool"]["flit"]:
+#         repo.error(CATEGORY, "tool.flit.sdist.exclude section not in config")
+#         return
+#     if "exclude" not in pyproject["tool"]["flit"]["sdist"]:
+#         repo.error(CATEGORY, "tool.flit.sdist.exclude section not in config")
+#         return
 
-    if not pyproject:
-        repo.error(
-            CATEGORY,
-            "Failed to load pyproject.toml",
-        )
-        logger.error("Failed to find pyproject.toml")
-        return
-    sdist_exclude_list = [
-        "requirements*.txt",
-        ".gitignore",
-        ".pylintrc",
-        "*.json.example*",
-        "test_*.py",
-        "*.sh",
-        ".github/",
-        ".vscode/",
-        "*.json",
-        "mypy.ini",
-    ]
+#     flit_exclude_list = pyproject["tool"]["flit"]["sdist"]["exclude"]
 
-    if "tool" not in pyproject:
-        repo.error(CATEGORY, "tool section not in config")
-        return
-    if "flit" not in pyproject["tool"]:
-        repo.error(CATEGORY, "tool.flit section not in config")
-        return
-    if "sdist" not in pyproject["tool"]["flit"]:
-        repo.error(CATEGORY, "tool.flit.sdist.exclude section not in config")
-        return
-    if "exclude" not in pyproject["tool"]["flit"]["sdist"]:
-        repo.error(CATEGORY, "tool.flit.sdist.exclude section not in config")
-        return
+#     logger.debug(
+#         json.dumps(flit_exclude_list, indent=4, default=str, ensure_ascii=False)
+#     )
 
-    flit_exclude_list = pyproject["tool"]["flit"]["sdist"]["exclude"]
-
-    logger.debug(
-        json.dumps(flit_exclude_list, indent=4, default=str, ensure_ascii=False)
-    )
-
-    for entry in sdist_exclude_list:
-        if entry not in flit_exclude_list:
-            repo.error(CATEGORY, f"tool.flit.sdist section missing '{entry}' entry.")
-    return
+#     for entry in sdist_exclude_list:
+#         if entry not in flit_exclude_list:
+#             repo.error(CATEGORY, f"tool.flit.sdist section missing '{entry}' entry.")
+#     return
