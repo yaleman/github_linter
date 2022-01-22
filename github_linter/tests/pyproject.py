@@ -1,13 +1,16 @@
 """ pyproject.toml checks """
 
 import json
+import re
 
-from typing import List, TypedDict
+from typing import Any, Dict, List, TypedDict
 
 # from github.Repository import Repository
 
 from loguru import logger
 import tomli
+import tomli_w
+
 
 from .. import RepoLinter
 
@@ -243,3 +246,111 @@ def check_pyproject_toml(
 #         if entry not in flit_exclude_list:
 #             repo.error(CATEGORY, f"tool.flit.sdist section missing '{entry}' entry.")
 #     return
+
+def transfer_poetry_field(
+    repo: RepoLinter,
+    fieldname: str,
+    poetry: Dict[str,Any],
+    project: Dict[str, Any],
+    ):
+    """ copy tool.poetry fields into the project section of pyproject.toml """
+    if fieldname in poetry and poetry[fieldname].strip():
+        if fieldname not in project or project[fieldname] != poetry[fieldname]:
+            if project.get(fieldname) != poetry[fieldname]:
+                repo.fix(CATEGORY,
+                    f"Project {fieldname} didn't match, was {project.get(fieldname, 'unset')}, is now {poetry[fieldname]}"
+                    )
+                project[fieldname] = poetry[fieldname]
+
+def transfer_poetry_authors(
+    repo: RepoLinter,
+    poetry: Dict[str, Any],
+    project: Dict[str, Any],
+    ):
+    """ transfers authors """
+
+    if "authors" not in  project:
+        project["authors"] = []
+
+    re_poetry_author = re.compile(r"(?P<name>[^\<]+) \<(?P<email>[^\>]+)\>$")
+    for author in poetry["authors"]:
+        results = re_poetry_author.search(author)
+
+        if not results:
+            continue
+        details = results.groupdict()
+        logger.debug(json.dumps(details))
+        if details not in project["authors"]:
+            project["authors"].append(details)
+            repo.fix(
+                CATEGORY,
+                f"Transferred the following author from poetry to pyproject: {details}")
+
+def fix_copy_poetry_to_project(repo: RepoLinter):
+    """ fix tool.poetry fields into the project section of pyproject.toml
+
+    PEP621 says a dict of name / email https://www.python.org/dev/peps/pep-0621/#authors-maintainers
+
+    poetry:  Authors must be in the form name <email>.
+    """
+    # this pulls name/email from a poetry author
+    pyproject = load_pyproject(repo)
+
+    if not pyproject:
+        repo.error(CATEGORY, "fix_copy_poetry_to_project failed - attempted to fix pyproject but doesn't exist")
+        return
+
+    # check the name field
+
+    if not "tool" in pyproject:
+        logger.debug("tool not in pyproject, bailing")
+        return
+
+    if not "poetry" in pyproject["tool"]:
+        logger.debug("tool.poetry not in pyproject, bailing")
+        return
+
+    poetry = pyproject["tool"]["poetry"]
+
+    if "project" not in pyproject:
+        pyproject["project"] = {}
+    project = pyproject["project"]
+
+    for field in [
+        "name",
+        "description",
+        "license",
+        "version",
+
+        "readme",
+        "homepage",
+        "documentation",
+        "repository",
+
+        "keywords",
+        "classifiers",
+        # TODO: Check how this maps to pyproject.toml
+        # "packages",
+    ]:
+        transfer_poetry_field(repo, field, poetry, project)
+
+    if "authors" in poetry:
+        transfer_poetry_authors(repo, poetry, project)
+
+    newfilecontents = tomli_w.dumps(pyproject)
+    logger.debug("Updated pyproject.toml:")
+    logger.debug(newfilecontents)
+
+    filecontents = repo.cached_get_file("pyproject.toml", clear_cache=True)
+    if filecontents and newfilecontents != filecontents.decoded_content.decode("utf-8"):
+        commit = repo.create_or_update_file("pyproject.toml",
+            newfile=newfilecontents,
+            oldfile=filecontents,
+            message="github-linter.fix_copy_poetry_to_project updating pyproject.toml",
+            )
+        repo.fix(CATEGORY, f"fixed pyproject.toml - commit url {commit}")
+    else:
+        logger.debug("pyproject.toml is up to date")
+
+
+    # TODO: copy scripts around

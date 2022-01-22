@@ -89,6 +89,7 @@ semver = ">=3.0.0.dev2"
 tomli = "^2.0.0"
 "ruamel.yaml" = "^0.17.20"
 Jinja2 = "^3.0.3"
+tomli-w = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.12.2"
