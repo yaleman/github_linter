@@ -250,6 +250,8 @@ def search_repos(
             searchrepos = [f"user:{owner}" for owner in kwargs_object["owner"]]
         search = " OR ".join(searchrepos)
         logger.debug("Search string: '{}'", search)
+        if search.strip() == "" or search == None:
+            raise ValueError("Blank search result, no point searching...")
         search_result = list(github.github.search_repositories(query=search))
 
         # filter search results by owner
