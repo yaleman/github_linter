@@ -39,7 +39,8 @@ Only runs if you've got python.
     - Checks you have provider config for all your required providers.
 - Testing
     - Checks that `.github/workflows/testing.yml exists`
-
+- mkdocs
+    - checks if you've got mkdocs-looking things and then makes sure you've got a github actions thing to run them
 
 ## Configuration
 
@@ -78,14 +79,14 @@ For an example:
 ## Adding new test modules
 
 1. Add a module under `github_linter/tests/`
-    - Set `str: CATEGORY` to a name which will go in the reports.
-    - Set `List[str]: LANGUAGES` to a list of lower case languages, eg:
+    - Set `CATEGORY: str = "nameofmodule"` to a name which will go in the reports.
+    - Set `LANGUAGES: List[str] = []` to a list of lower case languages, eg:
         - python
         - javascript
         - rust
         - shell
-        - "all" is allowed if it's a generic thing
-2. Call the tests `check_<something>`
-3. Import the module in `__main__`
-4. Add the module to `__main__.MODULES`
+        - "all" is allowed to match all
+2. Call check functions `check_<something>`
+3. Call fix functions `fix_<something>`
+4. Import the module in `tests/__init__.py` as part of the big `from . import ()` block.
 5. Eat cake.

@@ -11,6 +11,7 @@ from . import (
     github_actions,
     homebrew,
     issues,
+    mkdocs,
     pylintrc,
     pyproject,
     testing,

@@ -227,7 +227,7 @@ def get_all_user_repos(github: GithubLinter) -> List[Repository]:
         ]
     return repolist
 
-
+# pylint: disable=too-many-branches
 def search_repos(
     github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]]
 ) -> List[Repository]:
@@ -250,7 +250,7 @@ def search_repos(
             searchrepos = [f"user:{owner}" for owner in kwargs_object["owner"]]
         search = " OR ".join(searchrepos)
         logger.debug("Search string: '{}'", search)
-        if search.strip() == "" or search == None:
+        if search.strip() == "" or search is None:
             raise ValueError("Blank search result, no point searching...")
         search_result = list(github.github.search_repositories(query=search))
 
