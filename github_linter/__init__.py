@@ -306,8 +306,6 @@ def search_repos(
 ) -> List[Repository]:
     """ search repos based on cli input """
 
-    config = load_config()
-
     if not owner_filter:
         if "owner_list" in github.config["linter"] and len(github.config["linter"]["owner_list"]) != 0:
             owner_filter = github.config["linter"]["owner_list"]
@@ -326,8 +324,7 @@ def search_repos(
         if search_string.needs_post_filtering:
             repos = filter_by_repo(repos, repo_filter)
 
-
-    if not config["linter"].get("check_forks", None):
+    if not github.config["linter"].get("check_forks", None):
         logger.debug("Filtering out forks")
         filtered_by_forks = [repo for repo in repos if repo.fork is False]
         repos = filtered_by_forks
