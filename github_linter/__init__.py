@@ -3,17 +3,22 @@
 from collections import deque
 
 from datetime import datetime
+import itertools
+
 import os
+from re import search
 import time
 from types import ModuleType
-from typing import Any, Dict, Optional, List, Tuple, Union
+from typing import Dict, Optional, List, Tuple
 
 import json5 as json
 from loguru import logger
 from github import Github
 from github.ContentFile import ContentFile
 from github.Repository import Repository
+import pydantic
 import pytz
+import wildcard_matcher
 
 from .repolinter import RepoLinter
 from .utils import load_config
@@ -81,6 +86,7 @@ class GithubLinter:
                     password=self.config["github"]["password"],
                 )
 
+    @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def add_module(self, module_name: str, module: ModuleType):
         """ adds a module to modules """
         self.modules[module_name] = module
@@ -170,6 +176,8 @@ class GithubLinter:
             else:
                 logger.info("Repository {} checks out OK", repo_name)
 
+
+    @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def handle_repo(
         self,
         repo: Repository,
@@ -209,6 +217,7 @@ class GithubLinter:
         time.sleep(self.check_rate_limits())
 
 
+@pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
 def get_all_user_repos(github: GithubLinter) -> List[Repository]:
     """ simpler filtered listing """
     config = load_config()
@@ -227,66 +236,101 @@ def get_all_user_repos(github: GithubLinter) -> List[Repository]:
         ]
     return repolist
 
-# pylint: disable=too-many-branches
+
+@pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
+def filter_by_repo(
+    repo_list: List[Repository],
+    repo_filters: List[str]
+) -> List[Repository]:
+    """ filter repositories by name """
+    retval = []
+    for repository in repo_list:
+        if repository.name in repo_filters:
+            if repository not in retval:
+                retval.append(repository)
+                logger.debug("Adding {} based on name match", repository.name)
+            continue
+        for repo_filter in repo_filters:
+            if "*" in repo_filter:
+                if wildcard_matcher.match(repository.name, repo_filter):
+                    if repository not in retval:
+                        retval.append(repository)
+                    logger.debug("Adding {} based on wildcard match", repository.name)
+                    continue
+    return retval
+
+
+class RepoSearchString(pydantic.BaseModel): #pylint: disable=no-member
+    """ Result of running generate_repo_search_string"""
+    needs_post_filtering: bool
+    search_string: str
+
+@pydantic.validate_arguments
+def generate_repo_search_string(
+    repo_filter: List[str],
+    owner_filter: List[str],
+    ) -> RepoSearchString:
+    """ generates the search string,
+        if there's wildcards in repo_filter, then you
+        have to search for *everything* then filter it later
+    """
+
+    has_repo_wildcard = False
+    for filterstring in repo_filter:
+        if "*" in filterstring:
+            has_repo_wildcard = True
+            logger.debug("Falling back to owner-only search because of a wildcard in the repo_filter ({})", filterstring)
+            break
+
+    if has_repo_wildcard or not repo_filter:
+        search_string = ""
+        logger.debug("Adding owner filter")
+        search_string += " ".join([f"user:{owner.strip()}" for owner in owner_filter])
+        logger.debug("Search string: {}", search_string)
+        return RepoSearchString(needs_post_filtering=has_repo_wildcard, search_string=search_string)
+
+    search_chunks = []
+    for owner, repo in itertools.product(owner_filter, repo_filter):
+        combo = f"repo:{owner.strip()}/{repo.strip()}"
+        # logger.debug(combo)
+        search_chunks.append(combo)
+    search_string = " ".join(search_chunks)
+    logger.debug("Search string: {}", search_string)
+    return RepoSearchString(needs_post_filtering=False, search_string=search_string)
+
+@pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
 def search_repos(
-    github: GithubLinter, kwargs_object: Dict[str, Dict[Any, Any]]
+    github: GithubLinter,
+    repo_filter: List[str],
+    owner_filter: List[str],
 ) -> List[Repository]:
     """ search repos based on cli input """
 
     config = load_config()
 
-    if "repo" in kwargs_object or "owner" in kwargs_object:
-        search = ""
-        searchrepos = []
-        if "repo" in kwargs_object:
-            for repo in kwargs_object["repo"]:
-                if "owner" in kwargs_object:
-                    for owner in kwargs_object["owner"]:
-                        searchrepos.append(f"{owner}/{repo}")
-                else:
-                    searchrepos.append(repo)
+    if not owner_filter:
+        if "owner_list" in github.config["linter"] and len(github.config["linter"]["owner_list"]) != 0:
+            owner_filter = github.config["linter"]["owner_list"]
         else:
-            logger.warning("Filtering on owner alone")
-            searchrepos = [f"user:{owner}" for owner in kwargs_object["owner"]]
-        search = " OR ".join(searchrepos)
-        logger.debug("Search string: '{}'", search)
-        if search.strip() == "" or search is None:
-            raise ValueError("Blank search result, no point searching...")
-        search_result = list(github.github.search_repositories(query=search))
+            owner_filter = [github.github.get_user().login]
 
-        # filter search results by owner
-        if "owner" in kwargs_object:
-            logger.debug("Filtering based on owner: {}", kwargs_object["owner"])
-            filtered_result = [
-                repo
-                for repo in search_result
-                if repo.owner.login in kwargs_object["owner"]
-            ]
-            search_result = list(filtered_result)
-        # if you're not specifying it on the command line, filter the list by the config
-        elif config["linter"]["owner_list"]:
-            filtered_result = [
-                repo
-                for repo in search_result
-                if repo.owner.login in config["linter"]["owner_list"]
-            ]
-            logger.warning("Filtering by owner list in linter config")
-            search_result = list(filtered_result)
-        # filter search results by repo name
-        if "repo" in kwargs_object:
-            # logger.debug("Filtering based on repo: {}", kwargs_object["repo"])
-            filtered_result = [
-                repo for repo in search_result if repo.name in kwargs_object["repo"]
-            ]
-            search_result = filtered_result
+
+    # if it's just the user, then we can query easier
+    if set(owner_filter) == set(github.github.get_user().login) and not repo_filter:
+        repos = list(get_all_user_repos(github))
 
     else:
-        search_result = get_all_user_repos(github)
+        search_string = generate_repo_search_string(repo_filter, owner_filter)
+        repos = list(github.github.search_repositories(search_string.search_string))
 
-    if not config["linter"]["check_forks"]:
+        if search_string.needs_post_filtering:
+            repos = filter_by_repo(repos, repo_filter)
+
+
+    if not config["linter"].get("check_forks", None):
         logger.debug("Filtering out forks")
-        filtered_by_forks = [repo for repo in search_result if repo.fork is False]
-        search_result = list(filtered_by_forks)
+        filtered_by_forks = [repo for repo in repos if repo.fork is False]
+        repos = filtered_by_forks
 
-    logger.debug("Search result: {}", search_result)
-    return search_result
+    logger.debug("Search result: {}", repos)
+    return repos
