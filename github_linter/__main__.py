@@ -1,6 +1,6 @@
 """ cli bits """
 
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import click
 from loguru import logger
@@ -41,15 +41,9 @@ def cli(
     """ Github linter for checking your repositories for various things. """
     github = GithubLinter()
 
-    if repo is None or len(repo) == 0:
-        repo_filter: List[str] = []
-    else:
-        repo_filter = list(repo)
-
-    if owner is None or len(owner) == 0:
-        owner_filter: List[str] = []
-    else:
-        owner_filter = list(owner)
+    # these just set defaults
+    repo_filter = [] if repo is None else [ element for element in repo if element is not None ]
+    owner_filter = [] if owner is None else [ element for element in owner if element is not None ]
 
     user = github.github.get_user()
 

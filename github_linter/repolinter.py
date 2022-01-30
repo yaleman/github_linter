@@ -217,14 +217,17 @@ class RepoLinter:
 
     def error(self, category: str, value: str):
         """ adds an error """
+        logger.error("{} - {}", category, value)
         self.add_result(self.errors, category, value)
 
     def fix(self, category: str, value: str):
         """ adds a fixed item """
+        logger.success("{} - {}", category, value)
         self.add_result(self.fixes, category, value)
 
     def warning(self, category: str, value: str):
         """ adds a warning """
+        logger.warning("{} - {}", category, value)
         self.add_result(self.warnings, category, value)
 
     def load_module_config(

@@ -172,7 +172,7 @@ class GithubLinter:
                 # deque forces map to just run
                 deque(map(logger.error, errors))
                 deque(map(logger.warning, warnings))
-                deque(map(logger.info, fixes))
+                deque(map(logger.success, fixes))
             else:
                 logger.info("Repository {} checks out OK", repo_name)
 

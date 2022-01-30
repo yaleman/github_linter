@@ -1,11 +1,11 @@
 """ checks for dependabot config """
 
+from enum import Enum
 import json
-from typing import Dict, List, Union, TypedDict, Optional
+from typing import Any, Dict, List, TypedDict, Optional
 
 from loguru import logger
-
-# from github.Repository import Repository
+import pydantic
 import pytz
 
 # TODO: replace this with ruamel.yaml so we only have one cursed dependency
@@ -35,9 +35,9 @@ LANGUAGES = [
 
 class DefaultConfig(TypedDict):
     """ config typing for module config """
+    config_filename : str
+    schedule: Dict[str, str]
 
-
-DEFAULT_CONFIG: DefaultConfig = {}
 
 # CONFIG = {
 #     "version": "2",
@@ -55,13 +55,121 @@ DEFAULT_CONFIG: DefaultConfig = {}
 # }
 
 
-DEPENDABOT_CONFIG_FILE = TypedDict(
-    "DEPENDABOT_CONFIG_FILE",
-    {
-        "version": int,
-        "updates": List[Dict[str, Dict[str, str]]],
-    },
-)
+# pylint: disable=invalid-name
+class IntervalEnum(str, Enum):
+    """ possible intervals for dependabot """
+    daily = "daily"
+    weekly = "weekly"
+    monthly = "monthly"
+
+class DependabotSchedule(pydantic.BaseModel):
+    """ schedule """
+    interval: IntervalEnum
+    day: Optional[str]
+    time: Optional[str]
+    timezone: Optional[str] # needs to be one of pytz.all_timezones
+
+    # TODO: write tests for this
+    @pydantic.validator("timezone")
+    def validate_timezone(cls, value):
+        """ validator """
+        if value not in pytz.all_timezones:
+            raise ValueError(f"Invalid timezone: {value}")
+        return value
+
+    @pydantic.validator('day')
+    def validate_day_value(cls, v, values):
+        """ check you're specifying a valid day of the week """
+        if values.get("day"):
+            if 'interval' in values and values.get('day') not in [
+                "monday"
+                "tuesday"
+                'wednesday'
+                'thursday'
+                "friday"
+                "saturday"
+                "sunday"
+            ]:
+                raise ValueError(f"Invalid day: {values['day']}")
+        return v
+
+class DependabotCommitMessage(pydantic.BaseModel):
+    """ configuration model for the config
+    https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#commit-message
+
+    """
+    prefix: Optional[str]
+    prefix_development: Optional[str] = pydantic.Field(alias="prefix-development")
+    include: Optional[str]
+
+    @pydantic.validator("include")
+    def validate_include(cls, value):
+        """ checks for a valid entry """
+        if value != "scope":
+            raise ValueError("Only 'scope' can be specified in 'include' field.")
+
+
+
+class DependabotUpdateConfig(pydantic.BaseModel):
+    """ an update config """
+    package_ecosystem: str = pydantic.Field(alias="package-ecosystem")
+    directory: str = "/"
+
+    schedule: DependabotSchedule
+    allow: Optional[Dict[str,str]] # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#allow
+    assignees: Optional[List[str]]
+    commit_message: Optional[DependabotCommitMessage] = pydantic.Field(alias="commit-message")
+    ignore: Optional[List[str]]
+    insecure_external_code_execution: Optional[str] = pydantic.Field(alias="insecure-external-code-execution")
+    labels: Optional[List[str]]
+    milestone: Optional[int]
+    open_pull_requests_limit: Optional[int] = pydantic.Field(alias="open-pull-requests-limit")
+    # TODO: this needs to be a thing - https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#pull-request-branch-nameseparator #pylint: disable=line-too-long
+    # pull-request-branch-name.separator
+    rebase_strategy: Optional[str] = pydantic.Field(alias="rebase-strategy")
+    # TODO: registries typing for DependabotUpdateConfig
+    registries: Optional[Any]
+    reviewers: Optional[List[str]]
+    target_branch: Optional[str] = pydantic.Field(alias="target-branch")
+    vendor: Optional[bool]
+    versioning_strategy: Optional[str] = pydantic.Field(alias="versioning-strategy")
+
+
+    # TODO: write tests for this
+    @pydantic.validator('package_ecosystem')
+    def validate_package_ecosystem(cls, value):
+        """ validates you're getting the right value """
+        if value not in PACKAGE_ECOSYSTEM:
+            raise ValueError(f"invalid value for package_ecosystem '{value}'")
+
+    # TODO: write tests for this
+    @pydantic.validator('rebase_strategy')
+    def validate_rebase_strategy(cls, value):
+        """ validates you're getting the right value """
+        if value not in ["disabled", "auto"]:
+            raise ValueError("rebase-strategy needs to be either 'auto' or 'disabled'.")
+
+    # TODO: write tests for this
+    @pydantic.validator('rebase_strategy')
+    def validate_execution_permissions(cls, value):
+        """ validates you're getting the right value """
+        if value not in ["deny", "allow"]:
+            raise ValueError("insecure-external-code-execution needs to be either 'allow' or 'deny'.")
+
+DEFAULT_CONFIG: DefaultConfig = {
+    "config_filename" : ".github/dependabot.yml",
+    "schedule" : DependabotSchedule(
+        interval="weekly",
+        day="Monday",
+        time="00:00",
+        timezone= "Etc/UTC" # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+    ).dict()
+}
+
+class DependabotConfigFile(pydantic.BaseModel):
+    """ cnofiguration file"""
+    version: int
+    updates: Optional[List[DependabotUpdateConfig]]
 
 PACKAGE_ECOSYSTEM: Dict[str, List[str]] = {
     "bundler": [],
@@ -81,7 +189,6 @@ PACKAGE_ECOSYSTEM: Dict[str, List[str]] = {
     "terraform": ["HCL"],
 }
 
-
 def find_language_in_ecosystem(language: str) -> Optional[str]:
     """ checks to see if languages are in VALID_VALUES["package-ecosystem"] """
     for package in PACKAGE_ECOSYSTEM:
@@ -90,7 +197,16 @@ def find_language_in_ecosystem(language: str) -> Optional[str]:
             return package
     return None
 
+def generate_expected_update_config(repo: RepoLinter) -> List[DependabotUpdateConfig]:
+    """ generates the required configuration """
 
+    updates: List[DependabotUpdateConfig] = []
+
+    for language in repo.repository.get_languages():
+        if find_language_in_ecosystem(language):
+            logger.warning("Found lang/eco: {}, {}", language, find_language_in_ecosystem(language))
+
+    return updates
 # TODO: base dependabot config on repo.get_languages() - ie {'Python': 22722, 'Shell': 328}
 
 
@@ -101,10 +217,8 @@ def check_updates_for_languages(repo: RepoLinter):
     if not dependabot:
         return repo.error(CATEGORY, "Dependabot file not found")
 
-    if "updates" not in dependabot:
+    if not dependabot.updates:
         return repo.error(CATEGORY, "Updates config not found.")
-
-    updates = dependabot["updates"]
 
     required_package_managers = []
 
@@ -128,15 +242,15 @@ def check_updates_for_languages(repo: RepoLinter):
     package_managers_covered = []
 
     # check the update configs
-    for update in updates:
-        if "package-ecosystem" in update:
+    for update in dependabot.updates:
+        if update.package_ecosystem:
             if (
-                update["package-ecosystem"] in required_package_managers
-                and update["package-ecosystem"] not in package_managers_covered
+                update.package_ecosystem in required_package_managers
+                and update.package_ecosystem not in package_managers_covered
             ):
-                package_managers_covered.append(update["package-ecosystem"])
+                package_managers_covered.append(update.package_ecosystem)
                 logger.debug(
-                    "Satisified requirement for {}", update["package-ecosystem"]
+                    "Satisified requirement for {}", update.package_ecosystem
                 )
     # check that the repo has full coverage
     if set(required_package_managers) != set(package_managers_covered):
@@ -155,7 +269,7 @@ def check_updates_for_languages(repo: RepoLinter):
     return None
 
 
-DEPENDABOT_SCHEDULR_INTERVALS = [
+DEPENDABOT_SCHEDULE_INTERVALS = [
     "daily",
     "weekly",  # monday by default, or schedule.day if you want to change it
     "monthly",  # first of the month
@@ -164,23 +278,31 @@ DEPENDABOT_SCHEDULR_INTERVALS = [
 
 def load_file(
     repo: RepoLinter,
-) -> Union[Dict, DEPENDABOT_CONFIG_FILE]:
+) -> Optional[DependabotConfigFile]:
     """ grabs the dependabot config file and loads it """
-    fileresult = repo.cached_get_file(".github/dependabot.yml")
+    fileresult = repo.cached_get_file(repo.config[CATEGORY]["config_filename"])
     if not fileresult:
         logger.debug("Couldn't find dependabot config.")
-        return {}
+        return None
 
     try:
-        dependabot_config = yaml.safe_load(fileresult.decoded_content.decode("utf-8"))
+        yaml_config = yaml.safe_load(fileresult.decoded_content.decode("utf-8"))
         logger.debug(
-            json.dumps(dependabot_config, indent=4, default=str, ensure_ascii=False)
+            json.dumps(yaml_config, indent=4, default=str, ensure_ascii=False)
         )
-        return dependabot_config
+
+        updates: List[DependabotUpdateConfig] = []
+        if "updates" in yaml_config:
+            for update in yaml_config["updates"]:
+                updates.append(DependabotUpdateConfig(**update))
+            yaml_config["updates"] = updates
+
+        retval = DependabotConfigFile(**yaml_config)
+        return retval
     except yaml.YAMLError as exc:
         logger.error("Failed to parse dependabot config: {}", exc)
         repo.error(CATEGORY, f"Failed to parse dependabot config: {exc}")
-    return {}
+    return None
 
 
 def check_update_configs(
@@ -188,47 +310,47 @@ def check_update_configs(
 ):
     """ checks update config exists and is slightly valid """
 
-    dependabot = load_file(repo)
+    try:
+        dependabot = load_file(repo)
+    except pydantic.ValidationError as validation_error:
+        repo.error(CATEGORY, f"Failed to parse dependabot config: {validation_error}")
+        return
+
     if not dependabot:
-        logger.debug("Coudln't load dependabot config.")
+        logger.debug("Couldn't load dependabot config.")
         return
 
-    if "updates" not in dependabot:
-        repo.error(CATEGORY, "No udpates config in dependabot.yml.")
+    if not dependabot.updates:
+        repo.error(CATEGORY, "No updates config in dependabot.yml.")
         return
 
-    for update in dependabot["updates"]:
+    for update in dependabot.updates:
         logger.debug(json.dumps(update, indent=4))
-        if "package-ecosystem" not in update:
-            repo.error(CATEGORY, "package-ecosystem not set in an update")
+        # if "package-ecosystem" not in update:
+            # repo.error(CATEGORY, "package-ecosystem not set in an update")
 
-        elif update["package-ecosystem"] not in PACKAGE_ECOSYSTEM:
-            repo.error(
-                CATEGORY,
-                f"package-ecosystem set to invalid value: '{update['package-ecosystem']}'",
-            )
         # checks there's a schedule and it has a valid timezone
         # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates
-        if "schedule" not in update:
-            repo.error(CATEGORY, f"Schedule missing from update {json.dumps(update)}")
-            return
+        # if not update."schedule" not in update:
+            # repo.error(CATEGORY, f"Schedule missing from update {json.dumps(update)}")
+            # return
 
-        schedule: Dict[str, str] = update["schedule"]
-        if "interval" not in schedule:
-            repo.error(
-                CATEGORY, f"Interval missing from schedule {json.dumps(schedule)}"
-            )
+        # schedule: DependabotSchedule = update.schedule
+        # if "interval" not in schedule.dict():
+        #     repo.error(
+        #         CATEGORY, f"Interval missing from schedule {json.dumps(schedule)}"
+        #     )
 
         # not mandatory, but needs to be valid -
         # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#scheduletimezone
 
-        if "timezone" in schedule:
-            timezone: str = schedule["timezone"]
-            if timezone not in pytz.common_timezones:
-                repo.error(
-                    CATEGORY,
-                    f"Update timezone's not valid? {timezone}",
-                )
+        # if "timezone" in schedule:
+        #     timezone: str = schedule["timezone"]
+        #     if timezone not in pytz.common_timezones:
+        #         repo.error(
+        #             CATEGORY,
+        #             f"Update timezone's not valid? {timezone}",
+        #         )
 
 
 def check_updates_have_directory_set(
@@ -281,3 +403,28 @@ def fix_enable_automated_security_fixes(repo: RepoLinter):
         repo.fix(CATEGORY, "Enabled automated security fixes on repository.")
     else:
         repo.error(CATEGORY, "Failed to enable automated security fixes.")
+
+def fix_create_dependabot_config(repo: RepoLinter):
+    """ creates the dependabot config file """
+    existing_config = load_file(repo)
+
+    expected_config = generate_expected_update_config(repo)
+
+    if not existing_config:
+        # just write the full config
+        raise NotImplementedError("Can't handle a missing dependabot config yet")
+
+    if existing_config and not existing_config.updates:
+        existing_config.updates = expected_config
+
+    else:
+        # TODO: compare expected and existing config and update them.
+        #for update in config["updates"]:
+        #    update_parsed = DependabotUpdateConfig(**update)
+        #    logger.debug(json.dumps(update_parsed.dict(exclude_unset=True, exclude_none=True), indent=4))
+        raise NotImplementedError("Need to write the updatey bit!")
+
+
+def update_dependabot_config(old, new):
+    """ bleep bloop, compares the two """
+    raise NotImplementedError

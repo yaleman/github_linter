@@ -39,5 +39,10 @@
     },
     "terraform" : {
         "minimum_terraform_version" : "0.15"
+    },
+    "dependabot" : {
+        "interval" : "daily",
+        "time" : "06:00",
+        "tiemzone" : "Australia/Brisbane"
     }
 }
