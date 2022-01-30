@@ -150,7 +150,7 @@ def check_updates_for_languages(repo: RepoLinter):
                 f"Package manager needs to be configured for {manager}",
             )
     else:
-        # TODO: wot
+        # TODO: figure out what to do here
         return None
     return None
 

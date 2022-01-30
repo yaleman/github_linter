@@ -29,7 +29,7 @@ def check_open_issues(
     if repo.repository.open_issues:
         repo.warning(
             CATEGORY,
-            f"There are {repo.repository.open_issues} open issues for {repo.repository.full_name}",
+            f"There are {repo.repository.open_issues} open issues for {repo.repository.full_name} (https://github.com/{repo.repository.full_name}/issues)",
         )
 
 
