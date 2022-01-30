@@ -45,11 +45,11 @@ DEFAULT_CONFIG: DefaultConfig = {
 }
 
 
-def load_pylintrc(repo: RepoLinter) -> Optional[ConfigParser]:
+def load_pylintrc(repo: RepoLinter, clear_cache: bool = False) -> Optional[ConfigParser]:
     """ grabs the .pylintrc file from the repository """
 
     for filepath in repo.config[CATEGORY]["pylintrc_locations"]:
-        contents = repo.cached_get_file(filepath)
+        contents = repo.cached_get_file(filepath, clear_cache)
         if not contents:
             continue
 
