@@ -97,7 +97,7 @@ pydantic = "^1.9.0"
 [tool.poetry.dev-dependencies]
 pylint = "^2.12.2"
 mypy = "^0.931"
-types-PyYAML = "^6.0.3"
+types-PyYAML = "^6.0.4"
 types-pytz = "^2021.3.4"
 pytest = "^6.2.5"
 pylint-pydantic = "^0.1.4"
