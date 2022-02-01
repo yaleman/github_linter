@@ -48,4 +48,4 @@ def test_generate_repo_search_string():
     owner_filter = [ "yaleman", "terminaloutcomes "]
     repo_filter = ["github_linter", "cheese"]
     result = generate_repo_search_string(repo_filter=repo_filter, owner_filter=owner_filter)
-    assert result.search_string == "yaleman/github_linter yaleman/cheese terminaloutcomes/github_linter terminaloutcomes/cheese"
+    assert result.search_string == "repo:yaleman/github_linter repo:yaleman/cheese repo:terminaloutcomes/github_linter repo:terminaloutcomes/cheese"

@@ -6,10 +6,9 @@ from types import ModuleType
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from github.ContentFile import ContentFile
-from github.GithubException import UnknownObjectException
+from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
 
-# import json5 as json
 from loguru import logger
 import wildcard_matcher
 
@@ -89,7 +88,23 @@ class RepoLinter:
         elif filepath in self.filecache:
             return self.filecache[filepath]
         # cache and then return
-        self.filecache[filepath] = self.get_file(filepath)
+
+        try:
+            self.filecache[filepath] = self.get_file(filepath)
+        except GithubException as error_message:
+
+            if "documentation_url" in error_message.data:
+                docs_url = error_message.data["documentation_url"]
+            else:
+                docs_url = "Unknown docs URL"
+
+            logger.error(
+                "Failed to pull file '{}' : {} ({})",
+                filepath,
+                error_message.data["message"],
+                docs_url
+                )
+            return None
         return self.filecache[filepath]
 
     def create_or_update_file(

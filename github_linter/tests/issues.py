@@ -4,6 +4,7 @@ from typing import TypedDict
 
 from loguru import logger
 
+
 from .. import RepoLinter
 from ..utils import get_fix_file_path
 
@@ -57,6 +58,7 @@ def check_stale_yml(
     repo.skip_on_archived()
 
     filename = repo.config[CATEGORY]["stale_file"]
+
     filecontents = repo.cached_get_file(filename)
 
     if not filecontents:
