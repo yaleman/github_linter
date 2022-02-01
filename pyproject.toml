@@ -15,19 +15,6 @@ dynamic = [
     "description"
 ]
 
-dependencies = [
-    "click",
-    "PyGithub",
-    "requests",
-    "pyyaml",
-    "loguru",
-    "json5",
-    "pytz",
-    "python-hcl2", # terraform
-    "semver>=3.0.0.dev2",
-    "wildcard-matcher",
-]
-
 keywords = [
     "github"
 ]
