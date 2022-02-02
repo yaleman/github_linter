@@ -11,7 +11,9 @@
         "funding" : {
             "github" : "yaleman",
             "custom" : ["http://buymeacoffee.com/yaleman"]
-        },
+        }
+    },
+    "codeowners" : {
         "codeowners" : {
             "*" : "@yaleman"
         }
@@ -43,6 +45,6 @@
     "dependabot" : {
         "interval" : "daily",
         "time" : "06:00",
-        "tiemzone" : "Australia/Brisbane"
+        "timezone" : "Australia/Brisbane"
     }
 }

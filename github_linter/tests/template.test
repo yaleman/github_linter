@@ -1,0 +1,16 @@
+""" template test file """
+
+from typing import TypedDict
+
+from loguru import logger
+
+from ..repolinter import RepoLinter
+
+
+class DefaultConfig(TypedDict):
+    """ default config for the test module """
+
+CATEGORY = ""
+DEFAULT_CONFIG = ""
+
+LANGUAGES = [ "ALL" ]

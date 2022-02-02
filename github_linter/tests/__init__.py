@@ -6,6 +6,7 @@ from typing import Any, Dict
 from loguru import logger
 
 from . import (
+    codeowners,
     dependabot,
     generic,
     github_actions,

@@ -43,7 +43,6 @@ class DefaultConfig(TypedDict):
 
     files_to_remove: List[str]
     funding: FundingDict
-    codeowners: Optional[Dict[str, Union[List[str], str]]]
 
 
 DEFAULT_CONFIG: DefaultConfig = {
@@ -67,7 +66,6 @@ DEFAULT_CONFIG: DefaultConfig = {
         "patreon": None,
         "tidelift": None,
     },
-    "codeowners": None,
 }
 
 
@@ -132,47 +130,3 @@ def fix_funding_file(repo: RepoLinter) -> None:
         repo.fix(CATEGORY, f"Updated .github/FUNDING.yml file, commit URL {result}")
     else:
         repo.error(CATEGORY, "Failed to update .github/FUNDING.yml file.")
-
-
-def check_codeowners_exists(repo: RepoLinter) -> None:
-    """checks that CODEOWNERS exists in the root of the repo
-    after checking that you require it by setting it in the config"""
-
-    if not repo.config[CATEGORY]["codeowners"]:
-        logger.warning("Skipping check as codeowners aren't configured.")
-
-    filecontents = repo.cached_get_file("CODEOWNERS")
-    if not filecontents:
-        repo.error(CATEGORY, "CODEOWNERS file doesn't exist.")
-
-
-def fix_codeowners_exists(repo: RepoLinter) -> None:
-    """ makes a basic CODEOWNERS file based on the input """
-
-    filepath = "CODEOWNERS"
-
-    oldfile = repo.cached_get_file(filepath)
-
-    filecontents = """# This file was created by github-linter\n"""
-    if not repo.config[CATEGORY]["codeowners"]:
-        logger.warning("Skipping fix as codeowners aren't configured.")
-
-    for codeowner_path in repo.config[CATEGORY]["codeowners"]:
-        filecontents += f"{codeowner_path} "
-        if repo.config[CATEGORY]["codeowners"][codeowner_path] is not None:
-            owner = repo.config[CATEGORY]["codeowners"][codeowner_path]
-            if isinstance(owner, str):
-                filecontents += f"{owner}\n"
-            else:
-                filecontents += f" {','.join(owner)}\n"
-
-    if oldfile is not None and oldfile.decoded_content.decode("utf-8") == filecontents:
-        logger.debug("Don't need to update {}", filepath)
-        return
-    # TODO: prompt the user to continue
-    repo.create_or_update_file(
-        filepath=filepath,
-        newfile=filecontents,
-        oldfile=oldfile,
-        message="github-linter updated CODEOWNERS file.",
-    )
