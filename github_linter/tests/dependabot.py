@@ -7,9 +7,7 @@ from typing import Any, Dict, List, TypedDict, Optional
 from loguru import logger
 import pydantic
 import pytz
-
-# TODO: replace this with ruamel.yaml so we only have one cursed dependency
-import yaml
+import ruamel.yaml # type: ignore
 
 from github_linter import RepoLinter
 
@@ -286,7 +284,7 @@ def load_file(
         return None
 
     try:
-        yaml_config = yaml.safe_load(fileresult.decoded_content.decode("utf-8"))
+        yaml_config = ruamel.yaml.YAML(pure=True).load(fileresult.decoded_content.decode("utf-8"))
         logger.debug(
             json.dumps(yaml_config, indent=4, default=str, ensure_ascii=False)
         )
@@ -299,7 +297,7 @@ def load_file(
 
         retval = DependabotConfigFile(**yaml_config)
         return retval
-    except yaml.YAMLError as exc:
+    except Exception as exc: #pylint: disable=broad-except
         logger.error("Failed to parse dependabot config: {}", exc)
         repo.error(CATEGORY, f"Failed to parse dependabot config: {exc}")
     return None
@@ -325,7 +323,7 @@ def check_update_configs(
         return
 
     for update in dependabot.updates:
-        logger.debug(json.dumps(update, indent=4))
+        logger.debug(json.dumps(update.json(), indent=4))
         # if "package-ecosystem" not in update:
             # repo.error(CATEGORY, "package-ecosystem not set in an update")
 
