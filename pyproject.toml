@@ -1,6 +1,6 @@
 [build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["setuptools", "poetry_core>=1.0"]
+build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "github_linter"
@@ -38,20 +38,6 @@ dev = [
 'github-linter' = 'github_linter.__main__:cli'
 
 
-[tool.flit.sdist]
-exclude = [
-    ".vscode/",
-    "requirements*.txt",
-    ".gitignore",
-    ".pylintrc",
-    "*.json.example*",
-    "test_*.py",
-    "*.sh",
-    ".github/",
-    "*.json",
-    "mypy.ini",
-]
-
 [tool.poetry]
 name = "github_linter"
 version = "0.0.1"
@@ -70,16 +56,16 @@ loguru = "^0.6.0"
 PyGithub = "^1.55"
 requests = "^2.27.1"
 PyYAML = "^6.0"
+Jinja2 = "^3.0.3"
 json5 = "^0.9.6"
 pytz = "^2021.3"
 python-hcl2 = "^3.0.1"
-wildcard-matcher = "^0.0.3"
+pydantic = "^1.9.0"
 semver = ">=3.0.0.dev2"
 tomli = "^2.0.0"
-"ruamel.yaml" = "^0.17.20"
-Jinja2 = "^3.0.3"
-pydantic = "^1.9.0"
 tomli-w = "^1.0.0"
+"ruamel.yaml" = "^0.17.20"
+wildcard-matcher = "^0.0.3"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.12.2"
