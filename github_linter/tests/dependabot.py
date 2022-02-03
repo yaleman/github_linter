@@ -409,8 +409,9 @@ def fix_create_dependabot_config(repo: RepoLinter):
     expected_config = generate_expected_update_config(repo)
 
     if not existing_config:
-        # just write the full config
-        raise NotImplementedError("Can't handle a missing dependabot config yet")
+        # TODO: just write the full config
+        logger.warning("Can't handle a missing dependabot config yet")
+        return
 
     if existing_config and not existing_config.updates:
         existing_config.updates = expected_config
@@ -420,9 +421,11 @@ def fix_create_dependabot_config(repo: RepoLinter):
         #for update in config["updates"]:
         #    update_parsed = DependabotUpdateConfig(**update)
         #    logger.debug(json.dumps(update_parsed.dict(exclude_unset=True, exclude_none=True), indent=4))
-        raise NotImplementedError("Need to write the updatey bit!")
+        logger.warning("Need to write the updatey bit!")
+        return
 
 
 def update_dependabot_config(old, new):
     """ bleep bloop, compares the two """
+    # TODO: write update_dependabot_config
     raise NotImplementedError

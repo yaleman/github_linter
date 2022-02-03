@@ -8,7 +8,7 @@ from loguru import logger
 import ruamel.yaml  # type: ignore
 
 from github.ContentFile import ContentFile
-
+from github.GithubException import GithubException
 from .. import RepoLinter
 
 __all__ = [
@@ -101,7 +101,20 @@ def check_files_to_remove(
     repo: RepoLinter,
 ) -> None:
     """ check for files to remove """
-    contents = repo.repository.get_contents("")
+    try:
+        contents = repo.repository.get_contents("")
+    except GithubException as error_message:
+        if "documentation_url" in error_message.data:
+            docs_url = error_message.data["documentation_url"]
+        else:
+            docs_url = "Unknown docs URL"
+
+        logger.error(
+            "Failed to query repo contents {} ({})",
+            error_message.data["message"],
+            docs_url
+            )
+        return
     if isinstance(contents, ContentFile):
         contents = [contents]
 
