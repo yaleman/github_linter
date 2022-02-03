@@ -63,4 +63,3 @@ def fix_codeowners_exists(repo: RepoLinter) -> None:
         message="github-linter updated CODEOWNERS file.",
     )
     repo.fix(CATEGORY, f"Created basic CODEOWNERS file: {commit_url}")
-

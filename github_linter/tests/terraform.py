@@ -123,6 +123,7 @@ def check_providers_for_modules(
     version = Version.parse("1.2.3")
     logger.debug(version)
 
+
 def check_terraform_version(
     repo: RepoLinter,
 ) -> None:
