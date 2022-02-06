@@ -66,6 +66,9 @@ tomli = "^2.0.0"
 tomli-w = "^1.0.0"
 "ruamel.yaml" = "^0.17.20"
 wildcard-matcher = "^0.0.3"
+tinydb = "^4.6.1"
+fastapi = "^0.73.0"
+uvicorn = "^0.17.4"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.12.2"
