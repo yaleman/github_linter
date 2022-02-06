@@ -1,50 +1,51 @@
 {
-    "linter" : {
-        "owner_list" : [
+    "linter": {
+        "owner_list": [
             "yaleman",
             "terminaloutcomes",
             "drinkz-org"
         ],
-        "check_forks" : false
+        "check_forks": false
     },
-    "generic" : {
-        "funding" : {
-            "github" : "yaleman",
-            "custom" : ["http://buymeacoffee.com/yaleman"]
+    "generic": {
+        "funding": {
+            "github": "yaleman",
+            "custom": [
+                "http://buymeacoffee.com/yaleman"
+            ]
         }
     },
-    "codeowners" : {
-        "codeowners" : {
-            "*" : "@yaleman"
+    "codeowners": {
+        "codeowners": {
+            "*": "@yaleman"
         }
     },
-    "pyproject.toml" : {
-
-        "authors" : [
+    "pyproject.toml": {
+        "authors": [
             {
-                "name" : "James Hodgkinson",
-                "email" : "james@terminaloutcomes.com"
+                "name": "James Hodgkinson",
+                "email": "james@terminaloutcomes.com"
             },
             {
-                "name" : "James Hodgkinson",
-                "email" : "yaleman@ricetek.net"
+                "name": "James Hodgkinson",
+                "email": "yaleman@ricetek.net"
             }
         ]
     },
-    "pylintrc" : {
-        "pylintrc" : {
-            "max_line_length" : 200,
-            "disable" : [
+    "pylintrc": {
+        "pylintrc": {
+            "max_line_length": 200,
+            "disable": [
                 "W0511"
             ]
         }
     },
-    "terraform" : {
-        "minimum_terraform_version" : "0.15"
+    "terraform": {
+        "minimum_terraform_version": "0.15"
     },
-    "dependabot" : {
-        "interval" : "daily",
-        "time" : "06:00",
-        "timezone" : "Australia/Brisbane"
+    "dependabot": {
+        "interval": "daily",
+        "time": "06:00",
+        "timezone": "Australia/Brisbane"
     }
 }
