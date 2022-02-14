@@ -4,13 +4,14 @@ import asyncio
 
 from pathlib import Path
 from typing import AsyncGenerator, List, Optional
-from time import time
+import os
 
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import sessionmaker
 import sqlalchemy.dialects.sqlite
+
 from fastapi import  BackgroundTasks, FastAPI, Depends
 from fastapi.concurrency import run_in_threadpool
 
@@ -21,7 +22,7 @@ from pydantic import BaseModel
 from github.Repository import Repository
 from loguru import logger
 
-from .. import GithubLinter, get_all_user_repos
+from .. import GithubLinter
 
 DB_PATH = Path("~/.config/github_linter.sqlite").expanduser().resolve()
 DB_URL = f"sqlite+aiosqlite:///{DB_PATH.as_posix()}"
@@ -126,53 +127,6 @@ async def github_linter_js():
     return Response(status_code=404)
 
 
-async def update_stored_repos(
-    githublinter: GithubLinter=Depends(githublinter_factory),
-
-    session: AsyncSession = Depends(get_async_session),
-    ):
-    """ background task that caches the results of get_all_user_repos """
-
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    async with async_session_maker() as session:
-        results: List[Repository]  = await run_in_threadpool(lambda: get_all_user_repos(githublinter))
-
-        for repo in results:
-            repoobject = RepoData.parse_obj({
-                "full_name" : repo.full_name,
-                "name" : repo.name,
-                "owner" : repo.owner.name,
-                "organization" : repo.organization.name if repo.organization else None,
-                "default_branch" : repo.default_branch,
-                "archived" : repo.archived,
-                "description" : repo.description,
-                "fork" : repo.fork,
-                "open_issues" : repo.open_issues_count,
-                "last_updated" : time(),
-                "private" : repo.private,
-                "parent" :repo.parent.full_name if repo.parent else None,
-            })
-
-            insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos)\
-                .values(**repoobject.dict())
-            do_update = insert_row.on_conflict_do_update(
-                index_elements=['full_name'],
-                set_= repoobject.dict(),
-            )
-            await session.execute(do_update)
-            await session.commit()
-        lastupdated = {"name" : "last_updated", "value" : time()}
-        insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata)\
-            .values(**lastupdated)
-        do_update = insert_row.on_conflict_do_update(
-            index_elements=['name'],
-            set_= lastupdated,
-        )
-        await session.execute(do_update)
-        await session.commit()
 
 @app.get("/db/updated")
 async def db_updated(
@@ -193,15 +147,13 @@ async def db_updated(
 
 @app.get("/repos/update")
 async def update_repos(
-    background_tasks: BackgroundTasks,
-    githublinter: GithubLinter=Depends(githublinter_factory),
     ):
     """ does the background thing """
 
-    background_tasks.add_task(
-        update_stored_repos,
-        githublinter,
-        )
+    # TODO: spawn the process
+    print("Spawning an update process...")
+    os.spawnlp(os.P_NOWAIT, __file__, "--update")
+
     return {"message": "Updating in the background"}
 
 @app.get("/repos")
