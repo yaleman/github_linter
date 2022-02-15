@@ -19,7 +19,6 @@ from fastapi.responses import HTMLResponse, FileResponse, Response
 
 from pydantic import BaseModel
 
-from github.Repository import Repository
 from loguru import logger
 
 from .. import GithubLinter
@@ -33,6 +32,7 @@ Base = declarative_base()
 
 app = FastAPI()
 
+# pylint: disable=too-few-public-methods
 class SQLRepos(Base):
     """ sqlrepos """
     __tablename__ = "repos"
@@ -51,6 +51,7 @@ class SQLRepos(Base):
     organization = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
     parent = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
 
+# pylint: disable=too-few-public-methods
 class SQLMetadata(Base):
     """ metadata """
     __tablename__ = "metadata"
@@ -103,11 +104,13 @@ def githublinter_factory():
     githublinter.do_login()
     yield githublinter
 
-@app.get("/favicon.ico")
-async def favicon_ico():
-    """ return a null favicon """
-
-    return FileResponse("")
+@app.get("/favicon.svg")
+async def favicon():
+    """ return a """
+    icon_file = Path(Path(__file__).resolve().parent.as_posix()+"/images/github.svg")
+    if icon_file.exists():
+        return FileResponse(icon_file)
+    return Response(status_code=404)
 
 @app.get('/css/{filename:str}')
 async def css_file(filename: str):

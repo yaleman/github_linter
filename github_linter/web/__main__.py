@@ -9,10 +9,10 @@ from github.Repository import Repository
 
 import sqlalchemy
 
-from sqlalchemy.ext.asyncio import AsyncSession
+# from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base # DeclarativeMeta,
+# from sqlalchemy.orm import sessionmaker
 import sqlalchemy.dialects.sqlite
 
 import uvicorn # type: ignore
