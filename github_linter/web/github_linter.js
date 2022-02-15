@@ -22,7 +22,7 @@ var repo_app = new Vue({
     created () {
       this.updateRepos();
       this.getLastUpdated();
-      this.timer = setInterval(this.getLastUpdated, 2000);
+      this.timer = setInterval(this.getLastUpdated, 5000);
       this.timer = setInterval(this.updateRepos, 5000);
 
     },
