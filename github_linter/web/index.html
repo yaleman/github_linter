@@ -39,7 +39,7 @@
   </thead>
   <tbody>
     <tr v-for="(repo, index) in filteredRows" :key="`repo-${repo.full_name}`">
-      <th scope="row"><span v-if="repo.private">(P)</span> {{ repo.full_name }}</th>
+      <th scope="row">{{ repo.full_name }} <span v-if="repo.private">(P)</span></th>
       <td><a :href="'https://github.com/'+repo.full_name" target="_blank">Open in github</a></td>
 
       <td v-if="repo.archived == 1">🪦</td><td v-else></td>
