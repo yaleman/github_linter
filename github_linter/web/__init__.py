@@ -2,10 +2,13 @@
 
 import asyncio
 
+import logging
 from pathlib import Path
+from time import time
 from typing import AsyncGenerator, List, Optional
-import os
 
+
+from loguru import logger
 import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
@@ -19,9 +22,8 @@ from fastapi.responses import HTMLResponse, FileResponse, Response
 
 from pydantic import BaseModel
 
-from loguru import logger
 
-from .. import GithubLinter
+from .. import GithubLinter, Repository, get_all_user_repos
 
 DB_PATH = Path("~/.config/github_linter.sqlite").expanduser().resolve()
 DB_URL = f"sqlite+aiosqlite:///{DB_PATH.as_posix()}"
@@ -153,14 +155,84 @@ async def db_updated(
         print(f"Failed to pull last_updated: {error_message}")
         return -1
 
+async def update_stored_repo(
+    repo: Repository
+) -> None:
+    """ updates a single repository """
+    async with engine.begin() as conn:
+        repoobject = RepoData.parse_obj({
+            "full_name" : repo.full_name,
+            "name" : repo.name,
+            "owner" : repo.owner.name,
+            "organization" : repo.organization.name if repo.organization else None,
+            "default_branch" : repo.default_branch,
+            "archived" : repo.archived,
+            "description" : repo.description,
+            "fork" : repo.fork,
+            "open_issues" : repo.open_issues_count,
+            "last_updated" : time(),
+            "private" : repo.private,
+            "parent" :repo.parent.full_name if repo.parent else None,
+        })
+
+        insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos)\
+            .values(**repoobject.dict())
+        do_update = insert_row.on_conflict_do_update(
+            index_elements=['full_name'],
+            set_= repoobject.dict(),
+        )
+        await conn.execute(do_update)
+        # await conn.commit()
+        logger.info(f"Done with {repo}")
+        lastupdated = {"name" : "last_updated", "value" : time()}
+        insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata)\
+            .values(**lastupdated)
+        do_update = insert_row.on_conflict_do_update(
+            index_elements=['name'],
+            set_= lastupdated,
+        )
+        await conn.execute(do_update)
+        await conn.commit()
+
+async def update_stored_repos(
+    ) -> None:
+    """ background task that caches the results of get_all_user_repos """
+    githublinter = GithubLinter()
+    base = declarative_base()
+
+    async with engine.begin() as conn:
+        await conn.run_sync(base.metadata.create_all)
+
+        github_repos: List[Repository]  = get_all_user_repos(githublinter)
+        repo_names = [ ghrepo.full_name for ghrepo in github_repos ]
+
+        logger.info(f"Got {len(repo_names)} repos")
+        for repo in github_repos:
+            await update_stored_repo(repo)
+
+        all_repos_query = sqlalchemy.select(SQLRepos)
+        all_repos_execute = await conn.execute(all_repos_query)
+        if all_repos_execute is None:
+            return None
+        allrepos_rows = all_repos_execute.fetchall()
+        for dbrepo in allrepos_rows:
+            logger.debug("Checking {} for removal.", dbrepo.full_name)
+            if dbrepo.full_name not in repo_names:
+                logger.info("Removing unlisted repo: {}", dbrepo.full_name)
+                deleterepo_query = sqlalchemy.delete(SQLRepos).where(SQLRepos.full_name==dbrepo.full_name)
+                await conn.execute(deleterepo_query)
+
+
+
+
 @app.get("/repos/update")
 async def update_repos(
+    background_tasks: BackgroundTasks,
     ):
     """ does the background thing """
 
-    # TODO: spawn the process
     print("Spawning an update process...")
-    os.spawnlp(os.P_NOWAIT, __file__, "--update")
+    background_tasks.add_task(update_stored_repos)
 
     return {"message": "Updating in the background"}
 
