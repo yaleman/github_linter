@@ -48,7 +48,7 @@ def cli(
             )
 
 async def update_stored_repos(
-    ):
+    ) -> None:
     """ background task that caches the results of get_all_user_repos """
     githublinter = GithubLinter()
 

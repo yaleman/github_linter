@@ -5,7 +5,7 @@ from io import StringIO
 from typing import Any, Dict, List, Optional, TypedDict, Union
 
 from loguru import logger
-import ruamel.yaml  # type: ignore
+from ruyaml import YAML
 
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException
@@ -71,7 +71,7 @@ DEFAULT_CONFIG: DefaultConfig = {
 
 def parse_funding_file(input_string: Union[str, bytes]) -> FundingDict:
     """ parses the FUNDING.yml file into a FundingDict """
-    parsed_data: FundingDict = ruamel.yaml.YAML(pure=True).load(input_string)
+    parsed_data: FundingDict = YAML(pure=True).load(input_string)
     return parsed_data
 
 
@@ -83,7 +83,7 @@ def generate_funding_file(input_data: Dict[str, Any]):
         if input_data[key] is not None:
             output_data[key] = input_data[key]
 
-    yaml = ruamel.yaml.YAML(pure=True)
+    yaml = YAML(pure=True)
     yaml.brace_single_entry_mapping_in_flow_sequence = True
     # yaml.default_flow_style = False
     outputio = StringIO()

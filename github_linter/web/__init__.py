@@ -29,7 +29,7 @@ DB_URL = f"sqlite+aiosqlite:///{DB_PATH.as_posix()}"
 
 engine = create_async_engine(DB_URL)
 async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-Base: DeclarativeMeta = declarative_base()
+Base = declarative_base()
 
 app = FastAPI()
 
@@ -136,9 +136,14 @@ async def db_updated(
 
     try:
         stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name=="last_updated")
-        result: sqlalchemy.engine.result.ChunkedIteratorResult = await session.execute(stmt)
+        result: sqlalchemy.engine.result.Result = await session.execute(stmt)
 
-        data = MetaData.from_orm(result.fetchone()["SQLMetadata"])
+        if result is None:
+            return -1
+        row =  result.fetchone()
+        if (row is None) or ("SQLMetadata" not in row):
+            return -1
+        data = MetaData.from_orm(row["SQLMetadata"])
         return data.value
     # pylint: disable=broad-except
     except Exception as error_message:
