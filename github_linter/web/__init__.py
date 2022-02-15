@@ -144,9 +144,12 @@ async def db_updated(
         result: sqlalchemy.engine.result.Result = await session.execute(stmt)
 
         if result is None:
+            logger.debug("No response from db")
             return -1
         row =  result.fetchone()
-        if (row is None) or ("SQLMetadata" not in row):
+
+        if row is None:
+            logger.error("no row data querying update time: {}", row)
             return -1
         data = MetaData.from_orm(row["SQLMetadata"])
         return data.value
