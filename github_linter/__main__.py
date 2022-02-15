@@ -37,7 +37,7 @@ MODULE_CHOICES = [
 def cli(
     repo: Optional[Tuple[str]] = None,
     owner: Optional[Tuple[str]] = None,
-    **kwargs):
+    **kwargs) -> None:
     """ Github linter for checking your repositories for various things. """
     github = GithubLinter()
 
@@ -50,6 +50,8 @@ def cli(
     logger.debug("Getting repos")
     repos = search_repos(github, repo_filter, owner_filter)
 
+    if not repos:
+        return
 
     if "module" in kwargs and len(kwargs["module"]) > 0:
         for module in kwargs["module"]:

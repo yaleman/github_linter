@@ -3,6 +3,7 @@
 from collections import deque
 
 from datetime import datetime
+from distutils.log import error
 import itertools
 
 import os
@@ -14,6 +15,7 @@ import json5 as json
 from loguru import logger
 from github import Github
 from github.ContentFile import ContentFile
+from github.GithubException import GithubException
 from github.Repository import Repository
 import pydantic
 import pytz
@@ -235,7 +237,6 @@ def get_all_user_repos(github: GithubLinter) -> List[Repository]:
         ]
     return repolist
 
-
 @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
 def filter_by_repo(
     repo_list: List[Repository],
@@ -318,8 +319,17 @@ def search_repos(
 
     else:
         search_string = generate_repo_search_string(repo_filter, owner_filter)
-        repos = list(github.github.search_repositories(search_string.search_string))
-
+        try:
+            repos = list(github.github.search_repositories(search_string.search_string))
+        except GithubException as error_message:
+            logger.error("Failed to query repositories.")
+            if "errors" in error_message.data and len(error_message.data["errors"]) > 0:
+                errors = error_message.data["errors"]
+                for error_msg in errors:
+                    logger.error(json.loads(error_msg)["message"])
+            else:
+                logger.error(error_message)
+            return []
         if search_string.needs_post_filtering:
             repos = filter_by_repo(repos, repo_filter)
 
