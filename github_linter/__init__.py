@@ -6,10 +6,9 @@ from datetime import datetime
 import itertools
 
 import os
-from re import search
 import time
 from types import ModuleType
-from typing import Dict, Optional, List, Tuple
+from typing import Any, Dict, Optional, List, Tuple
 
 import json5 as json
 from loguru import logger
@@ -43,7 +42,7 @@ RATELIMIT_TYPES = {
 class GithubLinter:
     """ does things """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """ setup """
         self.config = load_config()
         if not self.config:
@@ -52,7 +51,7 @@ class GithubLinter:
         self.do_login()
 
         self.current_repo: Optional[Repository] = None
-        self.report = {}
+        self.report: Dict[str, Any] = {}
         self.modules: Dict[str, ModuleType] = {}
         self.filecache: Dict[str, Dict[str, Optional[ContentFile]]] = {}
 
@@ -125,15 +124,15 @@ class GithubLinter:
                     )
         return sleep_time
 
-    def display_report(self):
+    def display_report(self) -> None:
         """ displays a report """
         for repo_name in self.report:
             repo = self.report[repo_name]
             if not repo:
                 logger.warning("Empty report for {}, skipping", repo_name)
-            errors = []
-            warnings = []
-            fixes = []
+            errors: List[str] = []
+            warnings: List[str] = []
+            fixes: List[str] = []
             if "errors" in repo and repo["errors"]:
                 for category in repo["errors"]:
                     deque(

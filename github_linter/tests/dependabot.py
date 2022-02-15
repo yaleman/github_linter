@@ -7,7 +7,7 @@ from typing import Any, Dict, List, TypedDict, Optional
 from loguru import logger
 import pydantic
 import pytz
-import ruamel.yaml # type: ignore
+from ruyaml import YAML
 
 from github_linter import RepoLinter
 
@@ -284,7 +284,7 @@ def load_file(
         return None
 
     try:
-        yaml_config = ruamel.yaml.YAML(pure=True).load(fileresult.decoded_content.decode("utf-8"))
+        yaml_config = YAML(pure=True).load(fileresult.decoded_content.decode("utf-8"))
         logger.debug(
             json.dumps(yaml_config, indent=4, default=str, ensure_ascii=False)
         )

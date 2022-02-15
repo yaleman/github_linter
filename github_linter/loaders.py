@@ -3,10 +3,9 @@
 from typing import Any, Dict, Optional
 
 from loguru import logger
-import ruamel.yaml  # type: ignore
+from ruyaml import YAML
 
 from . import RepoLinter
-
 
 def load_yaml_file(
     repo: RepoLinter,
@@ -18,7 +17,7 @@ def load_yaml_file(
     if not fileresult:
         return {}
     try:
-        filecontents = ruamel.yaml.YAML(pure=True).load(fileresult.decoded_content.decode("utf-8"))
+        filecontents = YAML(pure=True).load(fileresult.decoded_content.decode("utf-8"))
         return filecontents
     #pylint: disable=broad-except
     except Exception as error_message:
