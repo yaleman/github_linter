@@ -619,14 +619,6 @@ anyio = ">=3.0.0,<4"
 full = ["itsdangerous", "jinja2", "python-multipart", "pyyaml", "requests"]
 
 [[package]]
-name = "tinydb"
-version = "4.6.1"
-description = "TinyDB is a tiny, document oriented database optimized for your happiness :)"
-category = "main"
-optional = false
-python-versions = ">=3.6,<4.0"
-
-[[package]]
 name = "toml"
 version = "0.10.2"
 description = "Python Library for Tom's Obvious, Minimal Language"
@@ -733,7 +725,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "66e8cdd305208cfb4589df75c13736263bd730391787ffd3f22e962f3e80b2b6"
+content-hash = "8800a4d4d6500757a22d0595672158c3736920b289d121521b47f850adea872c"
 
 [metadata.files]
 aiosqlite = [
@@ -1263,10 +1255,6 @@ sqlalchemy2-stubs = [
 starlette = [
     {file = "starlette-0.17.1-py3-none-any.whl", hash = "sha256:26a18cbda5e6b651c964c12c88b36d9898481cd428ed6e063f5f29c418f73050"},
     {file = "starlette-0.17.1.tar.gz", hash = "sha256:57eab3cc975a28af62f6faec94d355a410634940f10b30d68d31cb5ec1b44ae8"},
-]
-tinydb = [
-    {file = "tinydb-4.6.1-py3-none-any.whl", hash = "sha256:ac1fdae2a7d5d7e2ca915d2666e685d63982991827c5dd097b6be4a3b5822dbc"},
-    {file = "tinydb-4.6.1.tar.gz", hash = "sha256:0d5400f5e5ae368a84d57cb234456f1cf70430fd39bcd77ccd568fea91ff2a4e"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
