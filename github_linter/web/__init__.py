@@ -10,13 +10,13 @@ from typing import AsyncGenerator, List, Optional
 
 from loguru import logger
 import sqlalchemy
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import sessionmaker
 import sqlalchemy.dialects.sqlite
 
 from fastapi import  BackgroundTasks, FastAPI, Depends
-from fastapi.concurrency import run_in_threadpool
 
 from fastapi.responses import HTMLResponse, FileResponse, Response
 
@@ -61,9 +61,10 @@ class SQLMetadata(Base):
     value = sqlalchemy.Column(sqlalchemy.String)
 
 async def create_db():
-    """ do the stupid thing """
+    """ do the initial DB creation """
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        result = await conn.run_sync(Base.metadata.create_all)
+        logger.info("Result of creating DB: {}", result)
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
@@ -126,7 +127,6 @@ async def css_file(filename: str):
 async def github_linter_js():
     """ load the js """
     jspath = Path(Path(__file__).resolve().parent.as_posix()+"/github_linter.js")
-    # print(jspath.as_posix())
     if jspath.exists():
         return FileResponse(jspath)
     return Response(status_code=404)
@@ -155,7 +155,7 @@ async def db_updated(
         return data.value
     # pylint: disable=broad-except
     except Exception as error_message:
-        print(f"Failed to pull last_updated: {error_message}")
+        logger.warning(f"Failed to pull last_updated: {error_message}")
         return -1
 
 async def update_stored_repo(
@@ -234,7 +234,7 @@ async def update_repos(
     ):
     """ does the background thing """
 
-    print("Spawning an update process...")
+    logger.info("Spawning an update process...")
     background_tasks.add_task(update_stored_repos)
 
     return {"message": "Updating in the background"}
@@ -242,14 +242,17 @@ async def update_repos(
 @app.get("/repos")
 async def get_repos(
     session: AsyncSession = Depends(get_async_session)
-):
+) -> List[RepoData]:
     """ endpoint to provide the cached repo list """
 
-    stmt = sqlalchemy.select(SQLRepos).where(SQLRepos.full_name!="asdfasdfsadfsdaf")
-    result = await session.execute(stmt)
-
-    return [ RepoData.from_orm(element["SQLRepos"]) for element in result.fetchall() ]
-
+    try:
+        stmt = sqlalchemy.select(SQLRepos)
+        result = await session.execute(stmt)
+        retval = [ RepoData.from_orm(element["SQLRepos"]) for element in result.fetchall() ]
+    except OperationalError as operational_error:
+        logger.warning("Failed to pull repos from DB: {}", operational_error)
+        return []
+    return retval
 
 
 @app.get("/")
@@ -257,12 +260,11 @@ async def root(
     background_tasks: BackgroundTasks,
     ):
     """ homepage """
-
+    logger.info("Creating background task to create DB.")
     background_tasks.add_task(
             create_db,
             )
     indexpath = Path(Path(__file__).resolve().parent.as_posix()+"/index.html")
-    # print(indexpath.as_posix())
     if indexpath.exists():
         return HTMLResponse(indexpath.read_bytes())
     return Response(status_code=404)

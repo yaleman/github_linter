@@ -90,3 +90,29 @@ For an example:
 3. Call fix functions `fix_<something>`
 4. Import the module in `tests/__init__.py` as part of the big `from . import ()` block.
 5. Eat cake.
+
+
+## Docker container
+
+The container runs an entrypoint of `poetry shell` which puts you in an environment where the package and non-dev deps are installed.
+
+### Building the docker container
+
+This should auto-build with github actions (soon!) but here's a handy command:
+
+```shell
+docker build -t 'ghcr.io/yaleman/github_linter' .
+```
+
+### Running things in the docker container
+
+Running the web server:
+
+```shell
+docker run --rm -it \
+    -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
+    -v "$(pwd)/github_linter.json:/home/useruser/github_linter.json" \
+    -p '8000:8000' \
+    ghcr.io/yaleman/github_linter \
+    python -m github_linter.web
+```
