@@ -4,8 +4,6 @@ This is mainly for me, but it's a way of going through the Github repositories t
 
 Because I've got like ~100 repos and keep changing how I do things, and it annoys me to work on an old one and hit all the weird edge cases I've fixed elsewhere.
 
-![build](https://github.com/yaleman/github_linter/actions/workflows/testing.yml/badge.svg)
-
 ## Current tests
 
 - Dependabot
@@ -96,6 +94,8 @@ For an example:
 
 The container runs an entrypoint of `poetry shell` which puts you in an environment where the package and non-dev deps are installed.
 
+The container name to pull is `ghcr.io/yaleman/github_linter:latest`.
+
 ### Building the docker container
 
 This should auto-build with github actions (soon!) but here's a handy command:
@@ -106,13 +106,13 @@ docker build -t 'ghcr.io/yaleman/github_linter' .
 
 ### Running things in the docker container
 
-Running the web server:
+Running the web server.
 
 ```shell
 docker run --rm -it \
     -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
     -v "$(pwd)/github_linter.json:/home/useruser/github_linter.json" \
     -p '8000:8000' \
-    ghcr.io/yaleman/github_linter \
+    ghcr.io/yaleman/github_linter:latest \
     python -m github_linter.web
 ```
