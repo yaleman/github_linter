@@ -213,10 +213,12 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
 
     dependabot = load_file(repo)
     if not dependabot:
-        return repo.error(CATEGORY, "Dependabot file not found")
+        repo.error(CATEGORY, "Dependabot file not found")
+        return
 
     if not dependabot.updates:
-        return repo.error(CATEGORY, "Updates config not found.")
+        repo.error(CATEGORY, "Updates config not found.")
+        return
 
     required_package_managers = []
 
