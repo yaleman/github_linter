@@ -3,9 +3,9 @@
 from typing import Any, Dict, Optional
 
 from loguru import logger
-from ruyaml import YAML
+from ruyaml import YAML # type: ignore
 
-from . import RepoLinter
+from .repolinter import RepoLinter
 
 def load_yaml_file(
     repo: RepoLinter,

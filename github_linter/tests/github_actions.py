@@ -5,9 +5,8 @@ from typing import TypedDict
 import json5 as json
 from loguru import logger
 
-from .. import RepoLinter
-
 from ..loaders import load_yaml_file
+from ..repolinter import RepoLinter
 
 CATEGORY = "github_actions"
 
@@ -23,7 +22,7 @@ DEFAULT_CONFIG: DefaultConfig = {}
 # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#scheduletimezone
 
 
-def check_workflow_dir_exists(repo: RepoLinter):
+def check_workflow_dir_exists(repo: RepoLinter) -> None:
     """ checks '.github/workflows/' exists """
     if not repo.cached_get_file(".github", clear_cache=True):
         repo.error(CATEGORY, ".github dir not found")

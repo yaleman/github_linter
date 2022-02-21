@@ -7,9 +7,9 @@ from typing import Any, Dict, List, TypedDict, Optional
 from loguru import logger
 import pydantic
 import pytz
-from ruyaml import YAML
+from ruyaml import YAML # type: ignore
 
-from github_linter import RepoLinter
+from github_linter.repolinter import RepoLinter
 
 # template = """
 # version: 2
@@ -208,7 +208,7 @@ def generate_expected_update_config(repo: RepoLinter) -> List[DependabotUpdateCo
 # TODO: base dependabot config on repo.get_languages() - ie {'Python': 22722, 'Shell': 328}
 
 
-def check_updates_for_languages(repo: RepoLinter):
+def check_updates_for_languages(repo: RepoLinter) -> None:
     """ ensures that for every known language/package ecosystem, there's a configured update task """
 
     dependabot = load_file(repo)
@@ -231,7 +231,7 @@ def check_updates_for_languages(repo: RepoLinter):
             required_package_managers.append(package_manager)
     if not required_package_managers:
         logger.debug("No languages matched dependabot providers, stopping.")
-        return None
+        return
 
     logger.debug(
         "Need to ensure updates exist for these package ecosystems: {}",
@@ -263,8 +263,8 @@ def check_updates_for_languages(repo: RepoLinter):
             )
     else:
         # TODO: figure out what to do here
-        return None
-    return None
+        return
+    return
 
 
 DEPENDABOT_SCHEDULE_INTERVALS = [

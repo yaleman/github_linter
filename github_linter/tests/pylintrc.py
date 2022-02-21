@@ -8,7 +8,7 @@ import jinja2.exceptions
 import json5 as json
 from loguru import logger
 
-from github_linter import RepoLinter
+from github_linter.repolinter import RepoLinter
 
 CATEGORY = "pylintrc"
 
@@ -97,7 +97,7 @@ def check_max_line_length_configured(repo: RepoLinter) -> None:
 
 def check_pylintrc(
     repo: RepoLinter,
-):
+) -> None:
     """ checks for .pylintrc config """
 
     pylintrc = repo.cached_get_file(".pylintrc")
@@ -108,7 +108,7 @@ def check_pylintrc(
 
 def fix_pylintrc_missing(
     repo: RepoLinter,
-):
+) -> None:
     """ if there's no .pylintrc at all, add one """
 
     if not repo.config[CATEGORY]["pylintrc_locations"]:

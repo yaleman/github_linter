@@ -26,7 +26,8 @@ def get_fix_file_path(category: str, filename: str) -> Path:
             sys.exit(1)
     return fixes_path
 
-
+# I'm doing type: ignore here because it depends
+# on the downstream modules, which can be anything.
 def load_config() -> Dict[Optional[str], Any]:
     """ loads config """
     for configfile in [
@@ -45,16 +46,15 @@ def load_config() -> Dict[Optional[str], Any]:
         try:
             config = json.load(configfile.open(encoding="utf8"))
             logger.debug("Using config file {}", configfile.as_posix())
-            return config
+            if "linter" not in config:
+                config["linter"] = {}
+
+            for key in DEFAULT_LINTER_CONFIG:
+                if key not in config:
+                    config[key] = DEFAULT_LINTER_CONFIG[key]  # type: ignore
+            return config# type: ignore
         except JSONDecodeError as json_error:
             logger.error("Failed to load {}: {}", configfile.as_posix(), json_error)
-
-        if "linter" not in config:
-            config["linter"] = {}
-
-        for key in DEFAULT_LINTER_CONFIG:
-            if key not in config:
-                config[key] = DEFAULT_LINTER_CONFIG[key]  # type: ignore
 
     logger.error("Failed to find config file")
     return {}

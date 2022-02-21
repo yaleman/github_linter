@@ -12,7 +12,7 @@ import tomli
 import tomli_w
 
 
-from .. import RepoLinter
+from ..repolinter import RepoLinter
 
 CATEGORY = "pyproject.toml"
 LANGUAGES = ["python"]

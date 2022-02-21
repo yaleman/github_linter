@@ -1,29 +1,23 @@
 """ web interface for the project that outgrew its intention """
 
-import asyncio
-
-import logging
 from pathlib import Path
 from time import time
-from typing import AsyncGenerator, List, Optional
+from typing import AsyncGenerator, Dict, Generator, List, Optional, Union
 
-
+from fastapi import  BackgroundTasks, FastAPI, Depends
+from fastapi.responses import HTMLResponse, FileResponse, Response
+from github.Repository import Repository
 from loguru import logger
+from pydantic import BaseModel
 import sqlalchemy
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
+from sqlalchemy.ext.declarative import declarative_base #DeclarativeMeta
 from sqlalchemy.orm import sessionmaker
 import sqlalchemy.dialects.sqlite
 
-from fastapi import  BackgroundTasks, FastAPI, Depends
 
-from fastapi.responses import HTMLResponse, FileResponse, Response
-
-from pydantic import BaseModel
-
-
-from .. import GithubLinter, Repository, get_all_user_repos
+from .. import GithubLinter, get_all_user_repos
 
 DB_PATH = Path("~/.config/github_linter.sqlite").expanduser().resolve()
 DB_URL = f"sqlite+aiosqlite:///{DB_PATH.as_posix()}"
@@ -60,7 +54,7 @@ class SQLMetadata(Base):
     name = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
     value = sqlalchemy.Column(sqlalchemy.String)
 
-async def create_db():
+async def create_db() -> None:
     """ do the initial DB creation """
     async with engine.begin() as conn:
         result = await conn.run_sync(Base.metadata.create_all)
@@ -101,14 +95,14 @@ class MetaData(BaseModel):
         orm_mode=True
 
 
-def githublinter_factory():
+def githublinter_factory() -> Generator[GithubLinter, None, None]:
     """ githublinter factory """
     githublinter = GithubLinter()
     githublinter.do_login()
     yield githublinter
 
 @app.get("/favicon.svg")
-async def favicon():
+async def favicon() -> Union[Response,FileResponse]:
     """ return a """
     icon_file = Path(Path(__file__).resolve().parent.as_posix()+"/images/github.svg")
     if icon_file.exists():
@@ -116,7 +110,7 @@ async def favicon():
     return Response(status_code=404)
 
 @app.get('/css/{filename:str}')
-async def css_file(filename: str):
+async def css_file(filename: str) -> Union[Response,FileResponse]:
     """ css returner """
     cssfile = Path(Path(__file__).resolve().parent.as_posix()+f"/css/{filename}")
     if cssfile.exists():
@@ -124,7 +118,7 @@ async def css_file(filename: str):
     return Response(status_code=404)
 
 @app.get("/github_linter.js")
-async def github_linter_js():
+async def github_linter_js() -> Union[Response,FileResponse]:
     """ load the js """
     jspath = Path(Path(__file__).resolve().parent.as_posix()+"/github_linter.js")
     if jspath.exists():
@@ -136,7 +130,7 @@ async def github_linter_js():
 @app.get("/db/updated")
 async def db_updated(
     session: AsyncSession = Depends(get_async_session)
-    ):
+    ) -> int:
     """ pulls the last_updated field from the db """
 
     try:
@@ -152,7 +146,7 @@ async def db_updated(
             logger.error("no row data querying update time: {}", row)
             return -1
         data = MetaData.from_orm(row["SQLMetadata"])
-        return data.value
+        return int(data.value)
     # pylint: disable=broad-except
     except Exception as error_message:
         logger.warning(f"Failed to pull last_updated: {error_message}")
@@ -231,7 +225,7 @@ async def update_stored_repos(
 @app.get("/repos/update")
 async def update_repos(
     background_tasks: BackgroundTasks,
-    ):
+    ) -> Dict[str,str]:
     """ does the background thing """
 
     logger.info("Spawning an update process...")
@@ -258,7 +252,7 @@ async def get_repos(
 @app.get("/")
 async def root(
     background_tasks: BackgroundTasks,
-    ):
+    ) -> Union[Response,HTMLResponse]:
     """ homepage """
     logger.info("Creating background task to create DB.")
     background_tasks.add_task(

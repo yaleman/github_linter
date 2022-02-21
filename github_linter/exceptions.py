@@ -6,7 +6,7 @@ from loguru import logger
 class SkipOnArchived(Exception):
     """ skip a test if the repo's archived """
 
-    def __init__(self, *args) -> None:
+    def __init__(self, *args: object) -> None:
         """ adds a logging step """
         logger.debug("Skipping Archived Repo")
         super().__init__(*args)

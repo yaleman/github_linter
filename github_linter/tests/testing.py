@@ -4,7 +4,7 @@ from typing import TypedDict
 
 from loguru import logger
 
-from .. import RepoLinter
+from ..repolinter import RepoLinter
 
 
 CATEGORY = "testing"

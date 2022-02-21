@@ -18,7 +18,7 @@ from .types import DICTLIST
 from .utils import load_config
 
 
-def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]):
+def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]) -> None:
     """ digs into a dict, shoving the defaults in """
     if not source:
         return
@@ -32,9 +32,11 @@ def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]):
 
 
 def get_filtered_commands(
-    checklist: List[str], check_filter: Optional[Tuple]
+    checklist: List[str], check_filter: Optional[Tuple[str]]
 ) -> List[str]:
-    """ filters the checks """
+    """ filters the checks, the input is the list of wanted modules
+        from click.option()
+    """
     if not check_filter:
         return list(checklist)
     checks = []
@@ -51,7 +53,7 @@ def get_filtered_commands(
 class RepoLinter:
     """ handles the repository object, its parent and the report details """
 
-    def __init__(self, repo: Repository):
+    def __init__(self, repo: Repository) -> None:
         """ startup things """
         self.config = load_config()
         if not self.config:
@@ -230,17 +232,17 @@ class RepoLinter:
             result_object[category].append(value)
         logger.debug("{} - {}", category, value)
 
-    def error(self, category: str, value: str):
+    def error(self, category: str, value: str) -> None:
         """ adds an error """
         logger.error("{} - {}", category, value)
         self.add_result(self.errors, category, value)
 
-    def fix(self, category: str, value: str):
+    def fix(self, category: str, value: str) -> None:
         """ adds a fixed item """
         logger.success("{} - {}", category, value)
         self.add_result(self.fixes, category, value)
 
-    def warning(self, category: str, value: str):
+    def warning(self, category: str, value: str) -> None:
         """ adds a warning """
         logger.warning("{} - {}", category, value)
         self.add_result(self.warnings, category, value)
@@ -248,7 +250,7 @@ class RepoLinter:
     def load_module_config(
         self,
         module: ModuleType,
-    ):
+    ) -> None:
         """ mixes the config defaults in from the module with the config in the repository """
         if not hasattr(module, "DEFAULT_CONFIG"):
             return
@@ -272,7 +274,7 @@ class RepoLinter:
     def run_module(
         self,
         module: ModuleType,
-        check_filter: Optional[Tuple],
+        check_filter: Optional[Tuple[str]],
         do_fixes: bool,
     ) -> bool:
         """ runs a given module """

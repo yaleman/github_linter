@@ -5,7 +5,7 @@ from typing import TypedDict
 from loguru import logger
 
 
-from .. import RepoLinter
+from ..repolinter import RepoLinter
 from ..utils import get_fix_file_path
 
 CATEGORY = "issues"

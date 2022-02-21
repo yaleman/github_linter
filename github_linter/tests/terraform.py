@@ -8,7 +8,7 @@ import sys
 from loguru import logger
 import hcl2  # type: ignore
 import json5 as json
-from semver.version import Version  # type: ignore
+from semver.version import Version
 
 
 from .. import RepoLinter
@@ -43,7 +43,7 @@ AWS_MIN_VERSION = "3.41.0"
 def load_hclfile(
     repo: RepoLinter,
     filename: str,
-):
+) -> dict:
     """ loads the given filename using hcl2 """
     filecontent = repo.cached_get_file(filename)
     if not filecontent or not filecontent.decoded_content:

@@ -1,6 +1,6 @@
 """ cli bits """
 
-from typing import Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import click
 from loguru import logger
@@ -37,7 +37,9 @@ MODULE_CHOICES = [
 def cli(
     repo: Optional[Tuple[str]] = None,
     owner: Optional[Tuple[str]] = None,
-    **kwargs) -> None:
+    check: Optional[Tuple[str]] = None,
+    fix: bool = False,
+    **kwargs: Dict[str, Any]) -> None:
     """ Github linter for checking your repositories for various things. """
     github = GithubLinter()
 
@@ -63,10 +65,10 @@ def cli(
 
     for index, repository in enumerate(repos):
         if not repository.parent:
-            github.handle_repo(repository, check=kwargs.get("check"), fix=kwargs["fix"])
+            github.handle_repo(repository, check=check, fix=fix)
         # if it's a fork and you're checking them
         elif repository.parent.owner.login != user.login and github.config.get("check_forks"):
-            github.handle_repo(repository, check=kwargs.get("check"), fix=kwargs["fix"])
+            github.handle_repo(repository, check=check, fix=fix)
         else:
             logger.warning(
                 "check_forks is false and {} is a fork, skipping.", repository.full_name

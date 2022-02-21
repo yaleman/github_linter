@@ -11,7 +11,7 @@ class DefaultConfig(TypedDict):
     codeowners: Optional[Dict[str, Union[List[str], str]]]
 
 
-CATEGORY = ""
+CATEGORY = "codeowners"
 DEFAULT_CONFIG: DefaultConfig = {
     "codeowners": None,
 }

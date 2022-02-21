@@ -20,21 +20,21 @@ DEFAULT_CONFIG = {
 }
 
 
-def needs_mkdocs_workflow(repo: RepoLinter):
+def needs_mkdocs_workflow(repo: RepoLinter) -> bool:
     """ checks that there's a mkdocs config in the repository """
     for filepath in repo.config[CATEGORY]["mkdocs_config_files"]:
         if repo.cached_get_file(filepath, clear_cache=True):
             return True
     return False
 
-def check_mkdocs_workflow_exists(repo: RepoLinter):
+def check_mkdocs_workflow_exists(repo: RepoLinter) -> None:
     """ checks that the mkdocs github actions workflow exists """
     if needs_mkdocs_workflow(repo):
         if not repo.cached_get_file(repo.config[CATEGORY]["workflow_filepath"], clear_cache=True):
             repo.error(CATEGORY, "MKDocs github actions configuration missing.")
         # TODO: check if the file differs from expected.
 
-def fix_missing_mkdocs_workflow(repo: RepoLinter):
+def fix_missing_mkdocs_workflow(repo: RepoLinter) -> None:
     """ copies the mkdocs workflow if it needs it"""
     if needs_mkdocs_workflow(repo):
         workflow_file = repo.cached_get_file(repo.config[CATEGORY]["workflow_filepath"])

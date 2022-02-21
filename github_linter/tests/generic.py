@@ -5,11 +5,11 @@ from io import StringIO
 from typing import Any, Dict, List, Optional, TypedDict, Union
 
 from loguru import logger
-from ruyaml import YAML
+from ruyaml import YAML # type: ignore
 
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException
-from .. import RepoLinter
+from ..repolinter import RepoLinter
 
 __all__ = [
     "check_files_to_remove",
@@ -75,8 +75,8 @@ def parse_funding_file(input_string: Union[str, bytes]) -> FundingDict:
     return parsed_data
 
 
-def generate_funding_file(input_data: Dict[str, Any]):
-    """ generates a bytes object of a funding file based on a FundingDict """
+def generate_funding_file(input_data: Dict[str, Any]) -> str:
+    """ generates an object of a funding file based on a FundingDict """
     output_data = {}
 
     for key in input_data.keys():

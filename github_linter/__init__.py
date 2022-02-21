@@ -27,7 +27,6 @@ from .utils import load_config
 
 __version__ = "0.0.1"
 
-
 RATELIMIT_TYPES = {
     "core": {
         "minlimit": 50,
@@ -88,7 +87,7 @@ class GithubLinter:
                 )
 
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
-    def add_module(self, module_name: str, module: ModuleType):
+    def add_module(self, module_name: str, module: ModuleType) -> None:
         """ adds a module to modules """
         self.modules[module_name] = module
 
@@ -178,13 +177,13 @@ class GithubLinter:
                 logger.info("Repository {} checks out OK", repo_name)
 
 
-    @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
+    # @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def handle_repo(
         self,
         repo: Repository,
-        check: Optional[Tuple],
+        check: Optional[Tuple[str]],
         fix: bool,
-    ):
+    ) -> None:
         """ Runs modules against the given repo """
 
         repolinter = RepoLinter(repo)
