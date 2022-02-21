@@ -33,7 +33,14 @@ def load_config() -> Dict[Optional[str], Any]:
         Path("./github_linter.json"),
         Path(os.path.expanduser("~/.config/github_linter.json")),
     ]:
+
+        configfile = configfile.expanduser().resolve()
+
         if not configfile.exists():
+            logger.debug("Path {} doesn't exist.", configfile)
+            continue
+        if not configfile.is_file():
+            logger.debug("Path {} is not a file", configfile)
             continue
         try:
             config = json.load(configfile.open(encoding="utf8"))
