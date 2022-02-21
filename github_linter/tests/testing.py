@@ -18,7 +18,7 @@ class DefaultConfig(TypedDict):
 DEFAULT_CONFIG: DefaultConfig = {}
 
 
-def check_shellcheck(repo: RepoLinter):
+def check_shellcheck(repo: RepoLinter) -> None:
     """ If 'Shell' exists in repo languages, check for a shellcheck action """
     repo_langs = repo.repository.get_languages()
 
@@ -45,7 +45,7 @@ def check_shellcheck(repo: RepoLinter):
         )
 
 
-def check_testing_yml_exists(repo: RepoLinter):
+def check_testing_yml_exists(repo: RepoLinter) -> None:
     """ Checks that .github/workflows/testing.yml exists """
     repo.skip_on_archived()
 

@@ -1,6 +1,6 @@
 """ Terraform-related tests """
 
-from typing import Dict
+from typing import Any, Dict
 import re
 
 import sys
@@ -43,7 +43,7 @@ AWS_MIN_VERSION = "3.41.0"
 def load_hclfile(
     repo: RepoLinter,
     filename: str,
-) -> dict:
+) -> Dict[str, Any]:
     """ loads the given filename using hcl2 """
     filecontent = repo.cached_get_file(filename)
     if not filecontent or not filecontent.decoded_content:
@@ -52,7 +52,7 @@ def load_hclfile(
 
     logger.debug("Found {}", filename)
     # logger.debug(filecontent.decoded_content.decode("utf-8"))
-    return hcl2.loads(filecontent.decoded_content.decode("utf-8"))
+    return hcl2.loads(filecontent.decoded_content.decode("utf-8")) # type: ignore
 
 
 def check_providers_tf_exists(
