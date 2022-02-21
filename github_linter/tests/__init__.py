@@ -8,6 +8,7 @@ from loguru import logger
 from . import (
     codeowners,
     dependabot,
+    docs,
     generic,
     github_actions,
     homebrew,

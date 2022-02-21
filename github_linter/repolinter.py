@@ -278,7 +278,7 @@ class RepoLinter:
         """ runs a given module """
         self.load_module_config(module)
 
-        if "LANGUAGES" in dir(module):
+        if hasattr(module, "LANGUAGES") and 'ALL' not in getattr(module, "LANGUAGES"):
             if not self.module_language_check(module):
                 logger.debug(
                     "Module {} not required after language check, module langs: {}, repo langs: {}",
