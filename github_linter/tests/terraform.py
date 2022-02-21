@@ -11,7 +11,7 @@ import json5 as json
 from semver.version import Version
 
 
-from .. import RepoLinter
+from ..repolinter import RepoLinter
 
 
 CATEGORY = "terraform"

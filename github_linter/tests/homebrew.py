@@ -1,8 +1,7 @@
 """ checks for homebrew things """
 
 import sys
-from typing import List, TypedDict
-
+from typing import List, TypedDict, Callable, TypeVar, cast
 from loguru import logger
 
 from ..repolinter import RepoLinter
@@ -27,17 +26,20 @@ DEFAULT_CONFIG: DefaultConfig = {
 }
 
 
-def should_this_run(func):
+WrappedFunction = TypeVar("WrappedFunction", bound=Callable[[RepoLinter], None])
+
+def should_this_run(func: WrappedFunction) -> WrappedFunction:
     """ if the repo name doesn't match then don't run """
 
-    def inner(repo: RepoLinter):
+    def inner(repo: RepoLinter) -> None:
         if not repo.repository.name.startswith("homebrew-"):
             logger.debug("Not a homebrew repo, skipping")
             return None
         logger.debug("Name checks out: {}", repo.repository.name)
-        return func(repo)
+        func(repo)
+        return None
 
-    return inner
+    return cast(WrappedFunction, inner)
 
 
 @should_this_run
@@ -50,7 +52,7 @@ def check_update_files_exist(repo: RepoLinter) -> None:
 
 
 @should_this_run
-def fix_update_files_exist(repo: RepoLinter):
+def fix_update_files_exist(repo: RepoLinter) -> None:
     """ updates the homebrew files from the templates """
 
     for filename in repo.config[CATEGORY]["required_files"]:
