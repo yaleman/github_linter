@@ -486,7 +486,7 @@ testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.
 
 [[package]]
 name = "python-hcl2"
-version = "3.0.3"
+version = "3.0.4"
 description = "A parser for HCL2"
 category = "main"
 optional = false
@@ -725,7 +725,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "d14191463fdf688986d2c65064d1a949afa8ed3f00f893305b0af7c5a2ec1f92"
+content-hash = "5bd7f8543bb3aceacab2aab5e9afcd4d9b7c1466a7ebb776db1c01449ac83688"
 
 [metadata.files]
 aiosqlite = [
@@ -1153,7 +1153,7 @@ pytest = [
     {file = "pytest-7.0.1.tar.gz", hash = "sha256:e30905a0c131d3d94b89624a1cc5afec3e0ba2fbdb151867d8e0ebd49850f171"},
 ]
 python-hcl2 = [
-    {file = "python-hcl2-3.0.3.tar.gz", hash = "sha256:31b8135f474aa2dbd2325d7924f5ffe0b8a713669ca2d043511d8ed5a91798e5"},
+    {file = "python-hcl2-3.0.4.tar.gz", hash = "sha256:a300dbe2918271e6cd7ce4e7afa360eb2dbb226ee790b8e32a2a317586df8334"},
 ]
 pytz = [
     {file = "pytz-2021.3-py2.py3-none-any.whl", hash = "sha256:3672058bc3453457b622aab7a1c3bfd5ab0bdae451512f6cf25f64ed37f5b87c"},
