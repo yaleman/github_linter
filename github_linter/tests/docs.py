@@ -25,11 +25,12 @@ def check_contributing_exists(repo: RepoLinter) -> None:
     # don't need to run this if it's archived
     repo.skip_on_archived()
 
-    filepath = repo.config[CATEGORY]["contributing_file"]
+    filepath: str = repo.config[CATEGORY]["contributing_file"]
     filecontents = repo.cached_get_file(filepath)
 
     if filecontents is None:
-        repo.error(CATEGORY, "Couldn't find {contributing_file}")
+        repo.error(CATEGORY, f"Couldn't find {filepath}")
+        return None
     logger.debug("Found {}", filepath)
 
 def fix_contributing_exists(repo:RepoLinter) -> None:
@@ -46,6 +47,7 @@ def fix_contributing_exists(repo:RepoLinter) -> None:
 
     except jinja2.exceptions.TemplateNotFound as template_error:
         logger.error("Failed to load template: {}", template_error)
+        return None
 
     logger.warning("DOCS CONTRIBUTING TEST:")
     logger.info(new_filecontents)

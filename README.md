@@ -13,7 +13,7 @@ Because I've got like ~100 repos and keep changing how I do things, and it annoy
     - `CODEOWNERS` generation
     - generation of `.github/FUNDING`.yml
 - GitHub Actions
-    - Checks... something? TODO, fix this :P
+    - Checks for github actions tests and stuff
 - (GitHub) Issues
     - Checks for open Issues
     - Checks for open Pull Requests
@@ -36,7 +36,7 @@ Only runs if you've got python.
     - Checks for provider versions
     - Checks you have provider config for all your required providers.
 - Testing
-    - Checks that `.github/workflows/testing.yml exists`
+    - Doesn't check for much - have moved this to github_actions
 - mkdocs
     - checks if you've got mkdocs-looking things and then makes sure you've got a github actions thing to run them
 

@@ -117,7 +117,8 @@ class RepoLinter:
         message: Optional[str] = None,
     ) -> Optional[str]:
         """Create or update a file in the repository.
-        The message variable is what's put into the commit message
+        The message variable is what's put into the commit message.
+        Returns the commit URL.
         """
 
         if not message:
