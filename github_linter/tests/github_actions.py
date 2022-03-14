@@ -97,7 +97,7 @@ def check_language_workflows(repo: RepoLinter) -> None:
                 ]:
                     if required_key not in config_file:
                         repo.error(CATEGORY, f"Missing key in action file {filepath}: {required_key}")
-    return None
+
 
 def fix_language_workflows(repo: RepoLinter) -> None:
     """ Creates the config files per-language """
@@ -129,7 +129,7 @@ def fix_language_workflows(repo: RepoLinter) -> None:
                     )
                     repo.fix(CATEGORY, f"Created {filepath} from fix_language_workflows: {commit_url}")
 
-    return None
+
 
 def check_shellcheck(repo: RepoLinter) -> None:
     """ If 'Shell' exists in repo languages, check for a shellcheck action """

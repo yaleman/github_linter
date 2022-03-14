@@ -32,6 +32,7 @@ def check_contributing_exists(repo: RepoLinter) -> None:
         repo.error(CATEGORY, f"Couldn't find {filepath}")
         return None
     logger.debug("Found {}", filepath)
+    return None
 
 def fix_contributing_exists(repo:RepoLinter) -> None:
     """ creates a templated file """
@@ -59,3 +60,4 @@ def fix_contributing_exists(repo:RepoLinter) -> None:
         message=f"github-linter docs module creating {filepath}",
     )
     repo.fix(CATEGORY, f"Created {filepath}, commit url: {commit_url}")
+    return None
