@@ -34,7 +34,9 @@ dev = [
 
 [project.scripts]
 "github-linter" = 'github_linter.__main__:cli'
+"github-linter-web" = 'github_linter.web.__main__:cli'
 [tool.poetry.scripts]
+"github-linter-web" = 'github_linter.web.__main__:cli'
 'github-linter' = 'github_linter.__main__:cli'
 
 

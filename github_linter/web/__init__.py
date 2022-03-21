@@ -146,11 +146,12 @@ async def db_updated(
             logger.error("no row data querying update time: {}", row)
             return -1
         data = MetaData.from_orm(row["SQLMetadata"])
-        return int(data.value)
+        if '.' in data.value:
+            return int(data.value.split(".")[0])
     # pylint: disable=broad-except
     except Exception as error_message:
         logger.warning(f"Failed to pull last_updated: {error_message}")
-        return -1
+    return -1
 
 async def update_stored_repo(
     repo: Repository
