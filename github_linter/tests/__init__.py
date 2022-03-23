@@ -26,7 +26,7 @@ LANGUAGES = ["all"]
 DEFAULT_CONFIG: Dict[str, Any] = {}
 
 for module in sys.modules:
-    if module.startswith(__name__):
+    if module.startswith(__name__) and len(module.split(".")) == 3:
         if hasattr(sys.modules[module], "CATEGORY") and module.startswith(__name__):
             logger.debug("Adding module: {}", module)
             module_name = module.replace(f"{__name__}.", "")
