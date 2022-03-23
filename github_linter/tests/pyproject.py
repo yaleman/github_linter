@@ -254,7 +254,8 @@ def transfer_poetry_field(
     project: Dict[str, Any],
     ):
     """ copy tool.poetry fields into the project section of pyproject.toml """
-    if fieldname in poetry and poetry[fieldname].strip():
+    logger.debug(f"checking {fieldname=}")
+    if fieldname in poetry:
         if fieldname not in project or project[fieldname] != poetry[fieldname]:
             if project.get(fieldname) != poetry[fieldname]:
                 repo.fix(CATEGORY,
