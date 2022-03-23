@@ -50,13 +50,18 @@ def fix_contributing_exists(repo:RepoLinter) -> None:
         logger.error("Failed to load template: {}", template_error)
         return None
 
-    logger.warning("DOCS CONTRIBUTING TEST:")
-    logger.info(new_filecontents)
     filepath = repo.config[CATEGORY]["contributing_file"]
+
+    oldfile = repo.cached_get_file(filepath)
+
+    if oldfile is not None and oldfile.decoded_content.decode("utf-8") == new_filecontents:
+        logger.debug("Don't need to update {}", filepath)
+        return None
 
     commit_url = repo.create_or_update_file(
         filepath=filepath,
         newfile=new_filecontents,
+        oldfile=oldfile,
         message=f"github-linter docs module creating {filepath}",
     )
     repo.fix(CATEGORY, f"Created {filepath}, commit url: {commit_url}")
