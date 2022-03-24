@@ -14,7 +14,7 @@ import tomli_w
 
 from ..repolinter import RepoLinter
 
-CATEGORY = "pyproject.toml"
+CATEGORY = "pyproject"
 LANGUAGES = ["python"]
 
 # Config Defintiion
