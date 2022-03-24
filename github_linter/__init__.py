@@ -3,7 +3,6 @@
 from collections import deque
 
 from datetime import datetime
-from distutils.log import error
 import itertools
 
 import os
