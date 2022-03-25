@@ -3,7 +3,7 @@
 from typing import Any, Dict, Optional
 
 from loguru import logger
-from ruyaml import YAML # type: ignore
+from ruyaml import YAML
 
 from .repolinter import RepoLinter
 
@@ -17,7 +17,7 @@ def load_yaml_file(
     if not fileresult:
         return {}
     try:
-        filecontents = YAML(pure=True).load(fileresult.decoded_content.decode("utf-8"))
+        filecontents: Dict[Any, Any] = YAML(pure=True).load(fileresult.decoded_content.decode("utf-8"))
         return filecontents
     #pylint: disable=broad-except
     except Exception as error_message:

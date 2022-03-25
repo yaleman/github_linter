@@ -5,7 +5,7 @@ from io import StringIO
 from typing import Any, Dict, List, Optional, TypedDict, Union
 
 from loguru import logger
-from ruyaml import YAML # type: ignore
+from ruyaml import YAML
 
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException

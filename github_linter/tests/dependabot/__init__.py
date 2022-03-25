@@ -7,7 +7,7 @@ from typing import Any, Dict, List, TypedDict, Optional
 
 from loguru import logger
 import pydantic
-from ruyaml import YAML # type: ignore
+from ruyaml import YAML
 
 from github_linter.repolinter import RepoLinter
 
@@ -45,12 +45,12 @@ LANGUAGES = [
 
 DEFAULT_CONFIG: DefaultConfig = {
     "config_filename" : ".github/dependabot.yml",
-    "schedule" : DependabotSchedule(
-        interval="weekly",
-        day="monday",
-        time="00:00",
-        timezone= "Etc/UTC" # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-    ).dict()
+    "schedule" : DependabotSchedule.parse_obj({
+        "interval" : "weekly",
+        "day" : "monday",
+        "time" : "00:00",
+        "timezone" : "Etc/UTC" # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+    })
 }
 
 
@@ -72,20 +72,24 @@ def generate_expected_update_config(
     updates: List[DependabotUpdateConfig] = []
     for language in repo.repository.get_languages():
         if find_language_in_ecosystem(language):
-            logger.warning("Found lang/eco: {}, {}", language, find_language_in_ecosystem(language))
-            new_config = DependabotUpdateConfig.construct(
-                package_ecosystem=find_language_in_ecosystem(language),
-                schedule=repo.config[CATEGORY]["schedule"],
-            )
+            logger.debug("Found lang/eco: {}, {}", language, find_language_in_ecosystem(language))
+            new_config = DependabotUpdateConfig.parse_obj({
+                "package-ecosystem": find_language_in_ecosystem(language),
+                "schedule": repo.config[CATEGORY]["schedule"],
+                "directory" : "/",
+            })
             updates.append(new_config)
     config_file = DependabotConfigFile(
         version=2,
         updates=updates,
     )
+    logger.debug("Dumping expected_update_config")
+    logger.debug(json.dumps(config_file.dict(), indent=4, default=str))
     return config_file
 # TODO: base dependabot config on repo.get_languages() - ie {'Python': 22722, 'Shell': 328}
 
 
+# pylint: disable=too-many-branches
 def check_updates_for_languages(repo: RepoLinter) -> None:
     """ ensures that for every known language/package ecosystem, there's a configured update task """
 
@@ -200,22 +204,22 @@ def load_dependabot_config_file(
 
 def check_update_configs(
     repo: RepoLinter,
-):
+) -> None:
     """ checks update config exists and is slightly valid """
 
     try:
         dependabot = load_dependabot_config_file(repo)
     except pydantic.ValidationError as validation_error:
         repo.error(CATEGORY, f"Failed to parse dependabot config: {validation_error}")
-        return
+        return None
 
     if not dependabot:
         logger.debug("Couldn't load dependabot config.")
-        return
+        return None
 
     if not dependabot.updates:
         repo.error(CATEGORY, "No updates config in dependabot.yml.")
-        return
+        return None
 
     for update in dependabot.updates:
         logger.debug(json.dumps(update.json(), indent=4))
@@ -244,13 +248,14 @@ def check_update_configs(
         #             CATEGORY,
         #             f"Update timezone's not valid? {timezone}",
         #         )
-
+    return None
 
 def check_updates_have_directory_set(
     repo: RepoLinter,
-):
+) -> None:
     """ checks that each update config has 'directory' set """
 
+    # TODO: finish check_updates_have_directory_set
     dependabot = load_dependabot_config_file(repo)
     if not dependabot:
         logger.debug("Coudln't load dependabot config.")
@@ -259,9 +264,10 @@ def check_updates_have_directory_set(
 
 def check_dependabot_config(
     repo: RepoLinter,
-):
+) -> None:
     """ checks for dependabot config """
 
+    # TODO: finish check_dependabot_config
     dependabot_config = load_dependabot_config_file(repo)
 
     if not dependabot_config:
@@ -276,13 +282,13 @@ def check_dependabot_config(
 
 def check_dependabot_vulnerability_enabled(
     repo: RepoLinter,
-):
+) -> None:
     """ checks for dependabot config """
     if not repo.repository.get_vulnerability_alert():
         repo.error(CATEGORY, "Vulnerability reports on repository are not enabled.")
 
 
-def fix_enable_vulnerability_alert(repo: RepoLinter):
+def fix_enable_vulnerability_alert(repo: RepoLinter) -> None:
     """ enables vulnerability alerts on a repository """
     if repo.repository.enable_vulnerability_alert():
         repo.fix(CATEGORY, "Enabled vulnerability reports on repository.")
@@ -290,14 +296,14 @@ def fix_enable_vulnerability_alert(repo: RepoLinter):
         repo.error(CATEGORY, "Failed to enable vulnerability reports on repository.")
 
 
-def fix_enable_automated_security_fixes(repo: RepoLinter):
+def fix_enable_automated_security_fixes(repo: RepoLinter) -> None:
     """ enables dependabot on a repository """
     if repo.repository.enable_automated_security_fixes():
         repo.fix(CATEGORY, "Enabled automated security fixes on repository.")
     else:
         repo.error(CATEGORY, "Failed to enable automated security fixes.")
 
-def fix_create_dependabot_config(repo: RepoLinter):
+def fix_create_dependabot_config(repo: RepoLinter) -> None:
     """ creates the dependabot config file """
     existing_config = load_dependabot_config_file(repo)
 
@@ -340,9 +346,3 @@ def fix_create_dependabot_config(repo: RepoLinter):
         else:
             logger.debug("No changes to {}, file content matched.")
     return None
-
-
-def update_dependabot_config(old, new):
-    """ bleep bloop, compares the two """
-    # TODO: write update_dependabot_config
-    raise NotImplementedError

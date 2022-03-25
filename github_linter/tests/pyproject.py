@@ -3,7 +3,7 @@
 import json
 import re
 
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 # from github.Repository import Repository
 
@@ -37,7 +37,7 @@ DEFAULT_CONFIG: DefaultConfig = {
 
 def validate_pyproject_authors(
     repo: RepoLinter,
-    project_object: dict,
+    project_object: Dict[str, Any],
 ) -> None:
     """ checks the authors exist and are valid """
 
@@ -57,7 +57,7 @@ def validate_pyproject_authors(
 # pylint: disable=unused-argument
 def validate_project_name(
     repo: RepoLinter,
-    project_object: dict,
+    project_object: Dict[str, Any],
 ) -> bool:
     """ validates that the project name matches the repo name """
 
@@ -77,7 +77,7 @@ def validate_project_name(
 
 def validate_readme_configured(
     repo: RepoLinter,
-    project_object: dict,
+    project_object: Dict[str, Any],
 ) -> bool:
     """ validates that the project has a readme configured """
     if "readme" not in project_object:
@@ -98,7 +98,7 @@ def validate_readme_configured(
 
 def validate_scripts(
     repo: RepoLinter,
-    project_object: dict,
+    project_object: Dict[str, Any],
 ) -> bool:
     """ validates that the project has a readme configured """
 
@@ -125,7 +125,7 @@ def validate_scripts(
     return retval
 
 
-def load_pyproject(repo: RepoLinter):
+def load_pyproject(repo: RepoLinter) -> Optional[Dict[str, Any]]:
     """ loads the pyproject.toml file """
 
     fileresult = repo.cached_get_file("pyproject.toml")
@@ -144,30 +144,29 @@ def load_pyproject(repo: RepoLinter):
         return None
 
 
-def check_pyproject_build_backend(repo: RepoLinter):
+def check_pyproject_build_backend(repo: RepoLinter) -> None:
     """ gets the pyproject.toml file and looks for the key build-system.build-backend """
     pyproject = load_pyproject(repo)
 
     if not pyproject:
         logger.error("pyproject.toml not found")
-        return
+        return None
 
     if "build-system" not in pyproject:
         logger.error("Can't find build_backend")
         logger.debug(json.dumps(pyproject, indent=4, ensure_ascii=False))
-        return
+        return None
     if "build-backend" not in pyproject["build-system"]:
         logger.error("Can't find build-system.build-backend.")
         logger.debug(
             json.dumps(pyproject["build-system"], indent=4, ensure_ascii=False)
         )
-        return
+        return None
 
     backend = pyproject["build-system"]["build-backend"]
 
     logger.warning("Found build-backend.build-system in pyproject.toml: {}", backend)
-    # logger.info()
-    return
+    return None
 
 
 def check_pyproject_toml(
@@ -252,7 +251,7 @@ def transfer_poetry_field(
     fieldname: str,
     poetry: Dict[str,Any],
     project: Dict[str, Any],
-    ):
+    ) -> None:
     """ copy tool.poetry fields into the project section of pyproject.toml """
     logger.debug(f"checking {fieldname=}")
     if fieldname in poetry:
@@ -267,7 +266,7 @@ def transfer_poetry_authors(
     repo: RepoLinter,
     poetry: Dict[str, Any],
     project: Dict[str, Any],
-    ):
+    ) -> None:
     """ transfers authors """
 
     if "authors" not in  project:
@@ -287,7 +286,7 @@ def transfer_poetry_authors(
                 CATEGORY,
                 f"Transferred the following author from poetry to pyproject: {details}")
 
-def fix_copy_poetry_to_project(repo: RepoLinter):
+def fix_copy_poetry_to_project(repo: RepoLinter) -> None:
     """ fix tool.poetry fields into the project section of pyproject.toml
 
     PEP621 says a dict of name / email https://www.python.org/dev/peps/pep-0621/#authors-maintainers

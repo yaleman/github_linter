@@ -9,12 +9,6 @@ from ruyaml.scalarstring import DoubleQuotedScalarString
 
 from .constants import PACKAGE_ECOSYSTEM
 
-class DefaultConfig(TypedDict):
-    """ config typing for module config """
-    config_filename : str
-    schedule: Dict[str, str]
-
-
 
 class DependabotSchedule(pydantic.BaseModel):
     """ schedule """
@@ -25,14 +19,14 @@ class DependabotSchedule(pydantic.BaseModel):
 
     # TODO: write tests for this
     @pydantic.validator("timezone")
-    def validate_timezone(cls, value):
+    def validate_timezone(cls, value: Optional[DoubleQuotedScalarString]) -> Optional[DoubleQuotedScalarString]:
         """ validator """
         if value not in pytz.all_timezones:
             raise ValueError(f"Invalid timezone: {value}")
         return value
 
     @pydantic.validator('day')
-    def validate_day_value(cls, value, values):
+    def validate_day_value(cls, value: str, values: Dict[str, str]) -> str:
         """ check you're specifying a valid day of the week """
         if values.get("day"):
             if 'interval' in values and values.get('day') not in [
@@ -47,6 +41,12 @@ class DependabotSchedule(pydantic.BaseModel):
                 raise ValueError(f"Invalid day: {values['day']}")
         return value
 
+
+class DefaultConfig(TypedDict):
+    """ config typing for module config """
+    config_filename : str
+    schedule: DependabotSchedule
+
 class DependabotCommitMessage(pydantic.BaseModel):
     """ configuration model for the config
     https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#commit-message
@@ -57,10 +57,11 @@ class DependabotCommitMessage(pydantic.BaseModel):
     include: Optional[str]
 
     @pydantic.validator("include")
-    def validate_include(cls, value):
+    def validate_include(cls, value: str) -> str:
         """ checks for a valid entry """
         if value != "scope":
             raise ValueError("Only 'scope' can be specified in 'include' field.")
+        return value
 
 # template = """
 # version: 2
@@ -130,6 +131,7 @@ class DependabotConfigFile(pydantic.BaseModel):
     version: int
     updates: List[DependabotUpdateConfig]
 
+    # pylint: disable=too-few-public-methods
     class Config:
         """ meta config for class """
         arbitrary_types_allowed=True
