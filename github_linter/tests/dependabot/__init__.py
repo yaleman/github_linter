@@ -1,13 +1,13 @@
 """ checks for dependabot config """
 
-# from enum import Enum
 from io import StringIO
 import json
-from typing import Any, Dict, List, TypedDict, Optional
+from typing import List,  Optional
 
 from loguru import logger
 import pydantic
 from ruyaml import YAML
+from ruyaml.scalarstring import DoubleQuotedScalarString
 
 from github_linter.repolinter import RepoLinter
 
@@ -48,7 +48,7 @@ DEFAULT_CONFIG: DefaultConfig = {
     "schedule" : DependabotSchedule.parse_obj({
         "interval" : "weekly",
         "day" : "monday",
-        "time" : "00:00",
+        "time" : DoubleQuotedScalarString("00:00"),
         "timezone" : "Etc/UTC" # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
     })
 }
@@ -319,9 +319,9 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
         "updates" : updates,
     }
 
-    if existing_config is not None and update_dict == existing_config.dict(by_alias=True, exclude_unset=True, exclude_none=True):
-        logger.debug("Don't need to update config ... ")
-        return None
+    # if existing_config is not None and update_dict == existing_config.dict(by_alias=True, exclude_unset=True, exclude_none=True):
+        # logger.debug("Don't need to update config ... ")
+        # return None
     yaml = YAML()
     yaml.preserve_quotes = True # type: ignore
     buf = StringIO()
@@ -334,6 +334,7 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
     logger.debug("New contents: \n{}", newfilecontents)
 
     if newfilecontents != repo.cached_get_file(repo.config[CATEGORY]["config_filename"]):
+        logger.debug("Updating file")
         result = repo.create_or_update_file(
             filepath=repo.config[CATEGORY]["config_filename"],
             newfile=newfilecontents,
