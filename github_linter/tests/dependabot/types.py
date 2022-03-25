@@ -101,30 +101,35 @@ class DependabotUpdateConfig(pydantic.BaseModel):
     vendor: Optional[bool]
     versioning_strategy: Optional[str] = pydantic.Field(alias="versioning-strategy")
 
-
     # TODO: write tests for this
     @pydantic.validator('package_ecosystem')
-    def validate_package_ecosystem(cls, value):
+    def validate_package_ecosystem(cls, value: str) -> str:
         """ validates you're getting the right value """
         if value not in PACKAGE_ECOSYSTEM:
             raise ValueError(f"invalid value for package_ecosystem '{value}'")
+        return value
 
     # TODO: write tests for this
     @pydantic.validator('rebase_strategy')
-    def validate_rebase_strategy(cls, value):
+    def validate_rebase_strategy(cls, value: str) -> str:
         """ validates you're getting the right value """
         if value not in ["disabled", "auto"]:
             raise ValueError("rebase-strategy needs to be either 'auto' or 'disabled'.")
+        return value
 
     # TODO: write tests for this
     @pydantic.validator('rebase_strategy')
-    def validate_execution_permissions(cls, value):
+    def validate_execution_permissions(cls, value: str) -> str:
         """ validates you're getting the right value """
         if value not in ["deny", "allow"]:
             raise ValueError("insecure-external-code-execution needs to be either 'allow' or 'deny'.")
-
+        return value
 
 class DependabotConfigFile(pydantic.BaseModel):
     """ configuration file"""
     version: int
     updates: List[DependabotUpdateConfig]
+
+    class Config:
+        """ meta config for class """
+        arbitrary_types_allowed=True

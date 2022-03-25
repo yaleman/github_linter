@@ -102,6 +102,7 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
 
     # get the languages from the repo
     languages = repo.repository.get_languages()
+    logger.debug("Found the following languages: {}", ','.join(languages))
 
     # compare them to the ecosystem languages
     for language in languages:
@@ -117,20 +118,28 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
         "Need to ensure updates exist for these package ecosystems: {}",
         ", ".join(required_package_managers),
     )
+
     package_managers_covered = []
 
     # check the update configs
     for update in dependabot.updates:
-        if update.package_ecosystem:
-            if (
-                update.package_ecosystem in required_package_managers
-                and update.package_ecosystem not in package_managers_covered
-            ):
+        if update.package_ecosystem in required_package_managers:
+            if update.package_ecosystem not in package_managers_covered:
                 package_managers_covered.append(update.package_ecosystem)
                 logger.debug(
                     "Satisified requirement for {}", update.package_ecosystem
                 )
+            else:
+                logger.debug("Found {} already in package_managers_covered", update.package_ecosystem)
+        else:
+            logger.warning(
+                "Found unexpected package-ecosystem setting: '{}', not in {}",
+                update.package_ecosystem,
+                ','.join(required_package_managers),
+                )
+            logger.debug(update.dict())
     # check that the repo has full coverage
+
     if set(required_package_managers) != set(package_managers_covered):
         for manager in [
             manager
@@ -164,7 +173,9 @@ def load_dependabot_config_file(
         return None
 
     try:
+        logger.debug("Parsing loaded file into YAML")
         yaml_config = YAML(pure=True).load(fileresult.decoded_content.decode("utf-8"))
+        logger.debug("Dumping YAML-> dict file")
         logger.debug(
             json.dumps(yaml_config, indent=4, default=str, ensure_ascii=False)
         )
@@ -176,7 +187,10 @@ def load_dependabot_config_file(
         #     yaml_config["updates"] = updates
 
         retval = DependabotConfigFile.parse_obj(yaml_config)
-        # logger.debug(retval.json(by_alias=True))
+        logger.debug("dumping DependabotConfigFile")
+        logger.debug(json.dumps(retval.dict(), indent=4, default=str))
+        for update in retval.updates:
+            logger.debug("Package: {}", update.package_ecosystem)
         return retval
     except Exception as exc: #pylint: disable=broad-except
         logger.error("Failed to parse dependabot config: {}", exc)
