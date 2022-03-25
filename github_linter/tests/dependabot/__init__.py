@@ -47,7 +47,7 @@ DEFAULT_CONFIG: DefaultConfig = {
     "config_filename" : ".github/dependabot.yml",
     "schedule" : DependabotSchedule(
         interval="weekly",
-        day="Monday",
+        day="monday",
         time="00:00",
         timezone= "Etc/UTC" # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
     ).dict()
@@ -306,25 +306,26 @@ def fix_create_dependabot_config(repo: RepoLinter):
     yaml = YAML()
     yaml.preserve_quotes = True # type: ignore
     buf = StringIO()
-    yaml.dump(update_dict, buf)
+    yaml.dump(
+        data=update_dict,
+        stream=buf
+        )
     buf.seek(0)
     newfilecontents = buf.read()
     logger.debug("New contents: \n{}", newfilecontents)
 
     if newfilecontents != repo.cached_get_file(repo.config[CATEGORY]["config_filename"]):
-
         result = repo.create_or_update_file(
             filepath=repo.config[CATEGORY]["config_filename"],
             newfile=newfilecontents,
             oldfile=repo.cached_get_file(repo.config[CATEGORY]["config_filename"]),
-            message=f"{CATEGORY} - updating config"
-
+            message=f"github_linter - {CATEGORY} - updating config"
         )
         if result is not None:
             repo.fix(CATEGORY, f"Updated {repo.config[CATEGORY]['config_filename']} - {result}")
         else:
             logger.debug("No changes to {}, file content matched.")
-
+    return None
 
 
 def update_dependabot_config(old, new):

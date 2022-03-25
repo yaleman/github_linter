@@ -18,17 +18,19 @@ CATEGORY = "terraform"
 
 # this is the terraform version that linter recommends if you don't set it in config
 
-DEFAULT_CONFIG = {"minimum_terraform_version": "0.14.0"}
-
-LANGUAGES = [
-    "HCL",
-]
-
-PROVIDER_FILE_LIST = [
+DEFAULT_CONFIG = {
+    "minimum_terraform_version": "0.14.0",
+    "minimum_aws_version" : "3.41.0",
+    "provider_file_list" : [
     "providers.tf",
     "terraform/providers.tf",
     "terraform.tf",
     "terraform/terraform.tf",
+]
+    }
+
+LANGUAGES = [
+    "HCL",
 ]
 
 # TODO: Try and find old versions of the AWS plugin, needs to be at least 3.41.0
@@ -36,8 +38,6 @@ PROVIDER_FILE_LIST = [
 # - https://aws.amazon.com/blogs/compute/coming-soon-expansion-of-aws-lambda-states-to-all-functions/
 
 # HCLFILETYPE = Dict[str, List[Dict[str, str]]]
-
-AWS_MIN_VERSION = "3.41.0"
 
 
 def load_hclfile(
@@ -49,24 +49,21 @@ def load_hclfile(
     if not filecontent or not filecontent.decoded_content:
         logger.debug("Couldn't find file (or it was empty): {}", filename)
         return {}
-
     logger.debug("Found {}", filename)
-    # logger.debug(filecontent.decoded_content.decode("utf-8"))
     return hcl2.loads(filecontent.decoded_content.decode("utf-8")) # type: ignore
-
 
 def check_providers_tf_exists(
     repo: RepoLinter,
 ) -> None:
     """ checks the data for the pyproject.toml file """
 
-    for filename in PROVIDER_FILE_LIST:
+    for filename in repo.config[CATEGORY]["provider_file_list"]:
         hclfile = load_hclfile(repo, filename)
         if hclfile:
             return None
     repo.error(
         CATEGORY,
-        f"Couldn't find a providers.tf file, looked in {','.join(PROVIDER_FILE_LIST)}",
+        f"Couldn't find a providers.tf file, looked in {','.join(repo.config[CATEGORY]['provider_file_list'])}",
     )
     return None
 
@@ -78,7 +75,7 @@ def check_providers_for_modules(
     provider_list = []
     found_files = []
 
-    for filename in PROVIDER_FILE_LIST:
+    for filename in repo.config[CATEGORY]["provider_file_list"]:
         hclfile = load_hclfile(repo, filename)
         if not hclfile:
             continue
@@ -154,7 +151,7 @@ def check_terraform_version(
         )
         sys.exit(1)
 
-    for filename in PROVIDER_FILE_LIST:
+    for filename in repo.config[CATEGORY]["provider_file_list"]:
         hclfile = load_hclfile(repo, filename)
         if not hclfile:
             continue

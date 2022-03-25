@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional, TypedDict
 import pydantic
 import pytz
 
+from ruyaml.scalarstring import DoubleQuotedScalarString
+
 from .constants import PACKAGE_ECOSYSTEM
 
 class DefaultConfig(TypedDict):
@@ -13,11 +15,12 @@ class DefaultConfig(TypedDict):
     schedule: Dict[str, str]
 
 
+
 class DependabotSchedule(pydantic.BaseModel):
     """ schedule """
     interval: str
     day: Optional[str]
-    time: Optional[str]
+    time: Optional[DoubleQuotedScalarString]
     timezone: Optional[str] # needs to be one of pytz.all_timezones
 
     # TODO: write tests for this
@@ -79,7 +82,6 @@ class DependabotUpdateConfig(pydantic.BaseModel):
     """ an update config """
     package_ecosystem: str = pydantic.Field(..., alias="package-ecosystem")
     directory: str = "/"
-
     schedule: DependabotSchedule
     allow: Optional[Dict[str,str]] # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#allow
     assignees: Optional[List[str]]
