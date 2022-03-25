@@ -272,7 +272,7 @@ def check_dependabot_config(
 
     if not dependabot_config:
         logger.debug("Didn't find a dependabot config.")
-        return
+    return
 
     # if "updates" in dependabot_config and repo.repository:
     #     validate_updates_for_langauges(
@@ -286,7 +286,6 @@ def check_dependabot_vulnerability_enabled(
     """ checks for dependabot config """
     if not repo.repository.get_vulnerability_alert():
         repo.error(CATEGORY, "Vulnerability reports on repository are not enabled.")
-
 
 def fix_enable_vulnerability_alert(repo: RepoLinter) -> None:
     """ enables vulnerability alerts on a repository """
