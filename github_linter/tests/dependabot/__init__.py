@@ -258,8 +258,7 @@ def check_updates_have_directory_set(
     # TODO: finish check_updates_have_directory_set
     dependabot = load_dependabot_config_file(repo)
     if not dependabot:
-        logger.debug("Coudln't load dependabot config.")
-        return
+        repo.error(CATEGORY, "Coudln't load dependabot config.")
 
 
 def check_dependabot_config(
@@ -271,8 +270,7 @@ def check_dependabot_config(
     dependabot_config = load_dependabot_config_file(repo)
 
     if not dependabot_config:
-        logger.debug("Didn't find a dependabot config.")
-    return
+        repo.error(CATEGORY, "Didn't find a dependabot config.")
 
     # if "updates" in dependabot_config and repo.repository:
     #     validate_updates_for_langauges(
@@ -304,14 +302,8 @@ def fix_enable_automated_security_fixes(repo: RepoLinter) -> None:
 
 def fix_create_dependabot_config(repo: RepoLinter) -> None:
     """ creates the dependabot config file """
-    existing_config = load_dependabot_config_file(repo)
 
     expected_config = generate_expected_update_config(repo)
-
-    #if not existing_config:
-    #    # TODO: just write the full config
-    #    logger.warning("Can't handle a missing dependabot config yet")
-    #    return
 
     updates = [ val.dict(by_alias=True, exclude_unset=True, exclude_none=True) for val in expected_config.updates ]
     update_dict = {
@@ -319,9 +311,6 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
         "updates" : updates,
     }
 
-    # if existing_config is not None and update_dict == existing_config.dict(by_alias=True, exclude_unset=True, exclude_none=True):
-        # logger.debug("Don't need to update config ... ")
-        # return None
     yaml = YAML()
     yaml.preserve_quotes = True # type: ignore
     buf = StringIO()
@@ -345,4 +334,3 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
             repo.fix(CATEGORY, f"Updated {repo.config[CATEGORY]['config_filename']} - {result}")
         else:
             logger.debug("No changes to {}, file content matched.")
-    return None

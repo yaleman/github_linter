@@ -2,12 +2,17 @@
 
 from json import JSONDecodeError
 from typing import Any, Dict, Optional
+
 import os.path
 from pathlib import Path
 import sys
 
+from jinja2 import Environment, PackageLoader, select_autoescape
+import jinja2.exceptions
 import json5 as json
 from loguru import logger
+
+
 
 from .defaults import DEFAULT_LINTER_CONFIG
 
@@ -58,3 +63,29 @@ def load_config() -> Dict[Optional[str], Any]:
 
     logger.error("Failed to find config file")
     return {}
+
+
+def generate_jinja2_template_file(
+    module: str,
+    filename: str,
+    context: Optional[Dict[str, Any]],
+    module_path: str = ".",
+):
+    """ generates a file """
+
+    if context is None:
+        context = {}
+
+    # start up jinja2
+    jinja2_env = Environment(
+        loader=PackageLoader(package_name="github_linter", package_path=module_path),
+        autoescape=select_autoescape(),
+    )
+    try:
+        template = jinja2_env.get_template(f"fixes/{module}/{filename}")
+        rendered_template = template.render(**context)
+
+    except jinja2.exceptions.TemplateNotFound as template_error:
+        logger.error("Failed to load template: {}", template_error)
+        return None
+    return rendered_template
