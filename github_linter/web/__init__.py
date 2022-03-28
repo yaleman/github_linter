@@ -259,7 +259,16 @@ async def root(
     background_tasks.add_task(
             create_db,
             )
-    indexpath = Path(Path(__file__).resolve().parent.as_posix()+"/index.html")
-    if indexpath.exists():
-        return HTMLResponse(indexpath.read_bytes())
-    return Response(status_code=404)
+    # indexpath = Path(Path(__file__).resolve().parent.as_posix()+"/index.html")
+    # if indexpath.exists():
+        # return HTMLResponse(indexpath.read_bytes())
+
+    from jinja2 import Environment, PackageLoader, select_autoescape
+    env = Environment(
+        loader=PackageLoader(package_name="github_linter.web.templates", package_path=".",),
+        autoescape=select_autoescape()
+    )
+    template = env.get_template("index.html")
+
+    return HTMLResponse(template.render())
+    # return Response(status_code=404)

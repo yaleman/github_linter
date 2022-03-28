@@ -7,6 +7,8 @@
 // })
 
 var repo_app = new Vue({
+
+    delimiters: ['|', '|'], // because we're using it alongside jinja2
     el: '#repos',
     data: {
       repos: [

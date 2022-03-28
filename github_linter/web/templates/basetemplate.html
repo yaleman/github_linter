@@ -1,0 +1,32 @@
+<html>
+<head>
+  <title>Github Linter</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/pico.min.css">
+    <link rel="icon" type="image/svg+xml"
+ href="/favicon.svg">
+  <style>
+    [data-theme="light"],
+    :root:not([data-theme="dark"]) {
+        --primary: #8e24aa;
+        --primary-hover: #5f1972;
+    }
+
+  </style>
+</head>
+
+<body>
+<div id="repos">
+  <main class="container">
+      {% block content %}
+      {% endblock content %}
+</main>
+<!-- development version, includes helpful console warnings -->
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script src="github_linter.js"></script>
+
+</body>
+</html>
