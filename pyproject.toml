@@ -82,3 +82,4 @@ types-pytz = "^2021.3.6"
 pytest = "^7.1.1"
 pylint-pydantic = "^0.1.4"
 SQLAlchemy = {extras = ["mypy"], version = "^1.4.32"}
+bandit = "^1.7.4"
