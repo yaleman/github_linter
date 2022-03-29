@@ -7,7 +7,7 @@ name: bandit static checks
   pull_request:
 
 jobs:
-  mypy:
+  bandit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
