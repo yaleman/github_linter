@@ -63,3 +63,4 @@ def fix_create_security_md(repo: RepoLinter) -> None:
             logger.debug("File {} wasn't updated.", filename)
     else:
         logger.debug("Skipping creation of SECURITY.md, file exists...")
+    return None
