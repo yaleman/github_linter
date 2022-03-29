@@ -44,6 +44,10 @@ def fix_create_security_md(repo: RepoLinter) -> None:
                 "repo_name" : repo.repository.name,
             }
         )
+        if security_md_file is None:
+            repo.error(CATEGORY, "Failed to generate {filename}")
+            return None
+
         logger.debug(security_md_file)
         message = f"Created {filename}"
 

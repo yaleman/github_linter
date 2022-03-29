@@ -70,7 +70,7 @@ def generate_jinja2_template_file(
     filename: str,
     context: Optional[Dict[str, Any]],
     module_path: str = ".",
-):
+) -> Optional[str]:
     """ generates a file """
 
     if context is None:
