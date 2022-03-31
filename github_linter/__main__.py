@@ -86,5 +86,4 @@ def cli(
 
 
 if __name__ == "__main__":
-    # TODO: mypy raises '<nothing> not callable' for this - https://github.com/pallets/click/issues/2227
-    cli() # type: ignore
+    cli()
