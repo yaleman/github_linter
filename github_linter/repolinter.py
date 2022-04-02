@@ -12,7 +12,7 @@ from github.Repository import Repository
 from loguru import logger
 import wildcard_matcher
 
-from .exceptions import SkipOnArchived
+from .exceptions import NoChangeNeeded, SkipOnArchived
 
 from .types import DICTLIST
 from .utils import load_config
@@ -134,6 +134,7 @@ class RepoLinter:
         if oldfile:
             if oldfile.decoded_content == newfile_contents:
                 logger.debug("File content is up to date for {}", filepath)
+                # TODO: probably should raise NoChangeNeeded when create_or_update_file finds there's no change required
                 return None
             blobsha = oldfile.sha
         else:
@@ -305,9 +306,8 @@ class RepoLinter:
                     logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
                     try:
                         getattr(module, check)(repo=self)
+                    except NoChangeNeeded:
+                        pass
                     except SkipOnArchived:
                         pass
-            # else:
-            # logger.debug("Skipping check: {}", check)
-
         return True

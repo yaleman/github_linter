@@ -43,18 +43,18 @@ def get_repo_pages_data(repo: RepoLinter) -> PagesData:
         url=url
     )
 
-    logger.debug(json.dumps(
-        pagesdata,
-        indent=4,
-        default=str,
-        )
-    )
-
     if len(pagesdata) != 3:
         raise ValueError(f"Got {len(pagesdata)} from requesting the repo pages endpoint ({url}).")
 
     pages: PagesData = json.loads(pagesdata[2])
     if pages is None:
         raise ValueError(f"Invalid data returned from requesting the repo pages endpoint ({url}).")
+
+    logger.debug(json.dumps(
+        pages,
+        indent=4,
+        default=str,
+        )
+    )
 
     return pages
