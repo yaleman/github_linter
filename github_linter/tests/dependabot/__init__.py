@@ -281,11 +281,11 @@ def check_dependabot_config(
 def check_dependabot_vulnerability_enabled(
     repo: RepoLinter,
 ) -> None:
-    """ checks for dependabot config """
+    """ checks for dependabot vulnerability alert config """
     if not repo.repository.get_vulnerability_alert():
         repo.error(CATEGORY, "Vulnerability reports on repository are not enabled.")
 
-def fix_enable_vulnerability_alert(repo: RepoLinter) -> None:
+def fix_dependabot_vulnerability_enabled(repo: RepoLinter) -> None:
     """ enables vulnerability alerts on a repository """
     if repo.repository.enable_vulnerability_alert():
         repo.fix(CATEGORY, "Enabled vulnerability reports on repository.")
@@ -294,7 +294,7 @@ def fix_enable_vulnerability_alert(repo: RepoLinter) -> None:
 
 
 def fix_enable_automated_security_fixes(repo: RepoLinter) -> None:
-    """ enables dependabot on a repository """
+    """ enables dependabot on a repository, there doesn't seem to be a way to *check* this? """
     if repo.repository.enable_automated_security_fixes():
         repo.fix(CATEGORY, "Enabled automated security fixes on repository.")
     else:
