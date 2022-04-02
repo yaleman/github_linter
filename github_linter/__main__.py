@@ -38,6 +38,7 @@ MODULE_CHOICES = [
 @click.option(
     "--debug", "-d", is_flag=True, default=False, help="Enable debug logging"
 )
+# pylint: disable=too-many-arguments,too-many-locals
 def cli(
     repo: Optional[Tuple[str]] = None,
     owner: Optional[Tuple[str]] = None,
