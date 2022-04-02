@@ -48,14 +48,15 @@ class GithubLinter:
         if not self.config:
             self.config = {}
 
-        self.do_login()
+        self.github = self.do_login()
+
 
         self.current_repo: Optional[Repository] = None
         self.report: Dict[str, Any] = {}
         self.modules: Dict[str, ModuleType] = {}
         self.filecache: Dict[str, Dict[str, Optional[ContentFile]]] = {}
 
-    def do_login(self) -> None:
+    def do_login(self) -> Github:
         """ does the login/auth bit """
 
         if "github" not in self.config:
@@ -84,6 +85,7 @@ class GithubLinter:
                     login_or_token=self.config["github"]["username"],
                     password=self.config["github"]["password"],
                 )
+        return self.github
 
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def add_module(self, module_name: str, module: ModuleType) -> None:

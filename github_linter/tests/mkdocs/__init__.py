@@ -1,9 +1,15 @@
 """ does mkdocs things """
 
+from io import BytesIO
+
+import json
+
 from loguru import logger
+from ruyaml import YAML
 
 from github_linter.repolinter import RepoLinter
 from github_linter.utils import get_fix_file_path
+from github_linter.utils.pages import get_repo_pages_data
 
 CATEGORY = "mkdocs"
 
@@ -61,3 +67,44 @@ def fix_missing_mkdocs_workflow(repo: RepoLinter) -> None:
                 message="github-linter.mkdocs updated MKDocs github actions configuration",
             )
             repo.fix(CATEGORY, f"Updated MKDocs github actions configuration: {commit_url}")
+
+def check_github_metadata(repo: RepoLinter) -> None:
+    """ checks that the github metadata fields are set """
+
+    mkdocs_config_file = None
+    for filepath in repo.config[CATEGORY]["mkdocs_config_files"]:
+        if repo.cached_get_file(filepath) is not None:
+            mkdocs_config_file = repo.cached_get_file(filepath)
+            continue
+    if mkdocs_config_file is None:
+        logger.debug("No mkdocs config files found.")
+        return
+
+
+    mkdocs_file = YAML(typ='safe').load(mkdocs_config_file.decoded_content)
+    logger.debug(json.dumps(mkdocs_file, indent=4, default=str))
+
+    pagedata = get_repo_pages_data(repo)
+    required_fields = {
+        # "site_url": "https://yaleman.github.io/aussiebb/",
+        "repo_name": repo.repository.full_name,
+        "repo_url": repo.repository.url,
+    }
+
+
+    if pagedata["html_url"] is not None:
+        required_fields["site_url"] = pagedata["html_url"]
+
+    # logger.debug("dumping pages data\n{}", json.dumps(pagedata, indent=4))
+
+    # logger.debug(json.dumps(required_fields))
+    for field in required_fields:
+        mkdocs_file[field] = required_fields[field]
+    # logger.debug(json.dumps(mkdocs_file, indent=4, default=str))
+
+
+    writer = BytesIO()
+    YAML().dump(mkdocs_file, writer)
+    writer.seek(0)
+    logger.debug(writer.read())
+    #TODO: turn this into a check/fix

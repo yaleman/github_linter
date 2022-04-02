@@ -14,7 +14,7 @@ from loguru import logger
 
 
 
-from .defaults import DEFAULT_LINTER_CONFIG
+from ..defaults import DEFAULT_LINTER_CONFIG
 
 
 def get_fix_file_path(category: str, filename: str) -> Path:
