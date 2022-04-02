@@ -44,6 +44,7 @@ class SQLRepos(Base):
     private = sqlalchemy.Column(sqlalchemy.Boolean)
     description = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
     open_issues = sqlalchemy.Column(sqlalchemy.Integer)
+    open_prs = sqlalchemy.Column(sqlalchemy.Integer)
     last_updated = sqlalchemy.Column(sqlalchemy.Float)
     organization = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
     parent = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
@@ -78,6 +79,7 @@ class RepoData(BaseModel):
     description: Optional[str]
     fork: bool
     open_issues: int
+    open_prs: int
     last_updated: float
     private: bool
     organization: Optional[str]
@@ -169,6 +171,7 @@ async def update_stored_repo(
             "description" : repo.description,
             "fork" : repo.fork,
             "open_issues" : repo.open_issues_count,
+            "open_prs" : repo.get_pulls().totalCount,
             "last_updated" : time(),
             "private" : repo.private,
             "parent" :repo.parent.full_name if repo.parent else None,
@@ -220,9 +223,6 @@ async def update_stored_repos(
                 logger.info("Removing unlisted repo: {}", dbrepo.full_name)
                 deleterepo_query = sqlalchemy.delete(SQLRepos).where(SQLRepos.full_name==dbrepo.full_name)
                 await conn.execute(deleterepo_query)
-
-
-
 
 @app.get("/repos/update")
 async def update_repos(

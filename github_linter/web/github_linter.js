@@ -17,6 +17,7 @@ var repo_app = new Vue({
       repo_filter:'',
       hide_archived: false,
       show_has_issues: true,
+      show_has_prs: false,
       last_updated: null,
       waiting_for_update: false, // used when waiting for repos to update
       // total_issues: -1,
@@ -47,6 +48,14 @@ var repo_app = new Vue({
               // console.log("hiding " + repo.full_name + " because it doesn't have issues");
             }
           }
+          // filter for show_has_prs
+          if ( this.show_has_prs && result ) {
+            if ( repo.open_prs == 0 ) {
+              result = false;
+            } else {
+              result = true;
+            }
+          }
           // filter for hide_archived
           if (this.hide_archived && result ) {
             if (repo.archived == true) {
@@ -68,6 +77,15 @@ var repo_app = new Vue({
         tmp_count = 0;
         this.filteredRows.forEach(function(issue) {
           tmp_count += issue.open_issues;
+          // console.log("issues: "+issue.open_issues)
+        })
+        return tmp_count;
+      },
+      totalFilteredPRs() {
+        // this calculates the current view's number of total open issues
+        tmp_count = 0;
+        this.filteredRows.forEach(function(issue) {
+          tmp_count += issue.open_prs;
           // console.log("issues: "+issue.open_issues)
         })
         return tmp_count;
