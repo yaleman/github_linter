@@ -40,9 +40,6 @@ for module in sys.modules:
                 "Module {} doesn't have a DEFAULT_CONFIG attribute, weirdness may occur.",
                 module,
             )
-        # else:
-        # logger.warning("DEFAULT_CONFIG Type: {}", type(sys.modules[module].DEFAULT_CONFIG))
-
         if not hasattr(sys.modules[module], "LANGUAGES"):
             logger.warning(
                 "Module {} doesn't have a LANGUAGES attribute, weirdness may occur.",

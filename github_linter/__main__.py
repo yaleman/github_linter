@@ -1,5 +1,6 @@
 """ cli bits """
 
+import sys
 from typing import Any, Dict, Optional, Tuple
 
 import click
@@ -34,13 +35,24 @@ MODULE_CHOICES = [
 @click.option(
     "--check", "-k", multiple=True, help="Filter by check name, eg check_example"
 )
+@click.option(
+    "--debug", "-d", is_flag=True, default=False, help="Enable debug logging"
+)
 def cli(
     repo: Optional[Tuple[str]] = None,
     owner: Optional[Tuple[str]] = None,
-    check: Optional[Tuple[str]] = None,
     fix: bool = False,
-    **kwargs: Dict[str, Any]) -> None:
+    check: Optional[Tuple[str]] = None,
+    no_progress: bool = False,
+    debug: bool = False,
+    **kwargs: Dict[str, Any],
+    ) -> None:
     """ Github linter for checking your repositories for various things. """
+
+    if not debug:
+        logger.remove()
+        logger.add(level="INFO", sink=sys.stdout)
+
     github = GithubLinter()
 
     # these just set defaults
@@ -73,7 +85,7 @@ def cli(
             logger.warning(
                 "check_forks is false and {} is a fork, skipping.", repository.full_name
             )
-        if len(repos) > 3 and not kwargs.get("no_progress"):
+        if len(repos) > 3 and not no_progress:
             pct_done = round((index / len(repos) * 100), 1)
             logger.info(
                 "Completed {}, {}% ({}/{})",
