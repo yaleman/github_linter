@@ -19,14 +19,21 @@ from ..defaults import DEFAULT_LINTER_CONFIG
 
 def get_fix_file_path(category: str, filename: str) -> Path:
     """ gets a Path object for a filename within the fixes dir for the given category """
-    module_parent = Path(__file__).parent
+    if __file__.rsplit("/", maxsplit=1)[-1] == "__init__.py":
+        module_parent = Path(__file__).parent.parent
+    else:
+        module_parent = Path(__file__).parent
+    logger.debug(f"module parent: {module_parent}")
     fixes_path = module_parent / f"fixes/{category}/{filename}"
     if not fixes_path.exists():
         base_filename = Path(filename).name
         fixes_path = module_parent / f"fixes/{category}/{base_filename}"
         if not fixes_path.exists():
             logger.error(
-                "Fix file {} in category {} not found, bailing.", filename, category
+                "Fix file {} in category {} not found, bailing. I looked in {}",
+                filename,
+                category,
+                fixes_path,
             )
             sys.exit(1)
     return fixes_path

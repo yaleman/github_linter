@@ -9,11 +9,13 @@ class DefaultConfig(TypedDict):
     """ config object """
 
     codeowners: Optional[Dict[str, Union[List[str], str]]]
+    filepath: str
 
 
 CATEGORY = "codeowners"
 DEFAULT_CONFIG: DefaultConfig = {
     "codeowners": None,
+    "filepath" : "CODEOWNERS",
 }
 
 LANGUAGES = [ "ALL" ]
@@ -24,10 +26,12 @@ def check_codeowners_exists(repo: RepoLinter) -> None:
     """checks that CODEOWNERS exists in the root of the repo
     after checking that you require it by setting it in the config"""
 
+    repo.skip_on_archived()
+
     if not repo.config[CATEGORY]["codeowners"]:
         logger.warning("Skipping check as codeowners aren't configured.")
 
-    filecontents = repo.cached_get_file("CODEOWNERS")
+    filecontents = repo.cached_get_file(repo.config[CATEGORY]["filepath"])
     if not filecontents:
         repo.error(CATEGORY, "CODEOWNERS file doesn't exist.")
 
@@ -35,7 +39,9 @@ def check_codeowners_exists(repo: RepoLinter) -> None:
 def fix_codeowners_exists(repo: RepoLinter) -> None:
     """ makes a basic CODEOWNERS file based on the input """
 
-    filepath = "CODEOWNERS"
+    repo.skip_on_archived()
+
+    filepath = repo.config[CATEGORY]["filepath"]
 
     oldfile = repo.cached_get_file(filepath)
 
