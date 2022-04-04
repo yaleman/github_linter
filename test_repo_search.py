@@ -14,7 +14,7 @@ def test_filter_by_repo() -> None:
         retry=False,
         password=None,
         jwt=None,
-        base_url="",
+        base_url="https://github.com/yaleman/github_linter/",
         timeout=30,
         pool_size=10,
         per_page=100,
