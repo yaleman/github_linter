@@ -22,5 +22,4 @@ jobs:
           python --version
           python -m pip install --quiet --no-cache-dir --upgrade poetry
           poetry install
-          poetry run bandit -r $(basename $(pwd))
-
+          poetry run bandit -r $(basename $(pwd) | sed -E 's/-/_/')
