@@ -2,7 +2,7 @@
 
 from io import StringIO
 
-from typing import Any, Dict, List, Optional, TypedDict, Union
+from typing import List, Optional, TypedDict, Union
 
 from loguru import logger
 from ruyaml import YAML
@@ -75,13 +75,13 @@ def parse_funding_file(input_string: Union[str, bytes]) -> FundingDict:
     return parsed_data
 
 
-def generate_funding_file(input_data: Dict[str, Any]) -> str:
+def generate_funding_file(input_data: FundingDict) -> str:
     """ generates an object of a funding file based on a FundingDict """
     output_data = {}
 
     for key in input_data.keys():
-        if input_data[key] is not None:
-            output_data[key] = input_data[key]
+        if input_data.get(key) is not None:
+            output_data[key] = input_data.get(key)
 
     yaml = YAML(pure=True)
     yaml.brace_single_entry_mapping_in_flow_sequence = True

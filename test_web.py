@@ -9,7 +9,7 @@ from github_linter.web import app
 client = TestClient(app)
 
 
-def test_read_main():
+def test_read_main() -> None:
     """ test that the home page renders """
     response = client.get("/")
     assert response.status_code == 200
