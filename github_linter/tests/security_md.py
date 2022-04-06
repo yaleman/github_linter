@@ -13,7 +13,7 @@ class DefaultConfig(TypedDict):
 
 CATEGORY = "security_md"
 DEFAULT_CONFIG: DefaultConfig = {
-    "security_md_filename" : "SECURITY.MD"
+    "security_md_filename" : "SECURITY.md"
 }
 
 LANGUAGES = [ "ALL" ]
