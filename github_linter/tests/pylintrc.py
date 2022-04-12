@@ -107,53 +107,53 @@ def check_pylintrc(
 
 
 def fix_pylintrc_missing(
-    repo: RepoLinter,
+    _: RepoLinter,
 ) -> None:
     """ if there's no .pylintrc at all, add one """
 
-    logger.error("SKIPPING PYLINTRC UNTIL IT IS MOVED TO PYPROJECT - ref #73") 
+    logger.error("SKIPPING PYLINTRC UNTIL IT IS MOVED TO PYPROJECT - ref #73")
     return
-    if not repo.config[CATEGORY]["pylintrc_locations"]:
-        logger.debug(
-            "pylintrc_locations has been set to an empty list, bailing on this fix."
-        )
-        return
+    # if not repo.config[CATEGORY]["pylintrc_locations"]:
+    #     logger.debug(
+    #         "pylintrc_locations has been set to an empty list, bailing on this fix."
+    #     )
+    #     return
 
-    if not repo.config[CATEGORY]["pylintrc"]:
-        logger.debug("pylintrc not configured, bailing on this fix.")
-        return
+    # if not repo.config[CATEGORY]["pylintrc"]:
+    #     logger.debug("pylintrc not configured, bailing on this fix.")
+    #     return
 
-    # check if the pylintrc file exists in any of the check places
-    for filepath in repo.config[CATEGORY]["pylintrc_locations"]:
-        filecontents = repo.cached_get_file(filepath, clear_cache=True)
-        if filecontents:
-            logger.debug("File exists in {}, no action required.", filepath)
-            return
+    # # check if the pylintrc file exists in any of the check places
+    # for filepath in repo.config[CATEGORY]["pylintrc_locations"]:
+    #     filecontents = repo.cached_get_file(filepath, clear_cache=True)
+    #     if filecontents:
+    #         logger.debug("File exists in {}, no action required.", filepath)
+    #         return
 
-    filepath = repo.config[CATEGORY]["pylintrc_locations"][0]
-    logger.debug("Writing pylintrc file at: {}", filepath)
+    # filepath = repo.config[CATEGORY]["pylintrc_locations"][0]
+    # logger.debug("Writing pylintrc file at: {}", filepath)
 
-    # start up jinja2
-    jinja2_env = Environment(
-        loader=PackageLoader(package_name="github_linter", package_path="."),
-        autoescape=select_autoescape(),
-    )
-    try:
-        template = jinja2_env.get_template(f"fixes/{CATEGORY}/pylintrc")
+    # # start up jinja2
+    # jinja2_env = Environment(
+    #     loader=PackageLoader(package_name="github_linter", package_path="."),
+    #     autoescape=select_autoescape(),
+    # )
+    # try:
+    #     template = jinja2_env.get_template(f"fixes/{CATEGORY}/pylintrc")
 
-        context = {}
+    #     context = {}
 
-        for key in repo.config[CATEGORY]["pylintrc"]:
-            if repo.config[CATEGORY]["pylintrc"]:
-                context[key] = repo.config[CATEGORY]["pylintrc"][key]
+    #     for key in repo.config[CATEGORY]["pylintrc"]:
+    #         if repo.config[CATEGORY]["pylintrc"]:
+    #             context[key] = repo.config[CATEGORY]["pylintrc"][key]
 
-        new_filecontents = template.render(**context)
+    #     new_filecontents = template.render(**context)
 
-    except jinja2.exceptions.TemplateNotFound as template_error:
-        logger.error("Failed to load template: {}", template_error)
-    commit_url = repo.create_or_update_file(
-        filepath=filepath,
-        newfile=new_filecontents,
-        message=f"github-linter pylintrc module creating {filepath}",
-    )
-    repo.fix(CATEGORY, f"Created {filepath}, commit url: {commit_url}")
+    # except jinja2.exceptions.TemplateNotFound as template_error:
+    #     logger.error("Failed to load template: {}", template_error)
+    # commit_url = repo.create_or_update_file(
+    #     filepath=filepath,
+    #     newfile=new_filecontents,
+    #     message=f"github-linter pylintrc module creating {filepath}",
+    # )
+    # repo.fix(CATEGORY, f"Created {filepath}, commit url: {commit_url}")
