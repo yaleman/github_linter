@@ -183,6 +183,7 @@ def check_dependency_review_file(repo: RepoLinter) -> None:
 
     and ensures it matches the template
     """
+    repo.skip_on_private()
     repo.skip_on_archived()
 
     filepaths = get_dependency_review_file_paths(repo)
@@ -202,6 +203,7 @@ def fix_dependency_review_file(repo: RepoLinter) -> None:
 
     and ensures it matches the template
     """
+    repo.skip_on_private()
     repo.skip_on_archived()
 
     filepaths = get_dependency_review_file_paths(repo)
@@ -223,3 +225,33 @@ def fix_dependency_review_file(repo: RepoLinter) -> None:
         CATEGORY,
         f"Updated dependency_review workflow commit URL: {result}"
     )
+
+def fix_dependency_review_file_remove_private(repo: RepoLinter) -> None:
+    """ checks for .github/workflows/dependency_review.yml
+
+    and ensures it doesn't exist in private repos
+    """
+
+    repo.skip_on_archived()
+    if repo.repository.private is False:
+        logger.debug("Skipping non-private repo for this check")
+        return
+
+    filepaths = get_dependency_review_file_paths(repo)
+    existing_file = repo.cached_get_file(filepaths["repo_file_path"])
+
+    if existing_file is not None:
+
+        commit_result = repo.repository.delete_file(
+            path=filepaths["repo_file_path"],
+            message="github_linter - removing dependency checker github action",
+            sha=existing_file.sha,
+        )
+        if "commit" not in commit_result:
+            result= "Unknown Commit URL"
+        else:
+            result = getattr(commit_result["commit"], "html_url", "")
+        repo.fix(
+            CATEGORY,
+            f"Removed dependency_review workflow, commit URL: {result}"
+        )
