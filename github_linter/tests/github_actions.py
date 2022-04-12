@@ -16,6 +16,7 @@ templates/Dockerfile/build_container.yml would be used when running the fix
 
 """
 
+from pathlib import Path
 from typing import Dict, List, TypedDict
 
 import json5 as json
@@ -33,7 +34,7 @@ LANGUAGES = ["all"]
 class DefaultConfig(TypedDict):
     """ config typing for module config """
     tests_per_language: Dict[str, List[str]]
-
+    dependency_review: str
 
 DEFAULT_CONFIG: DefaultConfig = {
     "tests_per_language" : {
@@ -48,7 +49,8 @@ DEFAULT_CONFIG: DefaultConfig = {
         "Dockerfile" : [
             "build_container.yml",
         ]
-    }
+    },
+    "dependency_review" : ".github/workflows/dependency_review.yml",
 }
 
 # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#scheduletimezone
@@ -157,3 +159,65 @@ def check_shellcheck(repo: RepoLinter) -> None:
             CATEGORY,
             f"Shellcheck action string missing, expected {shellcheck_action}",
         )
+
+class DependencyReviewFilePaths(TypedDict):
+    """ typing """
+    repo_file_path: str
+    fix_file_path: Path
+
+def get_dependency_review_file_paths(
+    repo: RepoLinter,
+    ) -> DependencyReviewFilePaths:
+    """ gets the paths """
+    retval = DependencyReviewFilePaths({
+        "repo_file_path" : repo.config[CATEGORY]["dependency_review"],
+        "fix_file_path" : get_fix_file_path(
+        CATEGORY,
+        "dependency_review.yml",
+        ),
+    })
+    return retval
+
+def check_dependency_review_file(repo: RepoLinter) -> None:
+    """ checks for .github/workflows/dependency_review.yml
+
+    and ensures it matches the template
+    """
+
+    filepaths = get_dependency_review_file_paths(repo)
+    existing_file = repo.cached_get_file(filepaths["repo_file_path"])
+    fix_file_content = filepaths["fix_file_path"].read_bytes()
+
+    if existing_file is None or existing_file.decoded_content != fix_file_content:
+        repo.error(
+            CATEGORY,
+            f"Dependency review action is missing or needs update {filepaths['repo_file_path']}",
+            )
+        return
+    logger.debug(f"Dependency review action is up to date {filepaths['repo_file_path']}")
+
+def fix_dependency_review_file(repo: RepoLinter) -> None:
+    """ checks for .github/workflows/dependency_review.yml
+
+    and ensures it matches the template
+    """
+
+    filepaths = get_dependency_review_file_paths(repo)
+    existing_file = repo.cached_get_file(filepaths["repo_file_path"])
+    fix_file_content = filepaths["fix_file_path"].read_bytes()
+
+    if existing_file is not None and existing_file.decoded_content == fix_file_content:
+        logger.debug(
+            f"Dependency review action is up to date {filepaths['repo_file_path']}",
+            )
+        return
+    result = repo.create_or_update_file(
+        filepaths["repo_file_path"],
+        newfile=fix_file_content,
+        oldfile=existing_file,
+        message="github_actions - update dependency_review workflow",
+    )
+    repo.fix(
+        CATEGORY,
+        f"Updated dependency_review workflow commit URL: {result}"
+    )
