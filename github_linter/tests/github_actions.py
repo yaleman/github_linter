@@ -183,6 +183,7 @@ def check_dependency_review_file(repo: RepoLinter) -> None:
 
     and ensures it matches the template
     """
+    repo.skip_on_archived()
 
     filepaths = get_dependency_review_file_paths(repo)
     existing_file = repo.cached_get_file(filepaths["repo_file_path"])
@@ -201,6 +202,7 @@ def fix_dependency_review_file(repo: RepoLinter) -> None:
 
     and ensures it matches the template
     """
+    repo.skip_on_archived()
 
     filepaths = get_dependency_review_file_paths(repo)
     existing_file = repo.cached_get_file(filepaths["repo_file_path"])

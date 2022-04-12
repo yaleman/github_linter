@@ -3,8 +3,8 @@
 from configparser import ConfigParser, NoOptionError  # , NoSectionError
 from typing import List, Optional, TypedDict
 
-from jinja2 import Environment, PackageLoader, select_autoescape
-import jinja2.exceptions
+# from jinja2 import Environment, PackageLoader, select_autoescape
+# import jinja2.exceptions
 import json5 as json
 from loguru import logger
 
@@ -112,7 +112,6 @@ def fix_pylintrc_missing(
     """ if there's no .pylintrc at all, add one """
 
     logger.error("SKIPPING PYLINTRC UNTIL IT IS MOVED TO PYPROJECT - ref #73")
-    return
     # if not repo.config[CATEGORY]["pylintrc_locations"]:
     #     logger.debug(
     #         "pylintrc_locations has been set to an empty list, bailing on this fix."
