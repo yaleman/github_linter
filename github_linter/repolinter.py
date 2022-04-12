@@ -12,7 +12,7 @@ from github.Repository import Repository
 from loguru import logger
 import wildcard_matcher
 
-from .exceptions import NoChangeNeeded, SkipOnArchived
+from .exceptions import NoChangeNeeded, SkipOnArchived, SkipOnPrivate
 
 from .types import DICTLIST
 from .utils import load_config
@@ -148,7 +148,7 @@ class RepoLinter:
             branch=self.repository.default_branch,
         )
         if "commit" not in commit_result:
-            return "Unkown Commit URL"
+            return "Unknown Commit URL"
 
         return getattr(commit_result["commit"], "html_url", "")
 
@@ -273,6 +273,13 @@ class RepoLinter:
                 "This repository is archived so this test doesn't need to run."
             )
 
+    def skip_on_private(self) -> None:
+        """ Add this to a check to skip it if the repository is private. """
+        if self.repository.private:
+            raise SkipOnPrivate(
+                "This repository is private so this test can't run."
+            )
+
     def run_module(
         self,
         module: ModuleType,
@@ -301,6 +308,8 @@ class RepoLinter:
                     )
                 except SkipOnArchived:
                     pass
+                except SkipOnPrivate:
+                    pass
             if do_fixes:
                 if check.startswith("fix_"):
                     logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
@@ -309,5 +318,7 @@ class RepoLinter:
                     except NoChangeNeeded:
                         pass
                     except SkipOnArchived:
+                        pass
+                    except SkipOnPrivate:
                         pass
         return True

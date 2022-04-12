@@ -7,6 +7,14 @@ __all__ = [
     "SkipOnArchived",
 ]
 
+class NoChangeNeeded(Exception):
+    """ skip a fix if there's no change required """
+
+    def __init__(self, *args: object) -> None:
+        """ adds a logging step """
+        logger.debug("Fix not required, skipping.")
+        super().__init__(*args)
+
 class SkipOnArchived(Exception):
     """ skip a test if the repo's archived """
 
@@ -15,10 +23,10 @@ class SkipOnArchived(Exception):
         logger.debug("Skipping Archived Repo")
         super().__init__(*args)
 
-class NoChangeNeeded(Exception):
-    """ skip a fix if there's no change required """
+class SkipOnPrivate(Exception):
+    """ skip a test if the repo's private """
 
     def __init__(self, *args: object) -> None:
         """ adds a logging step """
-        logger.debug("Fix not required, skipping.")
+        logger.debug("Skipping Private Repo")
         super().__init__(*args)
