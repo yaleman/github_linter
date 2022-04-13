@@ -2,7 +2,7 @@
 
 from io import StringIO
 import json
-from typing import List,  Optional
+from typing import List
 
 from loguru import logger
 import pydantic
@@ -17,7 +17,8 @@ from .types import (
     DependabotSchedule,
     DependabotUpdateConfig,
 )
-from .constants import PACKAGE_ECOSYSTEM
+
+from .utils import find_language_in_ecosystem, load_dependabot_config_file
 
 CATEGORY = "dependabot"
 LANGUAGES = [
@@ -54,20 +55,10 @@ DEFAULT_CONFIG: DefaultConfig = {
 }
 
 
-
-def find_language_in_ecosystem(language: str) -> Optional[str]:
-    """ checks to see if languages are in VALID_VALUES["package-ecosystem"] """
-    for package in PACKAGE_ECOSYSTEM:
-        lowerlang = [lang.lower() for lang in PACKAGE_ECOSYSTEM[package]]
-        if language.lower() in lowerlang:
-            return package
-    return None
-
 def generate_expected_update_config(
     repo: RepoLinter,
     ) -> DependabotConfigFile:
     """ generates the required configuration """
-
 
     updates: List[DependabotUpdateConfig] = []
     for language in repo.repository.get_languages():
@@ -86,14 +77,12 @@ def generate_expected_update_config(
     logger.debug("Dumping expected_update_config")
     logger.debug(json.dumps(config_file.dict(), indent=4, default=str))
     return config_file
-# TODO: base dependabot config on repo.get_languages() - ie {'Python': 22722, 'Shell': 328}
-
 
 # pylint: disable=too-many-branches
 def check_updates_for_languages(repo: RepoLinter) -> None:
     """ ensures that for every known language/package ecosystem, there's a configured update task """
 
-    dependabot = load_dependabot_config_file(repo)
+    dependabot = load_dependabot_config_file(repo, CATEGORY)
     if dependabot is None or not dependabot:
         repo.error(CATEGORY, "Dependabot file not found")
         return
@@ -160,46 +149,6 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
     return
 
 
-DEPENDABOT_SCHEDULE_INTERVALS = [
-    "daily",
-    "weekly",  # monday by default, or schedule.day if you want to change it
-    "monthly",  # first of the month
-]
-
-
-def load_dependabot_config_file(
-    repo: RepoLinter,
-) -> Optional[DependabotConfigFile]:
-    """ grabs the dependabot config file and loads it """
-    fileresult = repo.cached_get_file(repo.config[CATEGORY]["config_filename"])
-    if not fileresult:
-        logger.debug("Couldn't find dependabot config.")
-        return None
-
-    try:
-        logger.debug("Parsing loaded file into YAML")
-        yaml_config = YAML(pure=True).load(fileresult.decoded_content.decode("utf-8"))
-        logger.debug("Dumping YAML-> dict file")
-        logger.debug(
-            json.dumps(yaml_config, indent=4, default=str, ensure_ascii=False)
-        )
-
-        # updates: List[DependabotUpdateConfig] = []
-        # if "updates" in yaml_config:
-        #     for update in yaml_config["updates"]:
-        #         updates.append(DependabotUpdateConfig(**update))
-        #     yaml_config["updates"] = updates
-
-        retval = DependabotConfigFile.parse_obj(yaml_config)
-        logger.debug("dumping DependabotConfigFile")
-        logger.debug(json.dumps(retval.dict(), indent=4, default=str))
-        for update in retval.updates:
-            logger.debug("Package: {}", update.package_ecosystem)
-        return retval
-    except Exception as exc: #pylint: disable=broad-except
-        logger.error("Failed to parse dependabot config: {}", exc)
-        repo.error(CATEGORY, f"Failed to parse dependabot config: {exc}")
-    return None
 
 
 def check_update_configs(
@@ -208,7 +157,7 @@ def check_update_configs(
     """ checks update config exists and is slightly valid """
 
     try:
-        dependabot = load_dependabot_config_file(repo)
+        dependabot = load_dependabot_config_file(repo, CATEGORY)
     except pydantic.ValidationError as validation_error:
         repo.error(CATEGORY, f"Failed to parse dependabot config: {validation_error}")
         return None
@@ -256,7 +205,7 @@ def check_updates_have_directory_set(
     """ checks that each update config has 'directory' set """
 
     # TODO: finish check_updates_have_directory_set
-    dependabot = load_dependabot_config_file(repo)
+    dependabot = load_dependabot_config_file(repo, CATEGORY)
     if not dependabot:
         repo.error(CATEGORY, "Coudln't load dependabot config.")
 
@@ -267,7 +216,7 @@ def check_dependabot_config(
     """ checks for dependabot config """
 
     # TODO: finish check_dependabot_config
-    dependabot_config = load_dependabot_config_file(repo)
+    dependabot_config = load_dependabot_config_file(repo, CATEGORY)
 
     if not dependabot_config:
         repo.error(CATEGORY, "Didn't find a dependabot config.")

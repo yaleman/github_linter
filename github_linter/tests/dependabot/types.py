@@ -7,7 +7,7 @@ import pytz
 
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
-from .constants import PACKAGE_ECOSYSTEM
+from .constants import DEPENDABOT_SCHEDULE_INTERVALS, PACKAGE_ECOSYSTEM
 
 
 class DependabotSchedule(pydantic.BaseModel):
@@ -16,6 +16,16 @@ class DependabotSchedule(pydantic.BaseModel):
     day: Optional[str]
     time: Optional[DoubleQuotedScalarString]
     timezone: Optional[str] # needs to be one of pytz.all_timezones
+
+    @pydantic.validator("interval")
+    def validate_interval(cls, value: str) -> str:
+        """ validates the schedule interval """
+        if value not in DEPENDABOT_SCHEDULE_INTERVALS:
+            raise pydantic.ValidationError(
+                f"interval needs to be in {','.join(DEPENDABOT_SCHEDULE_INTERVALS)}, got '{value}'",
+                DependabotSchedule
+                )
+        return value
 
     # TODO: write tests for this
     @pydantic.validator("timezone")
