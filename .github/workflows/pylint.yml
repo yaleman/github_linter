@@ -22,4 +22,4 @@ jobs:
             python -m pip install --quiet --no-cache-dir --upgrade poetry
             poetry install
             poetry run pylint $(basename $(pwd))
-            poetry run pylint test*.py
+            poetry run pylint tests
