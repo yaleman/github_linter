@@ -207,7 +207,7 @@ def check_updates_have_directory_set(
     # TODO: finish check_updates_have_directory_set
     dependabot = load_dependabot_config_file(repo, CATEGORY)
     if not dependabot:
-        repo.error(CATEGORY, "Coudln't load dependabot config.")
+        repo.error(CATEGORY, "Couldn't load dependabot config.")
 
 
 def check_dependabot_config(
@@ -236,6 +236,7 @@ def check_dependabot_vulnerability_enabled(
 
 def fix_dependabot_vulnerability_enabled(repo: RepoLinter) -> None:
     """ enables vulnerability alerts on a repository """
+    repo.skip_on_archived()
     if repo.repository.enable_vulnerability_alert():
         repo.fix(CATEGORY, "Enabled vulnerability reports on repository.")
     else:
@@ -244,6 +245,7 @@ def fix_dependabot_vulnerability_enabled(repo: RepoLinter) -> None:
 
 def fix_enable_automated_security_fixes(repo: RepoLinter) -> None:
     """ enables dependabot on a repository, there doesn't seem to be a way to *check* this? """
+    repo.skip_on_archived()
     if repo.repository.enable_automated_security_fixes():
         repo.fix(CATEGORY, "Enabled automated security fixes on repository.")
     else:
@@ -252,6 +254,7 @@ def fix_enable_automated_security_fixes(repo: RepoLinter) -> None:
 def fix_create_dependabot_config(repo: RepoLinter) -> None:
     """ creates the dependabot config file """
 
+    repo.skip_on_archived()
     expected_config = generate_expected_update_config(repo)
 
     updates = [ val.dict(by_alias=True, exclude_unset=True, exclude_none=True) for val in expected_config.updates ]
