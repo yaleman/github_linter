@@ -30,6 +30,8 @@
   <td>
     <!-- https://renatello.com/vue-js-href/ -->
     <a v-if="repo.open_issues > 0" :href="'https://github.com/'+repo.full_name+'/issues'" target="_blank">|repo.open_issues|</a>
+  </td>
+  <td>
     <a v-if="repo.open_prs > 0" :href="'https://github.com/'+repo.full_name+'/pulls'" target="_blank">|repo.open_prs|</a>
   </td>
 </tr>
