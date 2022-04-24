@@ -43,6 +43,9 @@ DEFAULT_CONFIG: DefaultConfig = {
             "pylint.yml",
             "pytest.yml",
         ],
+        "Rust" : [
+            "rust_test.yml",
+        ],
         "Shell" : [
             "shellcheck.yml",
         ],
