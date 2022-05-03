@@ -1,6 +1,6 @@
 """ docs tests """
 
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -34,8 +34,8 @@ def check_contributing_exists(repo: RepoLinter) -> None:
     logger.debug("Found {}", filepath)
     return None
 
-def fix_contributing_exists(repo:RepoLinter) -> None:
-    """ creates a templated file """
+def generate_contributing_file(repository_name: str) -> Optional[str]:
+    """ generates the 'CONTRIBUTING.md' file """
 
     # start up jinja2
     jinja2_env = Environment(
@@ -44,19 +44,27 @@ def fix_contributing_exists(repo:RepoLinter) -> None:
     )
     try:
         template = jinja2_env.get_template(f"fixes/{CATEGORY}/CONTRIBUTING.md")
-        new_filecontents = template.render(repo=repo.repository)
+        return template.render(repo=repository_name)
 
     except jinja2.exceptions.TemplateNotFound as template_error:
         logger.error("Failed to load template: {}", template_error)
         return None
 
+def fix_contributing_exists(repo:RepoLinter) -> None:
+    """ creates a templated file """
+
+
     filepath = repo.config[CATEGORY]["contributing_file"]
+    new_filecontents = generate_contributing_file(repo.repository)
+    if new_filecontents is None:
+        repo.error(CATEGORY, f"Failed to generate {filepath}")
+        return
 
     oldfile = repo.cached_get_file(filepath)
 
     if oldfile is not None and oldfile.decoded_content.decode("utf-8") == new_filecontents:
         logger.debug("Don't need to update {}", filepath)
-        return None
+        return
 
     commit_url = repo.create_or_update_file(
         filepath=filepath,
@@ -65,4 +73,3 @@ def fix_contributing_exists(repo:RepoLinter) -> None:
         message=f"github-linter docs module creating {filepath}",
     )
     repo.fix(CATEGORY, f"Created {filepath}, commit url: {commit_url}")
-    return None

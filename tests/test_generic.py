@@ -1,5 +1,6 @@
 """ testing pyproject """
 
+from github_linter.tests.docs import generate_contributing_file
 from github_linter.tests.generic import FundingDict, generate_funding_file, parse_funding_file
 
 
@@ -50,3 +51,8 @@ def test_generate_funding_file_simple() -> None:
     test_parse_funding_file()
     output = generate_funding_file(result)
     assert output == "github: yaleman\n"
+
+def test_generate_contributing_file() -> None:
+    """ testign thing """
+    filecontents =  generate_contributing_file("testrepo")
+    assert filecontents
