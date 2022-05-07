@@ -82,6 +82,7 @@ def generate_expected_update_config(
 def check_updates_for_languages(repo: RepoLinter) -> None:
     """ ensures that for every known language/package ecosystem, there's a configured update task """
 
+    repo.skip_on_archived()
     dependabot = load_dependabot_config_file(repo, CATEGORY)
     if dependabot is None or not dependabot:
         repo.error(CATEGORY, "Dependabot file not found")
@@ -156,6 +157,7 @@ def check_update_configs(
 ) -> None:
     """ checks update config exists and is slightly valid """
 
+    repo.skip_on_archived()
     try:
         dependabot = load_dependabot_config_file(repo, CATEGORY)
     except pydantic.ValidationError as validation_error:
@@ -204,6 +206,8 @@ def check_updates_have_directory_set(
 ) -> None:
     """ checks that each update config has 'directory' set """
 
+    repo.skip_on_archived()
+
     # TODO: finish check_updates_have_directory_set
     dependabot = load_dependabot_config_file(repo, CATEGORY)
     if not dependabot:
@@ -215,6 +219,8 @@ def check_dependabot_config(
 ) -> None:
     """ checks for dependabot config """
 
+
+    repo.skip_on_archived()
     # TODO: finish check_dependabot_config
     dependabot_config = load_dependabot_config_file(repo, CATEGORY)
 
@@ -231,6 +237,7 @@ def check_dependabot_vulnerability_enabled(
     repo: RepoLinter,
 ) -> None:
     """ checks for dependabot vulnerability alert config """
+    repo.skip_on_archived()
     if not repo.repository.get_vulnerability_alert():
         repo.error(CATEGORY, "Vulnerability reports on repository are not enabled.")
 
