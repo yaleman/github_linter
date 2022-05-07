@@ -7,6 +7,8 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 import jinja2.exceptions
 from loguru import logger
 
+
+from github.Repository import Repository
 from ..repolinter import RepoLinter
 
 
@@ -34,7 +36,7 @@ def check_contributing_exists(repo: RepoLinter) -> None:
     logger.debug("Found {}", filepath)
     return None
 
-def generate_contributing_file(repository_name: str) -> Optional[str]:
+def generate_contributing_file(repo: Repository) -> Optional[str]:
     """ generates the 'CONTRIBUTING.md' file """
 
     # start up jinja2
@@ -44,7 +46,7 @@ def generate_contributing_file(repository_name: str) -> Optional[str]:
     )
     try:
         template = jinja2_env.get_template(f"fixes/{CATEGORY}/CONTRIBUTING.md")
-        return template.render(repo=repository_name)
+        return template.render(repo=repo)
 
     except jinja2.exceptions.TemplateNotFound as template_error:
         logger.error("Failed to load template: {}", template_error)

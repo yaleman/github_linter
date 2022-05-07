@@ -1,13 +1,13 @@
 """ cli bits """
 
 import sys
-from typing import Any, Dict, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import click
 from loguru import logger
 
 from . import GithubLinter, search_repos
-from .tests import MODULES
+from .tests import MODULES, load_modules
 
 MODULE_CHOICES = [
     key for key in list(MODULES.keys()) if not key.startswith("github_linter")
@@ -21,7 +21,7 @@ MODULE_CHOICES = [
     "-m",
     multiple=True,
     type=click.Choice(MODULE_CHOICES),
-    help="Specify which modules to run",
+    help="Specify which modules to run, allows multiple.",
 )
 @click.option(
     "--no-progress",
@@ -46,13 +46,15 @@ def cli(
     check: Optional[Tuple[str]] = None,
     no_progress: bool = False,
     debug: bool = False,
-    **kwargs: Dict[str, Any],
+    module: Optional[List[str]] = None,
     ) -> None:
     """ Github linter for checking your repositories for various things. """
 
     if not debug:
         logger.remove()
         logger.add(level="INFO", sink=sys.stdout)
+
+    load_modules(module)
 
     github = GithubLinter()
 
@@ -68,13 +70,20 @@ def cli(
     if not repos:
         return
 
-    if "module" in kwargs and len(kwargs["module"]) > 0:
-        for module in kwargs["module"]:
-            github.add_module(module, MODULES[module])
+    if module and len(module) > 0:
+        for selected_module in module:
+            github.add_module(selected_module, MODULES[selected_module])
     else:
         logger.debug("Running all available modules.")
-        for module in MODULES:
-            github.add_module(module, MODULES[module])
+        for selected_module in MODULES:
+            github.add_module(selected_module, MODULES[selected_module])
+
+    if not github.modules:
+        logger.error("No modules configured, bailing!")
+        return
+    logger.info("Listing activated modules:")
+    for module in github.modules:
+        logger.info("- {}", module)
 
     for index, repository in enumerate(repos):
         if not repository.parent:
