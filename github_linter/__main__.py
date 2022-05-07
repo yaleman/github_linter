@@ -82,8 +82,8 @@ def cli(
         logger.error("No modules configured, bailing!")
         return
     logger.info("Listing activated modules:")
-    for module in github.modules:
-        logger.info("- {}", module)
+    for module_name in github.modules:
+        logger.info("- {}", module_name)
 
     for index, repository in enumerate(repos):
         if not repository.parent:
