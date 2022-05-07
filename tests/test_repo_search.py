@@ -1,7 +1,7 @@
 """ testing the search filter generator """
 
 from github_linter import filter_by_repo, generate_repo_search_string
-from tests.utils import generate_test_repo
+from utils import generate_test_repo
 
 
 def test_filter_by_repo() -> None:
