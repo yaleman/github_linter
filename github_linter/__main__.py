@@ -1,12 +1,12 @@
 """ cli bits """
 
-import sys
 from typing import List, Optional, Tuple
 
 import click
 from loguru import logger
 
 from . import GithubLinter, search_repos
+from .utils import setup_logging
 from .tests import MODULES, load_modules
 
 MODULE_CHOICES = [
@@ -50,10 +50,7 @@ def cli(
     ) -> None:
     """ Github linter for checking your repositories for various things. """
 
-    if not debug:
-        logger.remove()
-        logger.add(level="INFO", sink=sys.stdout)
-
+    setup_logging(debug)
     load_modules(module)
 
     github = GithubLinter()

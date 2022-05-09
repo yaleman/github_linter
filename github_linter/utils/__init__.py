@@ -96,3 +96,10 @@ def generate_jinja2_template_file(
         logger.error("Failed to load template: {}", template_error)
         return None
     return rendered_template
+
+def setup_logging(debug: bool) -> None:
+    """ sets up logging """
+
+    if not debug:
+        logger.remove()
+        logger.add(level="INFO", sink=sys.stdout)
