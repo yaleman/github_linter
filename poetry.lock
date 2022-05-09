@@ -278,7 +278,7 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "json5"
-version = "0.9.6"
+version = "0.9.7"
 description = "A Python implementation of the JSON5 data format."
 category = "main"
 optional = false
@@ -801,7 +801,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "35774d631b5213636936f67104d2a6f2db10a03e4b3aa8b91574ab128de2906a"
+content-hash = "b19adc63c542b812bd1afe5b9ee7cdc0197d4cb993f69a8b9e915beb4d033d91"
 
 [metadata.files]
 aiosqlite = [
@@ -1002,8 +1002,7 @@ jinja2 = [
     {file = "Jinja2-3.1.2.tar.gz", hash = "sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852"},
 ]
 json5 = [
-    {file = "json5-0.9.6-py2.py3-none-any.whl", hash = "sha256:823e510eb355949bed817e1f3e2d682455dc6af9daf6066d5698d6a2ca4481c2"},
-    {file = "json5-0.9.6.tar.gz", hash = "sha256:9175ad1bc248e22bb8d95a8e8d765958bf0008fef2fe8abab5bc04e0f1ac8302"},
+    {file = "json5-0.9.7.tar.gz", hash = "sha256:890d583a38f2fe2b25fa9b9ede9b99ebdbf44ca413fb1c045a59d14826ce91c1"},
 ]
 lark-parser = [
     {file = "lark-parser-0.10.1.tar.gz", hash = "sha256:42f367612a1bbc4cf9d8c8eb1b209d8a9b397d55af75620c9e6f53e502235996"},
