@@ -22,7 +22,10 @@ def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]) -> None:
     """ digs into a dict, shoving the defaults in """
     if not source:
         return
+    logger.debug("Processing {}, {}", source, type(source))
     for key in source:
+        logger.debug("Adding key={} {}", key, type(key))
+        logger.debug("{}, {}", dest, type(dest))
         if key not in dest:
             dest[key] = source[key]
             continue

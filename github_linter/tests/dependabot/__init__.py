@@ -51,7 +51,7 @@ DEFAULT_CONFIG: DefaultConfig = {
         "day" : "monday",
         "time" : DoubleQuotedScalarString("00:00"),
         "timezone" : "Etc/UTC" # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-    })
+    }).dict()
 }
 
 
@@ -149,10 +149,7 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
         return
     return
 
-
-
-
-def check_update_configs(
+def check_dependabot_config_valid(
     repo: RepoLinter,
 ) -> None:
     """ checks update config exists and is slightly valid """
@@ -219,7 +216,6 @@ def check_dependabot_config(
 ) -> None:
     """ checks for dependabot config """
 
-
     repo.skip_on_archived()
     # TODO: finish check_dependabot_config
     dependabot_config = load_dependabot_config_file(repo, CATEGORY)
@@ -270,8 +266,10 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
         "updates" : updates,
     }
 
+    logger.debug(json.dumps(update_dict, indent=4))
     yaml = YAML()
-    yaml.preserve_quotes = True # type: ignore
+    yaml.preserve_quotes = False # type: ignore
+    # yaml.default_flow_style = None
     buf = StringIO()
     yaml.dump(
         data=update_dict,
@@ -280,7 +278,7 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
     buf.seek(0)
     newfilecontents = buf.read()
     logger.debug("New contents: \n{}", newfilecontents)
-
+    # raise NotImplementedError
     if newfilecontents != repo.cached_get_file(repo.config[CATEGORY]["config_filename"]):
         logger.debug("Updating file")
         result = repo.create_or_update_file(
