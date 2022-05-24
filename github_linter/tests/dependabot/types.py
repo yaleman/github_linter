@@ -33,6 +33,14 @@ class DependabotSchedule(pydantic.BaseModel):
         """ validator """
         if value not in pytz.all_timezones:
             raise ValueError(f"Invalid timezone: {value}")
+        return DoubleQuotedScalarString(value)
+
+    # TODO: write tests for this
+    @pydantic.validator("time")
+    def validate_time(cls, value: Optional[DoubleQuotedScalarString]) -> Optional[DoubleQuotedScalarString]:
+        """ validator """
+        if value is not None:
+            return DoubleQuotedScalarString(value)
         return value
 
     @pydantic.validator('day')
@@ -55,7 +63,7 @@ class DependabotSchedule(pydantic.BaseModel):
 class DefaultConfig(TypedDict):
     """ config typing for module config """
     config_filename : str
-    schedule: DependabotSchedule
+    schedule: Dict[str, Any]
 
 class DependabotCommitMessage(pydantic.BaseModel):
     """ configuration model for the config

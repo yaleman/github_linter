@@ -6,3 +6,4 @@ config.py
 *.egg-info/
 build/
 dist/
+.coverage

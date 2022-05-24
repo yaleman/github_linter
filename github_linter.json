@@ -45,9 +45,11 @@
         "minimum_terraform_version": "0.15"
     },
     "dependabot": {
+        "schedule": {
         "interval": "weekly",
         "day" : "saturday",
         "time" : "02:00",
         "timezone": "Australia/Brisbane"
+        }
     }
 }
