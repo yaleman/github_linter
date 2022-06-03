@@ -77,7 +77,7 @@ ruyaml = "^0.91.0"
 [tool.poetry.dev-dependencies]
 pylint = "^2.13.9"
 mypy = "^0.960"
-types-PyYAML = "^6.0.7"
+types-PyYAML = "^6.0.8"
 types-pytz = "^2021.3.7"
 pytest = "^7.1.2"
 pylint-pydantic = "^0.1.4"
