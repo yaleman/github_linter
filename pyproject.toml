@@ -70,7 +70,7 @@ wildcard-matcher = "^0.0.3"
 fastapi = "^0.78.0"
 uvicorn = "^0.17.5"
 aiosqlite = "^0.17.0"
-SQLAlchemy = "^1.4.36"
+SQLAlchemy = "^1.4.37"
 greenlet = "^1.1.2"
 ruyaml = "^0.91.0"
 
@@ -81,6 +81,6 @@ types-PyYAML = "^6.0.8"
 types-pytz = "^2021.3.7"
 pytest = "^7.1.2"
 pylint-pydantic = "^0.1.4"
-SQLAlchemy = {extras = ["mypy"], version = "^1.4.36"}
+SQLAlchemy = {extras = ["mypy"], version = "^1.4.37"}
 bandit = "^1.7.4"
 coverage = "^6.4.1"
