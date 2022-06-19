@@ -235,6 +235,11 @@ async def update_repos(
 
     return {"message": "Updating in the background"}
 
+@app.get("/health")
+async def get_health() -> Response:
+    """really simple health check"""
+    return Response(content="OK", status_code=200)
+
 @app.get("/repos")
 async def get_repos(
     session: AsyncSession = Depends(get_async_session)
