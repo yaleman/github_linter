@@ -58,33 +58,32 @@ class GithubLinter:
     def do_login(self) -> Github:
         """ does the login/auth bit """
 
-        if "github" not in self.config:
-            if os.getenv("GITHUB_TOKEN"):
-                logger.debug("Using GITHUB_TOKEN environment variable for login.")
-                self.github = Github(os.getenv("GITHUB_TOKEN"))
-        else:
+        if os.getenv("GITHUB_TOKEN"):
+            logger.debug("Using GITHUB_TOKEN environment variable for login.")
+            self.github = Github(os.getenv("GITHUB_TOKEN"))
+            return self.github
+        if "github" in self.config and self.config["github"]:
             if (
                 "ignore_auth" in self.config["github"]
                 and self.config["github"]["ignore_auth"]
             ):
                 self.github = Github()
-            elif "token" in self.config["github"]:
+                return self.github
+            if "token" in self.config["github"]:
                 self.github=Github(
                     login_or_token=self.config["github"]["token"]
                 )
-            elif (
-                "username" not in self.config["github"]
-                or "password" not in self.config["github"]
+                return self.github
+            if (
+                "username" in self.config["github"]
+                and "password" in self.config["github"]
             ):
-                raise ValueError(
-                    "No authentication details available - cannot start up."
-                )
-            else:
                 self.github = Github(
                     login_or_token=self.config["github"]["username"],
                     password=self.config["github"]["password"],
                 )
-        return self.github
+                return self.github
+        raise ValueError("No authentication method was found!")
 
     @pydantic.validate_arguments(config=dict(arbitrary_types_allowed=True))
     def add_module(self, module_name: str, module: ModuleType) -> None:
