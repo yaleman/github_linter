@@ -17,10 +17,10 @@ RUN mkdir -p build/github_linter
 
 WORKDIR /build
 ADD github_linter /build/github_linter
+COPY pyproject.toml .
 COPY poetry.lock .
 COPY README.md .
 COPY LICENSE .
-COPY pyproject.toml .
 
 RUN mkdir -p /home/useruser/
 RUN chown useruser /home/useruser -R
@@ -30,7 +30,5 @@ WORKDIR /build/
 USER useruser
 RUN mkdir -p ~/.config/
 
-RUN python -m pip install --upgrade pip
-RUN poetry install --no-dev
-
-ENTRYPOINT [ "poetry","run" ]
+RUN python -m pip install --upgrade pip poetry
+RUN pip install /build/
