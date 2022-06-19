@@ -1,4 +1,8 @@
 {
+    "github" : {
+	"token" : "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"
+    },
+
     "linter": {
         "owner_list": [
             "yaleman",

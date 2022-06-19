@@ -50,7 +50,6 @@ class GithubLinter:
 
         self.github = self.do_login()
 
-
         self.current_repo: Optional[Repository] = None
         self.report: Dict[str, Any] = {}
         self.modules: Dict[str, ModuleType] = {}
@@ -64,15 +63,15 @@ class GithubLinter:
                 logger.debug("Using GITHUB_TOKEN environment variable for login.")
                 self.github = Github(os.getenv("GITHUB_TOKEN"))
         else:
-            if "github" not in self.config:
-                raise ValueError(
-                    "No 'github' key in config, and no GITHUB_TOKEN auth - cannot start up."
-                )
             if (
                 "ignore_auth" in self.config["github"]
                 and self.config["github"]["ignore_auth"]
             ):
                 self.github = Github()
+            elif "token" in self.config["github"]:
+                self.github=Github(
+                    login_or_token=self.config["github"]["token"]
+                )
             elif (
                 "username" not in self.config["github"]
                 or "password" not in self.config["github"]

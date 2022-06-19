@@ -59,6 +59,16 @@ For an example:
 1. Use the "GITHUB_TOKEN" auth method.
 2. Set the following in your config file:
     
+    Using a Personal Access Token (Recommended):
+
+    ```json
+    "github" : { 
+        "token" : "<pat>"
+    }
+    ```
+
+    Using username/password:
+    
     ```json
     "github" : { 
         "username" : "<your_username>", 
