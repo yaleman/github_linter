@@ -30,5 +30,5 @@ WORKDIR /build/
 USER useruser
 RUN mkdir -p ~/.config/
 
-RUN python -m pip install --upgrade pip poetry
-RUN pip install /build/
+RUN python -m pip install --no-cache-dir --disable-pip-version-check --upgrade pip poetry
+RUN pip install --no-cache-dir --disable-pip-version-check /build/
