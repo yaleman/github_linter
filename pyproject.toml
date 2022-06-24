@@ -75,7 +75,7 @@ greenlet = "^1.1.2"
 ruyaml = "^0.91.0"
 
 [tool.poetry.dev-dependencies]
-pylint = "^2.14.2"
+pylint = "^2.14.3"
 mypy = "^0.961"
 types-PyYAML = "^6.0.8"
 types-pytz = "^2021.3.7"
