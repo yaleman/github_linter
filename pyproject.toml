@@ -78,7 +78,7 @@ ruyaml = "^0.91.0"
 pylint = "^2.14.3"
 mypy = "^0.961"
 types-PyYAML = "^6.0.9"
-types-pytz = "^2022.1.0"
+types-pytz = "^2022.1.1"
 pytest = "^7.1.2"
 pylint-pydantic = "^0.1.4"
 SQLAlchemy = {extras = ["mypy"], version = "^1.4.39"}
