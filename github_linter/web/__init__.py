@@ -237,8 +237,10 @@ async def update_repos(
 
 @app.get("/health")
 async def get_health() -> Response:
-    """really simple health check"""
+    """ really simple health check, also triggers cron jobs sneakily """
+    # TODO: sneaky cron jobs
     return Response(content="OK", status_code=200)
+
 
 @app.get("/repos")
 async def get_repos(
