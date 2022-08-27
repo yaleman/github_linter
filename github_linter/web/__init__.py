@@ -258,11 +258,10 @@ async def cron_update(
     async with engine.begin() as conn:
         await conn.run_sync(base.metadata.create_all)
         last_update = await db_updated()
-        logger.success("Got the last update time: {}", last_update)
         if (time() - last_update) >= 3600:
             logger.debug("Cron shows it's been an hour, doing update...")
             await update_stored_repos()
-            logger.debug("Completed background cron update...")
+            logger.success("Completed background cron update...")
 
 @app.get("/health")
 async def get_health(
