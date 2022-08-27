@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from time import time
-from typing import AsyncGenerator, Dict, Generator, List, Optional, Union
+from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Union
 
 from fastapi import  BackgroundTasks, FastAPI, Depends
 from fastapi.responses import HTMLResponse, FileResponse, Response
@@ -33,8 +33,6 @@ app = FastAPI()
 class SQLRepos(Base):
     """ sqlrepos """
     __tablename__ = "repos"
-    # "repos",
-    # metadata_obj,
     full_name = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
     name = sqlalchemy.Column(sqlalchemy.String(255))
     owner = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
@@ -55,6 +53,14 @@ class SQLMetadata(Base):
     __tablename__ = "metadata"
     name = sqlalchemy.Column(sqlalchemy.String, primary_key=True)
     value = sqlalchemy.Column(sqlalchemy.String)
+
+class MetaData(BaseModel):
+    """ system metadata """
+    name: str
+    value: str
+    class Config:
+        """ config """
+        orm_mode=True
 
 async def create_db() -> None:
     """ do the initial DB creation """
@@ -85,14 +91,6 @@ class RepoData(BaseModel):
     organization: Optional[str]
     parent: Optional[str]
 
-    class Config:
-        """ config """
-        orm_mode=True
-
-class MetaData(BaseModel):
-    """ system metadata """
-    name: str
-    value: str
     class Config:
         """ config """
         orm_mode=True
@@ -128,33 +126,56 @@ async def github_linter_js() -> Union[Response,FileResponse]:
         return FileResponse(jspath)
     return Response(status_code=404)
 
-
-
 @app.get("/db/updated")
 async def db_updated(
-    session: AsyncSession = Depends(get_async_session)
     ) -> int:
     """ pulls the last_updated field from the db """
 
-    try:
-        stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name=="last_updated")
-        result: sqlalchemy.engine.result.Result = await session.execute(stmt)
+    async with engine.begin() as conn:
+        try:
+            stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name=="last_updated")
+            result: sqlalchemy.engine.result.Result = await conn.execute(stmt)
 
-        if result is None:
-            logger.debug("No response from db")
-            return -1
-        row =  result.fetchone()
+            if result is None:
+                logger.debug("No response from db")
+                return -1
+            row =  result.fetchone()
 
-        if row is None:
-            logger.error("no row data querying update time: {}", row)
-            return -1
-        data = MetaData.from_orm(row["SQLMetadata"])
-        if '.' in data.value:
-            return int(data.value.split(".")[0])
-    # pylint: disable=broad-except
-    except Exception as error_message:
-        logger.warning(f"Failed to pull last_updated: {error_message}")
-    return -1
+            if row is None:
+                logger.error("no row data querying update time: {}", row)
+                return -1
+            # print(row)
+            data = MetaData.from_orm(row)
+            if '.' in data.value:
+                return int(data.value.split(".")[0])
+        # pylint: disable=broad-except
+        except Exception as error_message:
+            logger.warning(f"Failed to pull last_updated: {error_message}")
+            try:
+                await set_update_time(-1, conn)
+                await conn.commit()
+                logger.success("Set it to -1 instead")
+            # pylint: disable=broad-except
+            except Exception as error:
+                logger.error("Tried to set it to -1 but THAT went wrong too! {}", error)
+        return -1
+
+async def set_update_time(update_time: float, conn: Any) -> None:
+    """ sets the last_updated time in the DB """
+    logger.debug("Setting update time to {}", update_time)
+    lastupdated = {"name" : "last_updated", "value" : update_time}
+
+    await conn.run_sync(Base.metadata.create_all)
+    insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(**lastupdated)
+    do_update = insert_row.on_conflict_do_update(
+        index_elements=['name'],
+        set_= lastupdated,
+    )
+    await conn.execute(do_update)
+    await conn.commit()
+
+    logger.debug("Successfully set update time to {}", update_time)
+
 
 async def update_stored_repo(
     repo: Repository
@@ -184,16 +205,9 @@ async def update_stored_repo(
             set_= repoobject.dict(),
         )
         await conn.execute(do_update)
-        # await conn.commit()
-        logger.info(f"Done with {repo}")
-        lastupdated = {"name" : "last_updated", "value" : time()}
-        insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata)\
-            .values(**lastupdated)
-        do_update = insert_row.on_conflict_do_update(
-            index_elements=['name'],
-            set_= lastupdated,
-        )
-        await conn.execute(do_update)
+        logger.info("Done with {}", repo.full_name)
+
+        await set_update_time(time(), conn)
         await conn.commit()
 
 async def update_stored_repos(
@@ -228,17 +242,37 @@ async def update_stored_repos(
 async def update_repos(
     background_tasks: BackgroundTasks,
     ) -> Dict[str,str]:
-    """ does the background thing """
+    """ Call this endpoint (/repos/update) to start the update process in the background. """
 
     logger.info("Spawning an update process...")
     background_tasks.add_task(update_stored_repos)
 
     return {"message": "Updating in the background"}
 
+async def cron_update(
+    ) -> None:
+    """ background task that does things every so often """
+    # githublinter = GithubLinter()
+    base = declarative_base()
+
+    async with engine.begin() as conn:
+        await conn.run_sync(base.metadata.create_all)
+        last_update = await db_updated()
+        logger.success("Got the last update time: {}", last_update)
+        if (time() - last_update) >= 3600:
+            logger.debug("Cron shows it's been an hour, doing update...")
+            await update_stored_repos()
+            logger.debug("Completed background cron update...")
+
 @app.get("/health")
-async def get_health() -> Response:
+async def get_health(
+    background_tasks: BackgroundTasks,
+    ) -> Response:
     """ really simple health check, also triggers cron jobs sneakily """
-    # TODO: sneaky cron jobs
+
+    # let's just check periodically for an update
+    background_tasks.add_task(cron_update)
+
     return Response(content="OK", status_code=200)
 
 
