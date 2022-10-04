@@ -131,7 +131,7 @@ def fix_funding_file(repo: RepoLinter) -> None:
 
     filename = ".github/FUNDING.yml"
     expected_file = generate_funding_file(repo.config[CATEGORY]["funding"])
-    print(expected_file)
+    logger.debug("Expected funding file:\n{expected_file}")
 
     filecontents = repo.cached_get_file(filename)
     if filecontents and expected_file == filecontents.decoded_content.decode("utf-8"):
