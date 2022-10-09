@@ -70,6 +70,18 @@ def generate_expected_update_config(
                 "directory" : "/",
             })
             updates.append(new_config)
+    github_actions_exists = False
+    for update in updates:
+        if update.package_ecosystem == "github-actions":
+            github_actions_exists = True
+    if not github_actions_exists:
+        updates.append(
+            DependabotUpdateConfig.parse_obj({
+                "package-ecosystem" : "github-actions",
+                "directory" : "/",
+                "schedule" : repo.config[CATEGORY]["schedule"]
+                })
+        )
     config_file = DependabotConfigFile(
         version=2,
         updates=updates,
@@ -104,6 +116,20 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
         if package_manager:
             logger.debug("Language is in package manager: {}", package_manager)
             required_package_managers.append(package_manager)
+
+    try:
+        get_workflows = repo.repository.get_dir_contents(".github/workflows")
+        if get_workflows:
+            logger.debug("List of files in .github/workflows: {}", get_workflows)
+            for file_details in get_workflows:
+                if file_details.path.endswith(".yml"):
+                    required_package_managers.append("github-actions")
+                    logger.debug("Adding github-actions to required checks..")
+                    break
+    except TypeError:
+        logger.debug("Couldn't get contents of dir '.github/workflows', skipping." )
+
+
     if not required_package_managers:
         logger.debug("No languages matched dependabot providers, stopping.")
         return
