@@ -4,13 +4,13 @@ from io import StringIO
 import json
 from typing import List
 
+from github.GithubException import UnknownObjectException
 from loguru import logger
 import pydantic
 from ruyaml import YAML
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
 from github_linter.repolinter import RepoLinter
-
 from .types import (
     DefaultConfig,
     DependabotConfigFile,
@@ -128,6 +128,9 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
                     break
     except TypeError:
         logger.debug("Couldn't get contents of dir '.github/workflows', skipping." )
+    except UnknownObjectException:
+        logger.debug("Couldn't get contents of dir '.github/workflows', skipping." )
+
 
 
     if not required_package_managers:
