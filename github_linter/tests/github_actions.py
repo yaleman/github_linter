@@ -236,9 +236,7 @@ def fix_dependency_review_file_remove_private(repo: RepoLinter) -> None:
     """
 
     repo.skip_on_archived()
-    if repo.repository.private is False:
-        logger.debug("Skipping non-private repo for this check")
-        return
+    repo.skip_on_public()
 
     filepaths = get_dependency_review_file_paths(repo)
     existing_file = repo.cached_get_file(filepaths["repo_file_path"])

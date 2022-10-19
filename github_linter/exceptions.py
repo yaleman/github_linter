@@ -30,3 +30,11 @@ class SkipOnPrivate(Exception):
         """ adds a logging step """
         logger.debug("Skipping Private Repo")
         super().__init__(*args)
+
+class SkipOnPublic(Exception):
+    """ skip a test if the repo's public """
+
+    def __init__(self, *args: object) -> None:
+        """ adds a logging step """
+        logger.debug("Skipping Public Repo")
+        super().__init__(*args)

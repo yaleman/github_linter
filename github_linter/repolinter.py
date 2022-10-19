@@ -12,7 +12,7 @@ from github.Repository import Repository
 from loguru import logger
 import wildcard_matcher
 
-from .exceptions import NoChangeNeeded, SkipOnArchived, SkipOnPrivate
+from .exceptions import NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic
 
 from .types import DICTLIST
 from .utils import load_config
@@ -283,6 +283,13 @@ class RepoLinter:
                 "This repository is private so this test can't run."
             )
 
+    def skip_on_public(self) -> None:
+        """ Add this to a check to skip it if the repository is public. """
+        if not self.repository.private:
+            raise SkipOnPublic(
+                "This repository is public so this test can't run."
+            )
+
     def run_module(
         self,
         module: ModuleType,
@@ -313,6 +320,8 @@ class RepoLinter:
                     pass
                 except SkipOnPrivate:
                     pass
+                except SkipOnPublic:
+                    pass
             if do_fixes:
                 if check.startswith("fix_"):
                     logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
@@ -323,5 +332,7 @@ class RepoLinter:
                     except SkipOnArchived:
                         pass
                     except SkipOnPrivate:
+                        pass
+                    except SkipOnPublic:
                         pass
         return True
