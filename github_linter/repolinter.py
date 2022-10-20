@@ -316,23 +316,13 @@ class RepoLinter:
                     getattr(module, check)(
                         repo=self,
                     )
-                except SkipOnArchived:
-                    pass
-                except SkipOnPrivate:
-                    pass
-                except SkipOnPublic:
+                except (SkipOnArchived, SkipOnPrivate, SkipOnPublic):
                     pass
             if do_fixes:
                 if check.startswith("fix_"):
                     logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
                     try:
                         getattr(module, check)(repo=self)
-                    except NoChangeNeeded:
-                        pass
-                    except SkipOnArchived:
-                        pass
-                    except SkipOnPrivate:
-                        pass
-                    except SkipOnPublic:
+                    except (NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic):
                         pass
         return True
