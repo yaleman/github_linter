@@ -15,7 +15,7 @@ from . import (
     homebrew,
     issues,
     mkdocs,
-    pylintrc,
+    # pylintrc,
     pyproject,
     security_md,
     testing,
