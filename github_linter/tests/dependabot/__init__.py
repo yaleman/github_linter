@@ -104,7 +104,9 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
         repo.error(CATEGORY, "Updates config not found.")
         return
 
-    required_package_managers = []
+    required_package_managers = [
+        "github-actions", # included by default because ... y'know.
+    ]
 
     # get the languages from the repo
     languages = repo.repository.get_languages()

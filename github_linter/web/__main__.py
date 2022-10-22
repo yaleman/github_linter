@@ -3,7 +3,7 @@
 from typing import Optional
 
 import click
-import uvicorn # type: ignore
+import uvicorn
 
 @click.command()
 @click.option("--reload", is_flag=True)
