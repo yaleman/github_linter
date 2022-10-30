@@ -85,7 +85,7 @@ def check_language_workflows(repo: RepoLinter) -> None:
 
             for filename in expected_files:
                 filepath = f".github/workflows/{filename}"
-                logger.warning("Checking for {}", filepath)
+                logger.debug("Checking for {}", filepath)
                 config_file = load_yaml_file(repo, filepath)
 
                 logger.debug(json.dumps(config_file, indent=4))
@@ -116,7 +116,7 @@ def fix_language_workflows(repo: RepoLinter) -> None:
 
             for filename in expected_files:
                 filepath = f".github/workflows/{filename}"
-                logger.warning("Checking for {}", filepath)
+                logger.debug("Checking for {}", filepath)
                 config_file = load_yaml_file(repo, filepath)
 
                 logger.debug(json.dumps(config_file, indent=4))
