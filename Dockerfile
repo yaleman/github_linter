@@ -18,7 +18,6 @@ RUN mkdir -p build/github_linter
 WORKDIR /build
 ADD github_linter /build/github_linter
 COPY pyproject.toml .
-COPY poetry.lock .
 COPY README.md .
 COPY LICENSE .
 
