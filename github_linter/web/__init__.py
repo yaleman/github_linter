@@ -13,7 +13,7 @@ from pydantic import BaseModel
 import sqlalchemy
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.ext.declarative import declarative_base #DeclarativeMeta
+from sqlalchemy.orm import declarative_base #DeclarativeMeta
 from sqlalchemy.orm import sessionmaker
 import sqlalchemy.dialects.sqlite
 
@@ -102,64 +102,6 @@ def githublinter_factory() -> Generator[GithubLinter, None, None]:
     githublinter.do_login()
     yield githublinter
 
-@app.get("/favicon.svg")
-async def favicon() -> Union[Response,FileResponse]:
-    """ return a """
-    icon_file = Path(Path(__file__).resolve().parent.as_posix()+"/images/github.svg")
-    if icon_file.exists():
-        return FileResponse(icon_file)
-    return Response(status_code=404)
-
-@app.get('/css/{filename:str}')
-async def css_file(filename: str) -> Union[Response,FileResponse]:
-    """ css returner """
-    cssfile = Path(Path(__file__).resolve().parent.as_posix()+f"/css/{filename}")
-    if cssfile.exists():
-        return FileResponse(cssfile)
-    return Response(status_code=404)
-
-@app.get("/github_linter.js")
-async def github_linter_js() -> Union[Response,FileResponse]:
-    """ load the js """
-    jspath = Path(Path(__file__).resolve().parent.as_posix()+"/github_linter.js")
-    if jspath.exists():
-        return FileResponse(jspath)
-    return Response(status_code=404)
-
-@app.get("/db/updated")
-async def db_updated(
-    ) -> int:
-    """ pulls the last_updated field from the db """
-
-    async with engine.begin() as conn:
-        try:
-            stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name=="last_updated")
-            result: sqlalchemy.engine.result.Result = await conn.execute(stmt)
-
-            if result is None:
-                logger.debug("No response from db")
-                return -1
-            row =  result.fetchone()
-
-            if row is None:
-                logger.error("no row data querying update time: {}", row)
-                return -1
-            # print(row)
-            data = MetaData.from_orm(row)
-            if '.' in data.value:
-                return int(data.value.split(".")[0])
-        # pylint: disable=broad-except
-        except Exception as error_message:
-            logger.warning(f"Failed to pull last_updated: {error_message}")
-            try:
-                await set_update_time(-1, conn)
-                await conn.commit()
-                logger.success("Set it to -1 instead")
-            # pylint: disable=broad-except
-            except Exception as error:
-                logger.error("Tried to set it to -1 but THAT went wrong too! {}", error)
-        return -1
-
 async def set_update_time(update_time: float, conn: Any) -> None:
     """ sets the last_updated time in the DB """
     logger.debug("Setting update time to {}", update_time)
@@ -238,17 +180,6 @@ async def update_stored_repos(
                 deleterepo_query = sqlalchemy.delete(SQLRepos).where(SQLRepos.full_name==dbrepo.full_name)
                 await conn.execute(deleterepo_query)
 
-@app.get("/repos/update")
-async def update_repos(
-    background_tasks: BackgroundTasks,
-    ) -> Dict[str,str]:
-    """ Call this endpoint (/repos/update) to start the update process in the background. """
-
-    logger.info("Spawning an update process...")
-    background_tasks.add_task(update_stored_repos)
-
-    return {"message": "Updating in the background"}
-
 async def cron_update(
     ) -> None:
     """ background task that does things every so often """
@@ -263,7 +194,79 @@ async def cron_update(
             await update_stored_repos()
             logger.success("Completed background cron update...")
 
-@app.get("/health")
+@app.get("/favicon.svg", response_model=None)
+async def favicon() -> Union[Response,FileResponse]:
+    """ return a """
+    icon_file = Path(Path(__file__).resolve().parent.as_posix()+"/images/github.svg")
+    if icon_file.exists():
+        return FileResponse(icon_file)
+    return Response(status_code=404)
+
+@app.get('/css/{filename:str}', response_model=None)
+async def css_file(filename: str) -> Union[Response,FileResponse]:
+    """ css returner """
+    cssfile = Path(Path(__file__).resolve().parent.as_posix()+f"/css/{filename}")
+    if cssfile.exists():
+        return FileResponse(cssfile)
+    return Response(status_code=404)
+
+@app.get("/github_linter.js", response_model=None)
+async def github_linter_js() -> Union[Response,FileResponse]:
+    """ load the js """
+    jspath = Path(Path(__file__).resolve().parent.as_posix()+"/github_linter.js")
+    if jspath.exists():
+        return FileResponse(jspath)
+    return Response(status_code=404)
+
+@app.get("/db/updated", response_model=None)
+async def db_updated(
+    ) -> int:
+    """ pulls the last_updated field from the db """
+
+    async with engine.begin() as conn:
+        try:
+            stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name=="last_updated")
+            result: sqlalchemy.engine.result.Result = await conn.execute(stmt)
+
+            if result is None:
+                logger.debug("No response from db")
+                return -1
+            row =  result.fetchone()
+
+            if row is None:
+                logger.error("no row data querying update time: {}", row)
+                return -1
+            # print(row)
+            data = MetaData.from_orm(row)
+            if '.' in data.value:
+                return int(data.value.split(".")[0])
+        # pylint: disable=broad-except
+        except Exception as error_message:
+            logger.warning(f"Failed to pull last_updated: {error_message}")
+            try:
+                await set_update_time(-1, conn)
+                await conn.commit()
+                logger.success("Set it to -1 instead")
+            # pylint: disable=broad-except
+            except Exception as error:
+                logger.error("Tried to set it to -1 but THAT went wrong too! {}", error)
+        return -1
+
+class ResponseMessage(BaseModel):
+    """ simple basemodel for response messages """
+    message: str
+
+@app.get("/repos/update")
+async def update_repos(
+    background_tasks: BackgroundTasks,
+    ) -> ResponseMessage:
+    """ Call this endpoint (/repos/update) to start the update process in the background. """
+
+    logger.info("Spawning an update process...")
+    background_tasks.add_task(update_stored_repos)
+    return ResponseMessage(message="Updating in the background")
+
+@app.get("/health", response_model=None)
 async def get_health(
     background_tasks: BackgroundTasks,
     ) -> Response:
@@ -273,7 +276,6 @@ async def get_health(
     background_tasks.add_task(cron_update)
 
     return Response(content="OK", status_code=200)
-
 
 @app.get("/repos")
 async def get_repos(
@@ -291,7 +293,7 @@ async def get_repos(
     return retval
 
 
-@app.get("/")
+@app.get("/", response_model=None)
 async def root(
     background_tasks: BackgroundTasks,
     ) -> Union[Response,HTMLResponse]:
