@@ -9,11 +9,11 @@ class DefaultLinterConfig(TypedDict):
     github: Optional[Dict[str, str]]
     check_forks: bool
     owner_list: List[str]
-    fix_branch: str
+    fix_branch: Optional[str]
 
 DEFAULT_LINTER_CONFIG: DefaultLinterConfig = {
     "github" : {},
     "check_forks": False,
     "owner_list": [],
-    "fix_branch" : "github-linter",
+    "fix_branch" : None,
     }

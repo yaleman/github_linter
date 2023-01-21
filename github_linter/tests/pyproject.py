@@ -302,11 +302,11 @@ def fix_copy_poetry_to_project(repo: RepoLinter) -> None:
 
     # check the name field
 
-    if not "tool" in pyproject:
+    if "tool" not in pyproject:
         logger.debug("tool not in pyproject, bailing")
         return
 
-    if not "poetry" in pyproject["tool"]:
+    if "poetry" not in pyproject["tool"]:
         logger.debug("tool.poetry not in pyproject, bailing")
         return
 

@@ -145,23 +145,23 @@ class RepoLinter:
             blobsha = ""
 
         commit_branch = self.config.get("fix_branch")
-        if commit_branch is None:
-            raise ValueError("Somehow we got a null value from the config for fix_branch while trying to commit a file!")
-        if commit_branch != self.repository.default_branch:
-
-            try:
-                target_branch = self.repository.get_branch(commit_branch)
-            except GithubException as error:
-                if error.status != 404:
-                    print(error)
-                    sys.exit(1)
-                logger.debug(f"404'd looking for branch {commit_branch}, will commit one.")
-                source_branch = self.repository.get_branch(self.repository.default_branch)
-                branch_create = self.repository.create_git_ref(ref='refs/heads/' + commit_branch, sha=source_branch.commit.sha)
-                logger.debug(f"result of creating {commit_branch} from {self.repository.default_branch}: {branch_create}")
-                logger.info("Created branch {} in {}", commit_branch, self.repository.full_name)
-        target_branch = self.repository.get_branch(commit_branch)
-
+        if commit_branch is not None:
+            # raise ValueError("Somehow we got a null value from the config for fix_branch while trying to commit a file!")
+            if commit_branch != self.repository.default_branch:
+                try:
+                    target_branch = self.repository.get_branch(commit_branch)
+                except GithubException as error:
+                    if error.status != 404:
+                        print(error)
+                        sys.exit(1)
+                    logger.debug(f"404'd looking for branch {commit_branch}, will commit one.")
+                    source_branch = self.repository.get_branch(self.repository.default_branch)
+                    branch_create = self.repository.create_git_ref(ref='refs/heads/' + commit_branch, sha=source_branch.commit.sha)
+                    logger.debug(f"result of creating {commit_branch} from {self.repository.default_branch}: {branch_create}")
+                    logger.info("Created branch {} in {}", commit_branch, self.repository.full_name)
+            target_branch = self.repository.get_branch(commit_branch)
+        else:
+            target_branch = self.repository.get_branch(self.repository.default_branch)
 
         commit_result = self.repository.update_file(
             path=filepath,

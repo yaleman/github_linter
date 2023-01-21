@@ -110,7 +110,8 @@ class DependabotUpdateConfig(pydantic.BaseModel):
     labels: Optional[List[str]]
     milestone: Optional[int]
     open_pull_requests_limit: Optional[int] = pydantic.Field(alias="open-pull-requests-limit")
-    # TODO: this needs to be a thing - https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#pull-request-branch-nameseparator #pylint: disable=line-too-long
+    # noqa: E501 pylint: disable=line-too-long
+    # TODO: this needs to be a thing - https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#pull-request-branch-nameseparator
     # pull-request-branch-name.separator
     rebase_strategy: Optional[str] = pydantic.Field(alias="rebase-strategy")
     # TODO: registries typing for DependabotUpdateConfig

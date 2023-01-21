@@ -11,6 +11,7 @@ from ruyaml import YAML
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
 from github_linter.repolinter import RepoLinter
+from github_linter.utils import get_fix_file_path
 from .types import (
     DefaultConfig,
     DependabotConfigFile,
@@ -267,6 +268,42 @@ def check_dependabot_vulnerability_enabled(
     repo.skip_on_archived()
     if not repo.repository.get_vulnerability_alert():
         repo.error(CATEGORY, "Vulnerability reports on repository are not enabled.")
+
+def check_dependabot_automerge_workflow(repo: RepoLinter) -> None:
+    """ checks the repo config file and see if auto-merge is enabled """
+    # TODO: the github module doesn't support directly querying the settings for this?
+    repo.skip_on_archived()
+    filepath = ".github/workflows/dependabot_auto_merge.yml"
+    fileresult = repo.get_file(filepath)
+    if fileresult is None:
+        repo.error(CATEGORY, f"{filepath} missing")
+    elif fileresult.content != get_fix_file_path(category=CATEGORY, filename=filepath).read_text:
+        repo.warning(CATEGORY, f"Content differs for {filepath}")
+
+def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
+    """ adds the automerge config """
+    repo.skip_on_archived()
+    filepath = ".github/workflows/dependabot_auto_merge.yml"
+    fileresult = repo.get_file(filepath)
+    if fileresult is None:
+        result = repo.create_or_update_file(
+            filepath=filepath,
+            newfile=get_fix_file_path(category=CATEGORY, filename=filepath),
+            oldfile=fileresult,
+            message=f"Created {filepath}"
+            )
+        return repo.fix(CATEGORY, f"Created {filepath}, commit url: {result}")
+    if fileresult.content != get_fix_file_path(category=CATEGORY, filename=filepath).read_text:
+        result = repo.create_or_update_file(
+            filepath=filepath,
+            newfile=get_fix_file_path(category=CATEGORY, filename=filepath),
+            oldfile=fileresult,
+            message=f"Updated {filepath} to latest version"
+            )
+        return repo.fix(CATEGORY, f"Updated {filepath} to latest version, commit url: {result}")
+    logger.debug("{} already exists and has the right contents!", filepath)
+    return None
+
 
 def fix_dependabot_vulnerability_enabled(repo: RepoLinter) -> None:
     """ enables vulnerability alerts on a repository """

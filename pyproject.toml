@@ -40,6 +40,9 @@ dev = [
 'github-linter' = 'github_linter.__main__:cli'
 
 
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.0.228"
+
 [tool.poetry]
 name = "github_linter"
 version = "0.0.2"
@@ -92,3 +95,12 @@ disable="W0511,consider-using-dict-items,duplicate-code"
 # https://github.com/samuelcolvin/pydantic/issues/1961#issuecomment-759522422
 extension-pkg-whitelist="pydantic"
 load-plugins="pylint_pydantic"
+
+[tool.ruff]
+line-length=200
+exclude=[
+    "W0511","consider-using-dict-items","duplicate-code"
+]
+# https://github.com/samuelcolvin/pydantic/issues/1961#issuecomment-759522422
+# extension-pkg-whitelist="pydantic"
+# load-plugins="pylint_pydantic"

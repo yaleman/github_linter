@@ -6,20 +6,21 @@ from typing import Any, Dict, List, Optional
 
 from loguru import logger
 
+
 from . import (
-    codeowners,
-    dependabot,
-    docs,
-    generic,
-    github_actions,
-    homebrew,
-    issues,
-    mkdocs,
+    codeowners, # noqa: F401
+    dependabot, # noqa: F401
+    docs, # noqa: F401
+    generic, # noqa: F401
+    github_actions, # noqa: F401
+    homebrew, # noqa: F401
+    issues, # noqa: F401
+    mkdocs, # noqa: F401
     # pylintrc,
-    pyproject,
-    security_md,
-    testing,
-    terraform,
+    pyproject, # noqa: F401
+    security_md, # noqa: F401
+    testing, # noqa: F401
+    terraform, # noqa: F401
 )
 
 CATEGORY = "tests"
