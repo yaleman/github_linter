@@ -275,10 +275,10 @@ def check_dependabot_automerge_workflow(repo: RepoLinter) -> None:
     repo.skip_on_archived()
     filepath = ".github/workflows/dependabot_auto_merge.yml"
     fileresult = repo.get_file(filepath)
-    if fileresult is None:
-        repo.error(CATEGORY, f"{filepath} missing")
-    elif fileresult.content != get_fix_file_path(category=CATEGORY, filename=filepath).read_text:
-        repo.warning(CATEGORY, f"Content differs for {filepath}")
+    if fileresult is None or fileresult.content is None:
+        return repo.error(CATEGORY, f"{filepath} missing")
+    if fileresult.content != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
+        return repo.warning(CATEGORY, f"Content differs for {filepath}")
 
 def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
     """ adds the automerge config """
@@ -293,7 +293,7 @@ def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
             message=f"Created {filepath}"
             )
         return repo.fix(CATEGORY, f"Created {filepath}, commit url: {result}")
-    if fileresult.content != get_fix_file_path(category=CATEGORY, filename=filepath).read_text:
+    if fileresult.content != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
         result = repo.create_or_update_file(
             filepath=filepath,
             newfile=get_fix_file_path(category=CATEGORY, filename=filepath),
