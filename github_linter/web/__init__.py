@@ -13,8 +13,10 @@ from pydantic import BaseModel
 import sqlalchemy
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import declarative_base #DeclarativeMeta
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base
+#, sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
 import sqlalchemy.dialects.sqlite
 
 
@@ -24,7 +26,7 @@ DB_PATH = Path("~/.config/github_linter.sqlite").expanduser().resolve()
 DB_URL = f"sqlite+aiosqlite:///{DB_PATH.as_posix()}"
 
 engine = create_async_engine(DB_URL)
-async_session_maker = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 Base = declarative_base()
 
 app = FastAPI()
@@ -108,7 +110,7 @@ async def set_update_time(update_time: float, conn: Any) -> None:
     lastupdated = {"name" : "last_updated", "value" : update_time}
 
     await conn.run_sync(Base.metadata.create_all)
-    insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(**lastupdated)
+    insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(**lastupdated) #type: ignore
     do_update = insert_row.on_conflict_do_update(
         index_elements=['name'],
         set_= lastupdated,
@@ -140,8 +142,9 @@ async def update_stored_repo(
             "parent" :repo.parent.full_name if repo.parent else None,
         })
 
-        insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos)\
-            .values(**repoobject.dict())
+
+        insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos).values(**repoobject.dict()) #type: ignore
+
         do_update = insert_row.on_conflict_do_update(
             index_elements=['full_name'],
             set_= repoobject.dict(),
@@ -226,7 +229,7 @@ async def db_updated(
     async with engine.begin() as conn:
         try:
             stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name=="last_updated")
-            result: sqlalchemy.engine.result.Result = await conn.execute(stmt)
+            result: sqlalchemy.engine.result.Result = await conn.execute(stmt) #type: ignore
 
             if result is None:
                 logger.debug("No response from db")
@@ -286,7 +289,7 @@ async def get_repos(
     try:
         stmt = sqlalchemy.select(SQLRepos)
         result = await session.execute(stmt)
-        retval = [ RepoData.from_orm(element["SQLRepos"]) for element in result.fetchall() ]
+        retval = [ RepoData.from_orm(element["SQLRepos"]) for element in result.fetchall() ] #type: ignore
     except OperationalError as operational_error:
         logger.warning("Failed to pull repos from DB: {}", operational_error)
         return []
