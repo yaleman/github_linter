@@ -289,7 +289,7 @@ async def get_repos(
     try:
         stmt = sqlalchemy.select(SQLRepos)
         result = await session.execute(stmt)
-        retval = [ RepoData.from_orm(element["SQLRepos"]) for element in result.fetchall() ] #type: ignore
+        retval = [ RepoData.from_orm(element.SQLRepos) for element in result.fetchall() ]
     except OperationalError as operational_error:
         logger.warning("Failed to pull repos from DB: {}", operational_error)
         return []
