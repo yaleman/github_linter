@@ -56,7 +56,8 @@ def load_config() -> Dict[Optional[str], Any]:
             logger.debug("Path {} is not a file", configfile)
             continue
         try:
-            config = json.load(configfile.open(encoding="utf8"))
+            with configfile.open(encoding="utf8") as file_handle:
+                config = json.load(file_handle)
             logger.debug("Using config file {}", configfile.as_posix())
             if "linter" not in config:
                 config["linter"] = {}
