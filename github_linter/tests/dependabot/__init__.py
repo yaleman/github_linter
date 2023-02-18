@@ -278,7 +278,8 @@ def check_dependabot_automerge_workflow(repo: RepoLinter) -> None:
     if fileresult is None or fileresult.content is None:
         return repo.error(CATEGORY, f"{filepath} missing")
     if fileresult.content != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
-        return repo.warning(CATEGORY, f"Content differs for {filepath}")
+        repo.warning(CATEGORY, f"Content differs for {filepath}")
+    return None
 
 def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
     """ adds the automerge config """
