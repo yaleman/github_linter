@@ -2,7 +2,6 @@
 
 from github.Repository import Repository
 from github.Requester import Requester
-
 def generate_test_repo() -> Repository:
     """ gets you a test repo """
     test_requester = Requester(
@@ -16,6 +15,7 @@ def generate_test_repo() -> Repository:
         per_page=100,
         user_agent="",
         verify=False,
+        app_auth=None,
     ) # type: ignore
 
     testrepo = Repository(
