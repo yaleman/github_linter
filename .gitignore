@@ -8,3 +8,4 @@ build/
 dist/
 .coverage
 poetry.lock
+github_linter.json
