@@ -10,10 +10,12 @@ from github.ContentFile import ContentFile
 from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
 
+
+import tomli
 from loguru import logger
 import wildcard_matcher
 
-from .exceptions import NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic
+from .exceptions import NoChangeNeeded, SkipNoLanguage, SkipOnArchived, SkipOnPrivate, SkipOnPublic
 
 from .types import DICTLIST
 from .utils import load_config
@@ -74,6 +76,8 @@ class RepoLinter:
         self.warnings: DICTLIST = {}
         self.fixes: DICTLIST = {}
         self.filecache: Dict[str, Optional[ContentFile]] = {}
+
+        self.languages: Optional[List[str]] = None
 
     def clear_file_cache(self, filepath: str) -> bool:
         """ removes a file from the file cache, returns bool if it was in there """
@@ -337,7 +341,7 @@ class RepoLinter:
                     getattr(module, check)(
                         repo=self,
                     )
-                except (SkipOnArchived, SkipOnPrivate, SkipOnPublic):
+                except (SkipOnArchived, SkipOnPrivate, SkipOnPublic, SkipNoLanguage):
                     pass
             if do_fixes:
                 if check.startswith("fix_"):
@@ -347,3 +351,33 @@ class RepoLinter:
                     except (NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic):
                         pass
         return True
+
+    def requires_language(self, language: str) -> None:
+        """ raises a skip exception if the repository doesn't have this language """
+        if self.languages is None:
+            self.languages = [ str(key) for key in self.repository.get_languages().keys() ]
+        logger.debug("Languages in repo: {}", ",".join(self.languages))
+        if language not in self.languages:
+            logger.debug("Didn't find {} in language list, raising SkipNoLanguage")
+            raise SkipNoLanguage
+        logger.debug("Found {} in repo's language list", language)
+
+    def load_pyproject(self) -> Optional[Dict[str, Any]]:
+        """ loads the pyproject.toml file
+
+        """
+
+        fileresult = self.cached_get_file("pyproject.toml")
+        if not fileresult:
+            logger.debug("No content for pyproject.toml")
+            return None
+
+        try:
+            return tomli.loads(fileresult.decoded_content.decode("utf-8"))
+        except tomli.TOMLDecodeError as tomli_error:
+            logger.debug(
+                "Failed to parse {}/pyproject.toml: {}",
+                self.repository.full_name,
+                tomli_error,
+            )
+            return None

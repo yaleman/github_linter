@@ -16,7 +16,7 @@ def generate_test_repo() -> Repository:
         user_agent="",
         verify=False,
         app_auth=None,
-    ) # type: ignore
+    )
 
     testrepo = Repository(
         test_requester,

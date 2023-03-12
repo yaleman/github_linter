@@ -15,6 +15,14 @@ class NoChangeNeeded(Exception):
         logger.debug("Fix not required, skipping.")
         super().__init__(*args)
 
+class SkipNoLanguage(Exception):
+    """ skip a test if the repo doesn't have the required language """
+
+    def __init__(self, *args: object) -> None:
+        """ adds a logging step """
+        logger.debug("Skipping Repo: Language not found.")
+        super().__init__(*args)
+
 class SkipOnArchived(Exception):
     """ skip a test if the repo's archived """
 

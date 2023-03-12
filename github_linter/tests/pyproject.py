@@ -3,12 +3,11 @@
 import json
 import re
 
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, TypedDict
 
 # from github.Repository import Repository
 
 from loguru import logger
-import tomli
 import tomli_w
 
 
@@ -125,28 +124,10 @@ def validate_scripts(
     return retval
 
 
-def load_pyproject(repo: RepoLinter) -> Optional[Dict[str, Any]]:
-    """ loads the pyproject.toml file """
-
-    fileresult = repo.cached_get_file("pyproject.toml")
-    if not fileresult:
-        logger.debug("No content for pyproject.toml")
-        return None
-
-    try:
-        return tomli.loads(fileresult.decoded_content.decode("utf-8"))
-    except tomli.TOMLDecodeError as tomli_error:
-        logger.debug(
-            "Failed to parse {}/pyproject.toml: {}",
-            repo.repository.full_name,
-            tomli_error,
-        )
-        return None
-
 
 def check_pyproject_build_backend(repo: RepoLinter) -> None:
     """ gets the pyproject.toml file and looks for the key build-system.build-backend """
-    pyproject = load_pyproject(repo)
+    pyproject = repo.load_pyproject()
 
     if not pyproject:
         logger.error("pyproject.toml not found")
@@ -176,7 +157,7 @@ def check_pyproject_toml(
 
     # config_expected = repo.config.get(CATEGORY)
 
-    parsed = load_pyproject(repo)
+    parsed = repo.load_pyproject()
     if not parsed:
         return repo.error(CATEGORY, "Failed to parse pyproject.toml")
     if not parsed.get("project"):
@@ -200,7 +181,7 @@ def check_pyproject_toml(
 #     repo: RepoLinter,
 # ) -> None:
 #     """ check for file exclusions so flit doesn't package things it shouldn't """
-#     pyproject = load_pyproject(repo)
+#     pyproject = load_pyproject()
 
 #     if not pyproject:
 #         repo.error(
@@ -294,7 +275,7 @@ def fix_copy_poetry_to_project(repo: RepoLinter) -> None:
     poetry:  Authors must be in the form name <email>.
     """
     # this pulls name/email from a poetry author
-    pyproject = load_pyproject(repo)
+    pyproject = repo.load_pyproject()
 
     if not pyproject:
         repo.error(CATEGORY, "fix_copy_poetry_to_project failed - attempted to fix pyproject but doesn't exist")
