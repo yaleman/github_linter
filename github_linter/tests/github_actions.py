@@ -17,7 +17,7 @@ templates/Dockerfile/build_container.yml would be used when running the fix
 """
 
 from pathlib import Path
-from typing import Dict, List, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 import json5 as json
 from loguru import logger
@@ -34,6 +34,7 @@ LANGUAGES = ["all"]
 class DefaultConfig(TypedDict):
     """ config typing for module config """
     tests_per_language: Dict[str, List[str]]
+    # dev_packages: Dict[str, List[str]] # TODO: move this to pyproject.toml
     dependency_review: str
 
 DEFAULT_CONFIG: DefaultConfig = {
@@ -53,6 +54,14 @@ DEFAULT_CONFIG: DefaultConfig = {
             "build_container.yml",
         ]
     },
+    # "dev_packages" : {
+    #     "Python" : [
+    #         "mypy",
+    #         "ruff",
+    #         "pytest",
+    #         "black",
+    # #     ]
+    # },
     "dependency_review" : ".github/workflows/dependency_review.yml",
 }
 
@@ -200,6 +209,94 @@ def check_dependency_review_file(repo: RepoLinter) -> None:
             )
         return
     logger.debug(f"Dependency review action is up to date {filepaths['repo_file_path']}")
+
+def nested_get(haystack: Dict[str, Any], needle: str) -> Optional[Any]:
+    """ digs into the haystack looking for the needle, layers are like "one.two.three.four" """
+    if "." not in needle:
+        return haystack.get(needle)
+    split_needle = needle.split(".")
+    first_layer_needle = split_needle[0]
+
+    if first_layer_needle not in haystack:
+        return None
+    return nested_get(haystack[first_layer_needle], ".".join(split_needle[1:]))
+
+def pylint_to_ruff_check_pyproject(repo: RepoLinter) -> None:
+    """ handles the pyproject.toml file if we're moving from pylint to ruff """
+    pyproject = repo.load_pyproject()
+    if pyproject is None:
+        return
+
+    logger.debug("tool.poetry.dependencies: {}", pyproject.get('tool.poetry.dependencies'))
+
+    stanzas = [
+        "tool.poetry.dependencies",
+        "tool.poetry.dev-dependencies",
+        "tool.poetry.extras",
+        "tool.poetry.group.dev.dependencies",
+    ]
+    for stanza in stanzas:
+        dependencies = nested_get(pyproject, stanza)
+        if dependencies is None:
+            logger.debug("didn't find stanza {} in pyproject.toml", stanza)
+            continue
+        logger.debug("{}: {}", stanza, dependencies)
+        if "pylint" in dependencies:
+            repo.warning(CATEGORY, f"pylint found in pyproject dependency stanza: {stanza}, please migrate to ruff")
+
+def pylint_to_ruff_check_github_workflows(repo: RepoLinter) -> None:
+    """ checks for github actions with pylint mentioned in the run field of job steps """
+
+    filename = ".github/workflows/pylint.yml"
+
+    workflow: Optional[Dict[str, Any]] = load_yaml_file(repo, filename)
+    if workflow == {}:
+        logger.debug("Couldn't find or load .github/workflows/pylint.yml")
+        return
+    if workflow is None:
+        logger.debug("Couldn't find or load .github/workflows/pylint.yml")
+        return
+
+    if "jobs" not in workflow:
+        logger.debug("No jobs in .github/workflows/pylint.yml")
+        return
+
+    jobs: Dict[str, Any] = workflow["jobs"]
+    for job_name in jobs:
+        logger.debug("job: {}", job_name)
+
+        job = workflow["jobs"][job_name]
+
+        if "steps" not in job:
+            logger.debug("Couldn't find steps for job {}", job_name)
+            continue
+        steps: List[Dict[str, Any]] = job['steps']
+
+        for step_index, step in enumerate(steps):
+            logger.info(step)
+            step_name = step.get("name", f"step #{step_index}")
+            if "run" not in step:
+                logger.debug("No 'run' in step '{}', skipping!", step_name)
+                continue
+            if 'pylint' in step['run']:
+                logger.debug("Found pylint in run: {}", step['run'])
+                message = f"Github Action Workflow filename=\"{filename}\" job=\"{job_name}\" step=\"{step_name}\" contains pylint in the run argument, please migrate to `ruff`."
+                repo.warning(CATEGORY, message)
+
+def check_migrate_pylint_to_ruff(repo: RepoLinter) -> None:
+    """ checks if pylint's in the package list or run commands and suggests moving to ruff
+    """
+    repo.skip_on_archived()
+    repo.requires_language("Python")
+
+    # Check for pyproject.toml and then look for the pylint package in there
+    pyproject_file = repo.get_file("pyproject.toml")
+    if pyproject_file is not None:
+        pylint_to_ruff_check_pyproject(repo)
+
+    # check for run commands which use pylint in the github action .github/workflows/pylint.yml
+    pylint_to_ruff_check_github_workflows(repo)
+
 
 def fix_dependency_review_file(repo: RepoLinter) -> None:
     """ checks for .github/workflows/dependency_review.yml
