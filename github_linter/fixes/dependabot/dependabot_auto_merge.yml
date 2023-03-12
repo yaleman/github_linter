@@ -1,3 +1,4 @@
+---
 name: Dependabot auto-merge and approve
 "on": pull_request
 

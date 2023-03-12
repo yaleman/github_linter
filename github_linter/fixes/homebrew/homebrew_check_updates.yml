@@ -1,5 +1,6 @@
+---
 name: Check for updates in brew definitions
-on:
+"on":
   schedule:
     - cron: '0 5 * * *'
   push:
