@@ -10,6 +10,8 @@ from typing import Any, Dict, List, TypedDict
 from loguru import logger
 import tomli_w
 
+from github_linter.exceptions import NoChangeNeeded
+
 
 from ..repolinter import RepoLinter
 
@@ -341,3 +343,67 @@ def fix_copy_poetry_to_project(repo: RepoLinter) -> None:
     # TODO: include and exclude fields from poetry should match sdist from flit?
 
     # TODO: tools.poetry.urls (arbitrary URLs) https://python-poetry.org/docs/pyproject/#urls
+
+
+def check_mypy_pydantic_plugin(repo: RepoLinter) -> None:
+    """ checks that the pydantic plugin's enabled for mypy """
+
+    # [tool.mypy]
+    # plugins = "pydantic.mypy"
+    repo.skip_on_archived()
+    pyproject = load_pyproject(repo)
+    pyproject_file = repo.cached_get_file("pyproject.toml")
+
+    if pyproject is None or pyproject_file is None:
+        logger.info("No pyproject file found in repo {}", repo.repository.full_name)
+        raise NoChangeNeeded
+
+
+    if not any(line for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n") if line.strip().startswith("mypy")):
+        logger.info("mypy not found in pyproject.toml")
+        raise NoChangeNeeded
+
+    if not any(line for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n") if line.strip().startswith("pydantic")):
+        logger.info("pydantic not found in pyproject.toml")
+        raise NoChangeNeeded
+
+    if "tool" not in pyproject:
+        repo.error(CATEGORY, "section 'tool' not found")
+        return
+    if "mypy" not in pyproject["tool"]:
+        repo.error(CATEGORY, "section 'tool.mypy' not found")
+        return
+    if "plugins" not in pyproject["tool"]["mypy"]:
+        repo.error(CATEGORY, "section 'tool.mypy.plugins' not found")
+        return
+    if "pydantic.mypy" not in pyproject['tool']['mypy']['plugins']:
+        repo.error(CATEGORY, "section 'tool.mypy.plugins' does not contain pydantic.mypy")
+        return
+
+def fix_mypy_pydantic_plugin(repo: RepoLinter) -> None:
+    """ ensures that the pydantic plugin's enabled for mypy """
+    repo.skip_on_archived()
+    try:
+        check_mypy_pydantic_plugin(repo)
+    except NoChangeNeeded:
+        logger.debug("No change needed for fix_mypy_pydantic_plugin")
+        return None
+    pyproject = load_pyproject(repo)
+    pyproject_file = repo.cached_get_file("pyproject.toml")
+    if pyproject is None or pyproject_file is None:
+        logger.info("No pyproject file found in repo {}", repo.repository.full_name)
+        return
+
+
+    if "tool" not in pyproject:
+        pyproject["tool"] = {}
+
+    if "mypy" not in pyproject["tool"]:
+        pyproject["tool"]["mypy"] = {}
+
+    if "plugins" not in pyproject["tool"]["mypy"]:
+        pyproject["tool"]["mypy"]["plugins"] = "pydantic.mypy"
+
+    logger.debug(tomli_w.dumps(pyproject))
+    result = repo.create_or_update_file("pyproject.toml", tomli_w.dumps(pyproject),repo.cached_get_file("pyproject.toml"),"Added pydantic plugin to mypy config in pyproject.toml")
+    logger.success("Added pydantic plugin to mypy config in pyproject.toml {}", result)

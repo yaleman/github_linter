@@ -40,7 +40,7 @@ def get_fix_file_path(category: str, filename: str) -> Path:
 
 # I'm doing type: ignore here because it depends
 # on the downstream modules, which can be anything.
-def load_config() -> Dict[Optional[str], Any]:
+def load_config() -> Dict[str, Any]:
     """ loads config """
     for configfile in [
         Path("./github_linter.json"),
@@ -57,7 +57,7 @@ def load_config() -> Dict[Optional[str], Any]:
             continue
         try:
             with configfile.open(encoding="utf8") as file_handle:
-                config = json.load(file_handle)
+                config: Dict[str, Any] = json.load(file_handle)
             logger.debug("Using config file {}", configfile.as_posix())
             if "linter" not in config:
                 config["linter"] = {}
@@ -65,7 +65,7 @@ def load_config() -> Dict[Optional[str], Any]:
             for key in DEFAULT_LINTER_CONFIG:
                 if key not in config:
                     config[key] = DEFAULT_LINTER_CONFIG[key]  # type: ignore
-            return config# type: ignore
+            return config
         except JSONDecodeError as json_error:
             logger.error("Failed to load {}: {}", configfile.as_posix(), json_error)
 
