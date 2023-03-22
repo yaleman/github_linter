@@ -351,7 +351,7 @@ def check_mypy_pydantic_plugin(repo: RepoLinter) -> None:
     # [tool.mypy]
     # plugins = "pydantic.mypy"
     repo.skip_on_archived()
-    pyproject = load_pyproject(repo)
+    pyproject = repo.load_pyproject()
     pyproject_file = repo.cached_get_file("pyproject.toml")
 
     if pyproject is None or pyproject_file is None:
@@ -388,7 +388,7 @@ def fix_mypy_pydantic_plugin(repo: RepoLinter) -> None:
     except NoChangeNeeded:
         logger.debug("No change needed for fix_mypy_pydantic_plugin")
         return None
-    pyproject = load_pyproject(repo)
+    pyproject = repo.load_pyproject()
     pyproject_file = repo.cached_get_file("pyproject.toml")
     if pyproject is None or pyproject_file is None:
         logger.info("No pyproject file found in repo {}", repo.repository.full_name)
