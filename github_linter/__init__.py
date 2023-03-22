@@ -14,7 +14,7 @@ import json5 as json
 from loguru import logger
 from github import Github
 from github.ContentFile import ContentFile
-from github.GithubException import GithubException
+from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
 import pydantic
 import pytz
@@ -217,22 +217,41 @@ class GithubLinter:
 
 
 @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
-def get_all_user_repos(github: GithubLinter) -> List[Repository]:
+def get_all_user_repos(github: GithubLinter, config: Optional[Dict[str, Any]]=None) -> List[Repository]:
     """ simpler filtered listing """
-    config = load_config()
+    if config is None:
+        config = load_config()
 
     logger.debug("Pulling all repositories accessible to user.")
-    repolist = list(github.github.get_user().get_repos())
     if config["linter"]["owner_list"]:
+        repolist = []
+
         logger.debug(
-            "Filtering by owner list in linter config: {}",
+            "Pulling by owner list in linter config: {}",
             ",".join(config["linter"]["owner_list"]),
         )
-        return [
-            repo
-            for repo in repolist
-            if repo.owner.login in config["linter"]["owner_list"]
-        ]
+
+        my_user = github.github.get_user()
+        if my_user.name in config["linter"]["owner_list"]:
+            for repo in my_user.get_repos():
+                repolist.append(repo)
+
+
+        for owner in config["linter"]["owner_list"]:
+            try:
+                user = github.github.get_user(owner)
+            except UnknownObjectException:
+                try:
+                    logger.debug("User not found, looking for org {}", owner)
+                    user = github.github.get_organization(owner)
+                except UnknownObjectException:
+                    logger.error("Couldn't pull user or organisation {} specified in owner list", owner)
+                    continue
+            for repo in user.get_repos(type="all"):
+                if repo not in repolist:
+                    repolist.append(repo)
+    else:
+        repolist = list(github.github.get_user().get_repos())
     return repolist
 
 @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})

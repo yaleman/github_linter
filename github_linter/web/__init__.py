@@ -19,6 +19,9 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 import sqlalchemy.dialects.sqlite
 
+__all__ = [
+    "get_all_user_repos",
+]
 
 from .. import GithubLinter, get_all_user_repos
 
