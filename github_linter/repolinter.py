@@ -49,7 +49,7 @@ def get_filtered_commands(
     for check in checklist:
         for filterstr in check_filter:
             if (
-                check.startswith(filterstr) or wildcard_matcher.match(check, filterstr)
+                filterstr in check or wildcard_matcher.match(check, filterstr)
             ) and check not in checks:
                 checks.append(check)
                 continue
@@ -341,14 +341,14 @@ class RepoLinter:
                     getattr(module, check)(
                         repo=self,
                     )
-                except (SkipOnArchived, SkipOnPrivate, SkipOnPublic, SkipNoLanguage):
+                except (SkipOnArchived, SkipOnPrivate, SkipOnPublic, SkipNoLanguage, NoChangeNeeded):
                     pass
             if do_fixes:
                 if check.startswith("fix_"):
                     logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
                     try:
                         getattr(module, check)(repo=self)
-                    except (NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic):
+                    except (NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic, NoChangeNeeded):
                         pass
         return True
 
