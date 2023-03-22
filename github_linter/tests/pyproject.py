@@ -368,13 +368,13 @@ def check_mypy_pydantic_plugin(repo: RepoLinter) -> None:
         raise NoChangeNeeded
 
     if "tool" not in pyproject:
-        repo.error(CATEGORY, "section 'tool' not found")
+        repo.error(CATEGORY, "section 'tool' not found while checking for mypy pydantic plugin")
         return
     if "mypy" not in pyproject["tool"]:
-        repo.error(CATEGORY, "section 'tool.mypy' not found")
+        repo.error(CATEGORY, "section 'tool.mypy' not found while checking for mypy pydantic plugin")
         return
     if "plugins" not in pyproject["tool"]["mypy"]:
-        repo.error(CATEGORY, "section 'tool.mypy.plugins' not found")
+        repo.error(CATEGORY, "section 'tool.mypy.plugins' not found while checking for mypy pydantic plugin")
         return
     if "pydantic.mypy" not in pyproject['tool']['mypy']['plugins']:
         repo.error(CATEGORY, "section 'tool.mypy.plugins' does not contain pydantic.mypy")
