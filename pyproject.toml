@@ -41,7 +41,7 @@ dev = [
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.0.256"
+ruff = "^0.0.259"
 
 [tool.poetry]
 name = "github_linter"
