@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
       - name: Set up Python 3.10  # TODO: This should be template-able based on what's in pyproject
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'  # TODO: This should be template-able based on what's in pyproject
       - name: Running tests
