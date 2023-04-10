@@ -16,11 +16,9 @@ def test_read_main() -> None:
     assert response.status_code == 200
     assert b"<title>Github Linter</title>" in response.content
 
-
 @pytest.mark.network
 def test_get_all_user_repos() -> None:
     """ tests what we get back from it """
-
     linter = GithubLinter()
     linter.do_login()
     config = {
@@ -30,7 +28,6 @@ def test_get_all_user_repos() -> None:
             ]
         }
     }
-
     result = get_all_user_repos(linter, config)
 
     for repo in result:
