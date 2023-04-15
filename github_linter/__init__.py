@@ -15,8 +15,8 @@ from loguru import logger
 from github import Github
 from github.ContentFile import ContentFile
 from github.Repository import Repository
-import github3
-from github3.repos.repo import ShortRepository
+import github3 #type: ignore
+from github3.repos.repo import ShortRepository #type: ignore
 import pydantic
 import pytz
 import wildcard_matcher
@@ -240,12 +240,12 @@ def get_all_user_repos(github: GithubLinter, config: Optional[Dict[str, Any]]=No
     if config is None:
         config = load_config()
 
-    if config["linter"]["owner_list"]:
+    if config["linter"].get("owner_list", []):
         repolist = []
 
         for owner in config["linter"]["owner_list"]:
             logger.debug("Pulling all the repositories for {}", owner)
-            if config["linter"]["repo_filter"]:
+            if config.get("linter", {}).get("repo_filter") is not None  :
                 for repo in github.github3.repositories_by(username=owner, type='owner'):
                     if repo.name in config["linter"]["repo_filter"]:
                         repolist.append(repo.full_name)
@@ -259,24 +259,25 @@ def get_all_user_repos(github: GithubLinter, config: Optional[Dict[str, Any]]=No
 
 @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
 def filter_by_repo(
-    repo_list: List[str],
+    repo_list: List[Repository],
     repo_filters: List[str]
-) -> List[str]:
+) -> List[Repository]:
     """ filter repositories by name """
     retval = []
     for repository in repo_list:
-        if repository in repo_filters:
+        if repository.name in repo_filters:
             if repository not in retval:
                 retval.append(repository)
                 logger.debug("Adding {} based on name match", repository)
             continue
         for repo_filter in repo_filters:
             if "*" in repo_filter:
-                if wildcard_matcher.match(repository, repo_filter):
+                if wildcard_matcher.match(repository.name, repo_filter):
                     if repository not in retval:
                         retval.append(repository)
                     logger.debug("Adding {} based on wildcard match", repository)
                     continue
+
     return retval
 
 

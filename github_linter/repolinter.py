@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
-from github3.repos.repo import ShortRepository
+from github3.repos.repo import ShortRepository #type: ignore
 
 import tomli
 from loguru import logger
