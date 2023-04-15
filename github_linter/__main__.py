@@ -59,8 +59,6 @@ def cli(
     repo_filter = [] if repo is None else [ element for element in repo if element is not None ]
     owner_filter = [] if owner is None else [ element for element in owner if element is not None ]
 
-    user = github.github.get_user()
-
     logger.debug("Getting repos")
     repos = search_repos(github, repo_filter, owner_filter)
 
@@ -83,15 +81,14 @@ def cli(
         logger.info("- {}", module_name)
 
     for index, repository in enumerate(repos):
-        if not repository.parent:
-            github.handle_repo(repository, check=check, fix=fix)
-        # if it's a fork and you're checking them
-        elif repository.parent.owner.login != user.login and github.config.get("check_forks"):
-            github.handle_repo(repository, check=check, fix=fix)
-        else:
+        if repository.fork and not github.config.get("check_forks"):
             logger.warning(
                 "check_forks is false and {} is a fork, skipping.", repository.full_name
             )
+            continue
+        github.handle_repo(repository, check=check, fix=fix)
+
+
         if len(repos) > 3 and not no_progress:
             pct_done = round((index / len(repos) * 100), 1)
             logger.info(

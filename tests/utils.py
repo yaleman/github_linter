@@ -24,4 +24,5 @@ def generate_test_repo() -> Repository:
         attributes={"full_name" : "testuser/test1", "name" : "test1"},
         completed=True,
         )
+
     return testrepo

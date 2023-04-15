@@ -58,8 +58,6 @@ def test_generate_funding_file_simple() -> None:
 def test_generate_contributing_file() -> None:
     """ testing thing """
 
-
-
     filecontents =  generate_contributing_file(generate_test_repo())
     assert filecontents
     assert "testuser/test1" in filecontents

@@ -167,12 +167,12 @@ async def update_stored_repos(
     async with engine.begin() as conn:
         await conn.run_sync(base.metadata.create_all)
 
-        github_repos: List[Repository]  = get_all_user_repos(githublinter)
-        repo_names = [ ghrepo.full_name for ghrepo in github_repos ]
+        github_repos = get_all_user_repos(githublinter)
 
-        logger.info(f"Got {len(repo_names)} repos")
+        logger.info(f"Got {len(github_repos)} repos")
         for repo in github_repos:
-            await update_stored_repo(repo)
+            # TODO: switch this to github3's implementation
+            await update_stored_repo(githublinter.github.get_repo(repo))
 
         all_repos_query = sqlalchemy.select(SQLRepos)
         all_repos_execute = await conn.execute(all_repos_query)
@@ -181,7 +181,7 @@ async def update_stored_repos(
         allrepos_rows = all_repos_execute.fetchall()
         for dbrepo in allrepos_rows:
             logger.debug("Checking {} for removal.", dbrepo.full_name)
-            if dbrepo.full_name not in repo_names:
+            if dbrepo.full_name not in github_repos:
                 logger.info("Removing unlisted repo: {}", dbrepo.full_name)
                 deleterepo_query = sqlalchemy.delete(SQLRepos).where(SQLRepos.full_name==dbrepo.full_name)
                 await conn.execute(deleterepo_query)

@@ -74,8 +74,9 @@ fastapi = "^0.95.0"
 uvicorn = "^0.21.0"
 aiosqlite = "^0.18.0"
 SQLAlchemy = "^2.0.0"
-greenlet = "^2.0.1"
 ruyaml = "^0.91.0"
+github3-py = "^3.2.0"
+greenlet = "^2.0.2"
 
 [tool.poetry.dev-dependencies]
 mypy = "^1.0"

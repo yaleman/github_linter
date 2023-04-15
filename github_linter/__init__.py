@@ -14,8 +14,9 @@ import json5 as json
 from loguru import logger
 from github import Github
 from github.ContentFile import ContentFile
-from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
+import github3 #type: ignore
+from github3.repos.repo import ShortRepository #type: ignore
 import pydantic
 import pytz
 import wildcard_matcher
@@ -49,11 +50,25 @@ class GithubLinter:
             self.config = {}
 
         self.github = self.do_login()
+        self.github3 = self.do_login3()
 
         self.current_repo: Optional[Repository] = None
         self.report: Dict[str, Any] = {}
         self.modules: Dict[str, ModuleType] = {}
         self.filecache: Dict[str, Dict[str, Optional[ContentFile]]] = {}
+
+        self.do_login3()
+
+    def do_login3(self) -> github3.GitHub:
+        """ Does the login phase for github3.py"""
+
+        if os.getenv("GITHUB_TOKEN"):
+            logger.debug("Using GITHUB_TOKEN environment variable for login.")
+            self.github3 = github3.login(token=os.getenv("GITHUB_TOKEN"))
+            logger.debug("Checking github3 login: {}", self.github3.me())
+            return self.github3
+        logger.error("Can't login using the github3 library without a token.")
+        raise ValueError("No authentication method was found!")
 
     def do_login(self) -> Github:
         """ does the login/auth bit """
@@ -179,19 +194,22 @@ class GithubLinter:
     # @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
     def handle_repo(
         self,
-        repo: Repository,
+        repo: ShortRepository,
         check: Optional[Tuple[str]],
         fix: bool,
     ) -> None:
         """ Runs modules against the given repo """
 
-        repolinter = RepoLinter(repo)
+        github_repo = self.github.get_repo(repo.full_name)
+
+        repolinter = RepoLinter(github_repo, repo)
+
         self.current_repo = repolinter.repository
 
         logger.debug("Current repo: {}", repo.full_name)
         if repolinter.repository.archived:
             logger.warning(
-                "Repository {} is archived!", repolinter.repository.full_name
+                "Repository {} is archived!", repolinter.repository3.full_name
             )
 
         if repolinter.repository.parent:
@@ -217,41 +235,26 @@ class GithubLinter:
 
 
 @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
-def get_all_user_repos(github: GithubLinter, config: Optional[Dict[str, Any]]=None) -> List[Repository]:
+def get_all_user_repos(github: GithubLinter, config: Optional[Dict[str, Any]]=None) -> List[str]:
     """ simpler filtered listing """
     if config is None:
         config = load_config()
 
-    logger.debug("Pulling all repositories accessible to user.")
-    if config["linter"]["owner_list"]:
+    if config["linter"].get("owner_list", []):
         repolist = []
 
-        logger.debug(
-            "Pulling by owner list in linter config: {}",
-            ",".join(config["linter"]["owner_list"]),
-        )
-
-        my_user = github.github.get_user()
-        if my_user.name in config["linter"]["owner_list"]:
-            for repo in my_user.get_repos():
-                repolist.append(repo)
-
-
         for owner in config["linter"]["owner_list"]:
-            try:
-                user = github.github.get_user(owner)
-            except UnknownObjectException:
-                try:
-                    logger.debug("User not found, looking for org {}", owner)
-                    user = github.github.get_organization(owner)
-                except UnknownObjectException:
-                    logger.error("Couldn't pull user or organisation {} specified in owner list", owner)
-                    continue
-            for repo in user.get_repos(type="all"):
-                if repo not in repolist:
-                    repolist.append(repo)
+            logger.debug("Pulling all the repositories for {}", owner)
+            if config.get("linter", {}).get("repo_filter") is not None  :
+                for repo in github.github3.repositories_by(username=owner, type='owner'):
+                    if repo.name in config["linter"]["repo_filter"]:
+                        repolist.append(repo.full_name)
+            else:
+                repolist.extend([repo.full_name for repo in github.github3.repositories(owner)])
     else:
-        repolist = list(github.github.get_user().get_repos())
+        logger.debug("Pulling all the repositories I own")
+        repolist = [ repo.full_name for repo in github.github3.repositories(type='owner')]
+    logger.debug("Repo list: {}", ", ".join(repolist))
     return repolist
 
 @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
@@ -265,15 +268,16 @@ def filter_by_repo(
         if repository.name in repo_filters:
             if repository not in retval:
                 retval.append(repository)
-                logger.debug("Adding {} based on name match", repository.name)
+                logger.debug("Adding {} based on name match", repository)
             continue
         for repo_filter in repo_filters:
             if "*" in repo_filter:
                 if wildcard_matcher.match(repository.name, repo_filter):
                     if repository not in retval:
                         retval.append(repository)
-                    logger.debug("Adding {} based on wildcard match", repository.name)
+                    logger.debug("Adding {} based on wildcard match", repository)
                     continue
+
     return retval
 
 
@@ -320,40 +324,35 @@ def search_repos(
     github: GithubLinter,
     repo_filter: List[str],
     owner_filter: List[str],
-) -> List[Repository]:
+) -> List[github3.repos.repo.ShortRepository]:
     """ search repos based on cli input """
 
+    username = github.github3.me().login
+
+
     if not owner_filter:
+        logger.debug("Pulling owner filter from config")
         if "owner_list" in github.config["linter"] and len(github.config["linter"]["owner_list"]) != 0:
             owner_filter = github.config["linter"]["owner_list"]
         else:
-            owner_filter = [github.github.get_user().login]
+            logger.debug("No owner filter, using username")
+            owner_filter = [username]
 
+    logger.info("Username: {}", username)
+    logger.info("Owner Filter: {}", owner_filter)
+    logger.info("Repo Filter: {}", repo_filter)
 
-    # if it's just the user, then we can query easier
-    if set(owner_filter) == set(github.github.get_user().login) and not repo_filter:
-        repos = list(get_all_user_repos(github))
+    results = []
 
-    else:
-        search_string = generate_repo_search_string(repo_filter, owner_filter)
-        try:
-            repos = list(github.github.search_repositories(search_string.search_string))
-        except GithubException as error_message:
-            logger.error("Failed to query repositories.")
-            if "errors" in error_message.data and len(error_message.data["errors"]) > 0:
-                errors = error_message.data["errors"]
-                for error_msg in errors:
-                    logger.error(json.loads(error_msg)["message"])
+    for owner in owner_filter:
+        logger.debug("Pulling repos for {}", owner)
+        for repo in github.github3.repositories_by(username=owner, type='owner'):
+            if len(repo_filter) > 0:
+                if repo.name in repo_filter:
+                    results.append(repo)
             else:
-                logger.error(error_message)
-            return []
-        if search_string.needs_post_filtering:
-            repos = filter_by_repo(repos, repo_filter)
+                results.append(repo)
 
-    if not github.config["linter"].get("check_forks", None):
-        logger.debug("Filtering out forks")
-        filtered_by_forks = [repo for repo in repos if repo.fork is False]
-        repos = filtered_by_forks
-
-    logger.debug("Search result: {}", repos)
-    return repos
+    logger.debug("Found repos: {}", ", ".join([str(result) for result in results]))
+    logger.debug("Found {} repos", len(results))
+    return results
