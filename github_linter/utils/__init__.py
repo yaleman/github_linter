@@ -38,8 +38,6 @@ def get_fix_file_path(category: str, filename: str) -> Path:
             sys.exit(1)
     return fixes_path
 
-# I'm doing type: ignore here because it depends
-# on the downstream modules, which can be anything.
 def load_config() -> Dict[str, Any]:
     """ loads config """
     for configfile in [

@@ -24,7 +24,6 @@ Only runs if you've got Python.
     - Checks authors based on a list.
     - Check module name matches repo
     - TODO: Check for imports, maybe?
-- `pylintrc`
 
 Only runs if you've got python.
 

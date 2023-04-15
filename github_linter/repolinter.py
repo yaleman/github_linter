@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
-
+from github3.repos.repo import ShortRepository
 
 import tomli
 from loguru import logger
@@ -59,13 +59,17 @@ def get_filtered_commands(
 class RepoLinter:
     """ handles the repository object, its parent and the report details """
 
-    def __init__(self, repo: Repository) -> None:
+    def __init__(self,
+            repo: Repository,
+            repo3: ShortRepository,
+            ) -> None:
         """ startup things """
         self.config = load_config()
         if not self.config:
             self.config = {}
 
         self.repository = repo
+        self.repository3 = repo3
 
         self.timings = {
             "start_time": datetime.now(),
