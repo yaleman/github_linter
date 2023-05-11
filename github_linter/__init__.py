@@ -328,29 +328,51 @@ def search_repos(
     """ search repos based on cli input """
 
     username = github.github3.me().login
-
+    logger.debug("Logged in as username {}", username)
 
     if not owner_filter:
-        logger.debug("Pulling owner filter from config")
+        logger.info("Pulling owner filter from config")
         if "owner_list" in github.config["linter"] and len(github.config["linter"]["owner_list"]) != 0:
             owner_filter = github.config["linter"]["owner_list"]
         else:
-            logger.debug("No owner filter, using username")
+            logger.info("No owner filter, using username")
             owner_filter = [username]
+    else:
+        logger.debug("Using owner filter: {}", owner_filter)
 
     logger.info("Username: {}", username)
-    logger.info("Owner Filter: {}", owner_filter)
     logger.info("Repo Filter: {}", repo_filter)
 
     results = []
 
-    for owner in owner_filter:
-        logger.debug("Pulling repos for {}", owner)
-        for repo in github.github3.repositories_by(username=owner, type='owner'):
+    if username in owner_filter:
+        repos = github.github3.repositories(type='private')
+        logger.debug("Found repos: {}", repos)
+        for repo in repos:
             if len(repo_filter) > 0:
-                if repo.name in repo_filter:
+                if repo.name in repo_filter and repo.name not in results:
                     results.append(repo)
-            else:
+                else:
+                    logger.debug("Skipping {} != {}", repo.name, repo_filter)
+            elif repo.name not in results:
+                logger.debug("Adding {}", repo)
+                results.append(repo)
+
+    for owner in owner_filter:
+        if username == owner:
+            logger.debug("Already done {}", username)
+            continue
+        logger.debug("Pulling repos for {}", owner)
+        repos = github.github3.repositories_by(username=owner, type='owner')
+        logger.debug("Found repos: {}", repos)
+        for repo in repos:
+            if len(repo_filter) > 0:
+                if repo.name in repo_filter and repo.name not in results:
+                    results.append(repo)
+                else:
+                    logger.debug("Skipping {} != {}", repo.name, repo_filter)
+            elif repo.name not in results:
+                logger.debug("Adding {}", repo)
                 results.append(repo)
 
     logger.debug("Found repos: {}", ", ".join([str(result) for result in results]))
