@@ -46,6 +46,7 @@ DEFAULT_CONFIG: DefaultConfig = {
         ],
         "Rust" : [
             "rust_test.yml",
+            "clippy.yml",
         ],
         "Shell" : [
             "shellcheck.yml",
