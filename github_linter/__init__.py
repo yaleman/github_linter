@@ -206,7 +206,7 @@ class GithubLinter:
 
         self.current_repo = repolinter.repository
 
-        logger.debug("Current repo: {}", repo.full_name)
+        logger.info("Current repo: {}", repo.full_name)
         if repolinter.repository.archived:
             logger.warning(
                 "Repository {} is archived!", repolinter.repository3.full_name
@@ -363,7 +363,7 @@ def search_repos(
             logger.debug("Found repos: {}", repos)
             for repo in repos:
                 if len(repo_filter) > 0:
-                    if repo.name in repo_filter and repo.name not in results:
+                    if repo.name in repo_filter:
                         results.append(repo)
                     else:
                         logger.debug("Skipping {} != {}", repo.name, repo_filter)
@@ -378,13 +378,16 @@ def search_repos(
             logger.debug("Found repos: {}", repos)
             for repo in repos:
                 if len(repo_filter) > 0:
-                    if repo.name in repo_filter and repo.name not in results:
+                    if repo.name in repo_filter:
                         results.append(repo)
                     else:
                         logger.debug("Skipping {} != {}", repo.name, repo_filter)
                 elif repo not in results:
                     logger.debug("Adding {}", repo)
                     results.append(repo)
+    # filter by repo.owner.login
+
+    results = [ repo for repo in set(results) if repo.owner.login in owner_filter ]
 
     logger.debug("Found repos: {}", ", ".join([str(result) for result in results]))
     logger.debug("Found {} repos", len(results))

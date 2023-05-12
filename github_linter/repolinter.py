@@ -6,13 +6,13 @@ import sys
 from types import ModuleType
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import difflib
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
 from github3.repos.repo import ShortRepository #type: ignore
-
-import tomli
 from loguru import logger
+import tomli
 import wildcard_matcher
 
 from .exceptions import NoChangeNeeded, SkipNoLanguage, SkipOnArchived, SkipOnPrivate, SkipOnPublic
@@ -385,3 +385,9 @@ class RepoLinter:
                 tomli_error,
             )
             return None
+
+    def diff_file(self, old_file: str, new_file: str) -> None:
+        """ diffs two files using difflib """
+        diff = difflib.unified_diff(old_file.splitlines(), new_file.splitlines(), fromfile="old", tofile="new")
+        for line in diff:
+            logger.warning(line)
