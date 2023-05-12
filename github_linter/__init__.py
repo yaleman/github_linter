@@ -367,7 +367,7 @@ def search_repos(
                         results.append(repo)
                     else:
                         logger.debug("Skipping {} != {}", repo.name, repo_filter)
-                elif repo.name not in results:
+                elif repo not in results:
                     logger.debug("Adding {}", repo)
                     results.append(repo)
 
@@ -382,7 +382,7 @@ def search_repos(
                         results.append(repo)
                     else:
                         logger.debug("Skipping {} != {}", repo.name, repo_filter)
-                elif repo.name not in results:
+                elif repo not in results:
                     logger.debug("Adding {}", repo)
                     results.append(repo)
 
