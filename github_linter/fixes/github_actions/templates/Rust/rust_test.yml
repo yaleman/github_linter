@@ -3,20 +3,31 @@ name: Rust Testing
 "on":
   push:
 
+env:
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   cargo_test:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/cargo@v1
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.3
         with:
-          command: test
+          version: "v0.4.2"
+      - name: cargo test
+        run: cargo test --verbose
   cargo_build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/cargo@v1
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.3
         with:
-          command: build
+          version: "v0.4.2"
+      - name: cargo build
+        run: cargo build --verbose
