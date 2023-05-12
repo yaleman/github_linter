@@ -14,7 +14,7 @@ def test_read_main() -> None:
     """ test that the home page renders """
     response = client.get("/")
     assert response.status_code == 200
-    assert b"<title>Github Linter</title>" in response.decoded_content
+    assert b"<title>Github Linter</title>" in response.content
 
 @pytest.mark.network
 def test_get_all_user_repos() -> None:

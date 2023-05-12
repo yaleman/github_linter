@@ -10,6 +10,7 @@ from loguru import logger
 import pydantic
 from ruyaml import YAML
 from ruyaml.scalarstring import DoubleQuotedScalarString
+from github_linter.exceptions import SkipOnProtected
 
 from github_linter.repolinter import RepoLinter
 from github_linter.utils import get_fix_file_path
@@ -288,6 +289,8 @@ def check_dependabot_automerge_workflow(repo: RepoLinter) -> None:
 def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
     """ adds the automerge config """
     repo.skip_on_archived()
+    repo.skip_on_protected()
+
     filepath = ".github/workflows/dependabot_auto_merge.yml"
     fileresult = repo.get_file(filepath)
     if fileresult is None:
@@ -331,6 +334,7 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
     """ creates the dependabot config file """
 
     repo.skip_on_archived()
+
     expected_config = generate_expected_update_config(repo)
 
     updates = [ val.dict(by_alias=True, exclude_unset=True, exclude_none=True) for val in expected_config.updates ]
