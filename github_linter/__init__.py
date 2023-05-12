@@ -345,35 +345,46 @@ def search_repos(
 
     results = []
 
-    if username in owner_filter:
-        repos = github.github3.repositories(type='private')
-        logger.debug("Found repos: {}", repos)
-        for repo in repos:
-            if len(repo_filter) > 0:
-                if repo.name in repo_filter and repo.name not in results:
+    # we're specifically looking for some
+    if len(repo_filter) > 0:
+        for repo_name in repo_filter:
+            for owner in owner_filter:
+                try:
+                    repo_get = github.github3.repository(owner=owner, repository=repo_name)
+                    if repo_get is not None:
+                        logger.debug("Adding {}", repo_get.name)
+                        results.append(repo_get)
+                except github3.exceptions.NotFoundError:
+                    pass
+    else:
+        # pull the private ones because that's a thing
+        if username in owner_filter:
+            repos = github.github3.repositories(type='private')
+            logger.debug("Found repos: {}", repos)
+            for repo in repos:
+                if len(repo_filter) > 0:
+                    if repo.name in repo_filter and repo.name not in results:
+                        results.append(repo)
+                    else:
+                        logger.debug("Skipping {} != {}", repo.name, repo_filter)
+                elif repo.name not in results:
+                    logger.debug("Adding {}", repo)
                     results.append(repo)
-                else:
-                    logger.debug("Skipping {} != {}", repo.name, repo_filter)
-            elif repo.name not in results:
-                logger.debug("Adding {}", repo)
-                results.append(repo)
 
-    for owner in owner_filter:
-        if username == owner:
-            logger.debug("Already done {}", username)
-            continue
-        logger.debug("Pulling repos for {}", owner)
-        repos = github.github3.repositories_by(username=owner, type='owner')
-        logger.debug("Found repos: {}", repos)
-        for repo in repos:
-            if len(repo_filter) > 0:
-                if repo.name in repo_filter and repo.name not in results:
+        # pull everything else
+        for owner in owner_filter:
+            logger.debug("Pulling repos for {}", owner)
+            repos = github.github3.repositories_by(username=owner, type='owner')
+            logger.debug("Found repos: {}", repos)
+            for repo in repos:
+                if len(repo_filter) > 0:
+                    if repo.name in repo_filter and repo.name not in results:
+                        results.append(repo)
+                    else:
+                        logger.debug("Skipping {} != {}", repo.name, repo_filter)
+                elif repo.name not in results:
+                    logger.debug("Adding {}", repo)
                     results.append(repo)
-                else:
-                    logger.debug("Skipping {} != {}", repo.name, repo_filter)
-            elif repo.name not in results:
-                logger.debug("Adding {}", repo)
-                results.append(repo)
 
     logger.debug("Found repos: {}", ", ".join([str(result) for result in results]))
     logger.debug("Found {} repos", len(results))

@@ -1,7 +1,10 @@
 ---
-name: Rust Testing
+name: Clippy
+
+# Trigger the workflow on push or pull request
 "on":
   push:
+  pull_request:
 
 env:
   SCCACHE_GHA_ENABLED: "true"
@@ -11,7 +14,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  cargo_test:
+  clippy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -19,15 +22,6 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.3
         with:
           version: "v0.4.2"
-      - name: cargo test
-        run: cargo test --verbose
-  cargo_build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.3
-        with:
-          version: "v0.4.2"
-      - name: cargo build
-        run: cargo build --verbose
+      - name: "Run clippy (ignores errors, this is just a check)"
+        run: cargo clippy
+        continue-on-error: true
