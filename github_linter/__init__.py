@@ -67,6 +67,18 @@ class GithubLinter:
             self.github3 = github3.login(token=os.getenv("GITHUB_TOKEN"))
             logger.debug("Checking github3 login: {}", self.github3.me())
             return self.github3
+        if (
+            "ignore_auth" in self.config["github"]
+                and self.config["github"]["ignore_auth"]
+            ):
+            self.github = Github()
+            return self.github
+        if "token" in self.config["github"]:
+            self.github3=github3.login(
+                token=self.config["github"]["token"]
+            )
+            return self.github3
+
         logger.error("Can't login using the github3 library without a token.")
         raise ValueError("No authentication method was found!")
 

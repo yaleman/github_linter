@@ -10,7 +10,6 @@ from loguru import logger
 import pydantic
 from ruyaml import YAML
 from ruyaml.scalarstring import DoubleQuotedScalarString
-from github_linter.exceptions import SkipOnProtected
 
 from github_linter.repolinter import RepoLinter
 from github_linter.utils import get_fix_file_path
@@ -279,7 +278,7 @@ def check_dependabot_automerge_workflow(repo: RepoLinter) -> None:
     fileresult = repo.get_file(filepath)
     if fileresult is None or fileresult.decoded_content.decode('utf-8').strip() == "":
         return repo.error(CATEGORY, f"{filepath} missing")
-    if fileresult.decoded_content != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
+    if fileresult.decoded_content.decode('utf-8') != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
 
         repo.warning(CATEGORY, f"Content differs for {filepath}")
         # show the diff between the two files
