@@ -6,16 +6,16 @@ import sys
 from types import ModuleType
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import difflib
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
 from github3.repos.repo import ShortRepository #type: ignore
-
-import tomli
 from loguru import logger
+import tomli
 import wildcard_matcher
 
-from .exceptions import NoChangeNeeded, SkipNoLanguage, SkipOnArchived, SkipOnPrivate, SkipOnPublic
+from .exceptions import NoChangeNeeded, SkipNoLanguage, SkipOnArchived, SkipOnPrivate, SkipOnProtected, SkipOnPublic
 
 from .types import DICTLIST
 from .utils import load_config
@@ -98,7 +98,9 @@ class RepoLinter:
         """
 
         if clear_cache:
-            self.clear_file_cache(filepath)
+            if self.clear_file_cache(filepath) is False:
+                logger.error("Failed to clear cache for {}", filepath)
+                sys.exit(1)
         elif filepath in self.filecache:
             return self.filecache[filepath]
         # cache and then return
@@ -133,6 +135,10 @@ class RepoLinter:
         The message variable is what's put into the commit message.
         Returns the commit URL.
         """
+
+        if self.repository3.branch(self.repository3.default_branch).protected:
+            logger.warning("Can't update file on  {} as the default branch is protected", self.repository3.full_name)
+            raise SkipOnProtected("Can't make changes to a protected branch")
 
         if not message:
             message = f"github-linter updating file: {filepath}"
@@ -305,6 +311,13 @@ class RepoLinter:
                 "This repository is archived so this test doesn't need to run."
             )
 
+    def skip_on_protected(self) -> None:
+        """ Add this to a check to skip it if the repository has a protected main branch. """
+        if self.repository.archived:
+            raise SkipOnProtected(
+                "This repository has a protected main branch so we can't run here."
+            )
+
     def skip_on_private(self) -> None:
         """ Add this to a check to skip it if the repository is private. """
         if self.repository.private:
@@ -352,7 +365,7 @@ class RepoLinter:
                     logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
                     try:
                         getattr(module, check)(repo=self)
-                    except (NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic, NoChangeNeeded):
+                    except (NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic, NoChangeNeeded, SkipOnProtected):
                         pass
         return True
 
@@ -385,3 +398,9 @@ class RepoLinter:
                 tomli_error,
             )
             return None
+
+    def diff_file(self, old_file: str, new_file: str) -> None:
+        """ diffs two files using difflib """
+        diff = difflib.unified_diff(old_file.splitlines(), new_file.splitlines(), fromfile="old", tofile="new")
+        for line in diff:
+            logger.warning(line)

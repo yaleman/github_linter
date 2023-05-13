@@ -2,9 +2,10 @@
 
 from io import StringIO
 import json
+import sys
 from typing import List
 
-from github.GithubException import UnknownObjectException
+from github.GithubException import GithubException, UnknownObjectException
 from loguru import logger
 import pydantic
 from ruyaml import YAML
@@ -275,15 +276,20 @@ def check_dependabot_automerge_workflow(repo: RepoLinter) -> None:
     repo.skip_on_archived()
     filepath = ".github/workflows/dependabot_auto_merge.yml"
     fileresult = repo.get_file(filepath)
-    if fileresult is None or fileresult.content is None:
+    if fileresult is None or fileresult.decoded_content.decode('utf-8').strip() == "":
         return repo.error(CATEGORY, f"{filepath} missing")
-    if fileresult.content != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
+    if fileresult.decoded_content.decode('utf-8') != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
+
         repo.warning(CATEGORY, f"Content differs for {filepath}")
+        # show the diff between the two files
+        repo.diff_file(fileresult.decoded_content.decode('utf-8'), get_fix_file_path(category=CATEGORY, filename=filepath).read_text())
     return None
 
 def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
     """ adds the automerge config """
     repo.skip_on_archived()
+    repo.skip_on_protected()
+
     filepath = ".github/workflows/dependabot_auto_merge.yml"
     fileresult = repo.get_file(filepath)
     if fileresult is None:
@@ -294,7 +300,7 @@ def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
             message=f"Created {filepath}"
             )
         return repo.fix(CATEGORY, f"Created {filepath}, commit url: {result}")
-    if fileresult.content != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
+    if fileresult.decoded_content.decode('utf-8') != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
         result = repo.create_or_update_file(
             filepath=filepath,
             newfile=get_fix_file_path(category=CATEGORY, filename=filepath),
@@ -327,6 +333,7 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
     """ creates the dependabot config file """
 
     repo.skip_on_archived()
+
     expected_config = generate_expected_update_config(repo)
 
     updates = [ val.dict(by_alias=True, exclude_unset=True, exclude_none=True) for val in expected_config.updates ]
@@ -348,15 +355,19 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
     newfilecontents = buf.read()
     logger.debug("New contents: \n{}", newfilecontents)
     # raise NotImplementedError
-    if newfilecontents != repo.cached_get_file(repo.config[CATEGORY]["config_filename"]):
+    if newfilecontents != repo.cached_get_file(repo.config[CATEGORY]["config_filename"],True):
         logger.debug("Updating file")
-        result = repo.create_or_update_file(
-            filepath=repo.config[CATEGORY]["config_filename"],
-            newfile=newfilecontents,
-            oldfile=repo.cached_get_file(repo.config[CATEGORY]["config_filename"]),
-            message=f"github_linter - {CATEGORY} - updating config"
-        )
-        if result is not None:
-            repo.fix(CATEGORY, f"Updated {repo.config[CATEGORY]['config_filename']} - {result}")
-        else:
-            logger.debug("No changes to {}, file content matched.")
+        try:
+            result = repo.create_or_update_file(
+                filepath=repo.config[CATEGORY]["config_filename"],
+                newfile=newfilecontents,
+                oldfile=repo.cached_get_file(repo.config[CATEGORY]["config_filename"]),
+                message=f"github_linter - {CATEGORY} - updating config"
+            )
+            if result is not None:
+                repo.fix(CATEGORY, f"Updated {repo.config[CATEGORY]['config_filename']} - {result}")
+            else:
+                logger.debug("No changes to {}, file content matched.")
+        except GithubException as ghe:
+            logger.error("Failed to update file, bailing now! repo={}, filename={} error={}", repo.repository.full_name, repo.config[CATEGORY]["config_filename"], ghe)
+            sys.exit(1)

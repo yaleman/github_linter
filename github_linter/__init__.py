@@ -67,6 +67,18 @@ class GithubLinter:
             self.github3 = github3.login(token=os.getenv("GITHUB_TOKEN"))
             logger.debug("Checking github3 login: {}", self.github3.me())
             return self.github3
+        if (
+            "ignore_auth" in self.config["github"]
+                and self.config["github"]["ignore_auth"]
+            ):
+            self.github = Github()
+            return self.github
+        if "token" in self.config["github"]:
+            self.github3=github3.login(
+                token=self.config["github"]["token"]
+            )
+            return self.github3
+
         logger.error("Can't login using the github3 library without a token.")
         raise ValueError("No authentication method was found!")
 
@@ -206,7 +218,7 @@ class GithubLinter:
 
         self.current_repo = repolinter.repository
 
-        logger.debug("Current repo: {}", repo.full_name)
+        logger.info("Current repo: {}", repo.full_name)
         if repolinter.repository.archived:
             logger.warning(
                 "Repository {} is archived!", repolinter.repository3.full_name
@@ -363,11 +375,11 @@ def search_repos(
             logger.debug("Found repos: {}", repos)
             for repo in repos:
                 if len(repo_filter) > 0:
-                    if repo.name in repo_filter and repo.name not in results:
+                    if repo.name in repo_filter:
                         results.append(repo)
                     else:
                         logger.debug("Skipping {} != {}", repo.name, repo_filter)
-                elif repo.name not in results:
+                elif repo not in results:
                     logger.debug("Adding {}", repo)
                     results.append(repo)
 
@@ -378,13 +390,16 @@ def search_repos(
             logger.debug("Found repos: {}", repos)
             for repo in repos:
                 if len(repo_filter) > 0:
-                    if repo.name in repo_filter and repo.name not in results:
+                    if repo.name in repo_filter:
                         results.append(repo)
                     else:
                         logger.debug("Skipping {} != {}", repo.name, repo_filter)
-                elif repo.name not in results:
+                elif repo not in results:
                     logger.debug("Adding {}", repo)
                     results.append(repo)
+    # filter by repo.owner.login
+
+    results = [ repo for repo in set(results) if repo.owner.login in owner_filter ]
 
     logger.debug("Found repos: {}", ", ".join([str(result) for result in results]))
     logger.debug("Found {} repos", len(results))

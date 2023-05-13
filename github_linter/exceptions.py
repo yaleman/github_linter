@@ -46,3 +46,11 @@ class SkipOnPublic(Exception):
         """ adds a logging step """
         logger.debug("Skipping Public Repo")
         super().__init__(*args)
+
+class SkipOnProtected(Exception):
+    """ skip a test if the repo's main branch is protected """
+
+    def __init__(self, *args: object) -> None:
+        """ adds a logging step """
+        logger.warning("Skipping Repo with protected main branch")
+        super().__init__(*args)
