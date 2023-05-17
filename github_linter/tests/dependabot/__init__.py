@@ -135,8 +135,6 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
     except UnknownObjectException:
         logger.debug("Couldn't get contents of dir '.github/workflows', skipping." )
 
-
-
     if not required_package_managers:
         logger.debug("No languages matched dependabot providers, stopping.")
         return
@@ -165,22 +163,28 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
                 ','.join(required_package_managers),
                 )
             logger.debug(update.dict())
-    # check that the repo has full coverage
 
+    # check that the repo has full coverage
     if set(required_package_managers) != set(package_managers_covered):
-        for manager in [
+        missing_package_managers = [
             manager
             for manager in required_package_managers
             if manager not in package_managers_covered
-        ]:
+        ]
+        for manager in missing_package_managers:
             repo.error(
                 CATEGORY,
                 f"Package manager needs to be configured for {manager}",
             )
-    else:
-        # TODO: figure out what to do here
-        return
-    return
+
+        extra_package_managers =  [
+            manager for manager in package_managers_covered if manager not in required_package_managers
+        ]
+
+        for extra_manager in extra_package_managers:
+            repo.error(
+                CATEGORY,
+                f"Package manager {extra_manager} is configured but not needed",)
 
 def check_dependabot_config_valid(
     repo: RepoLinter,
@@ -255,11 +259,6 @@ def check_dependabot_config(
 
     if not dependabot_config:
         repo.error(CATEGORY, "Didn't find a dependabot config.")
-
-    # if "updates" in dependabot_config and repo.repository:
-    #     validate_updates_for_langauges(
-    #         repo.repository, dependabot_config["updates"], errors_object, warnings_object
-    #     )
 
 
 def check_dependabot_vulnerability_enabled(
