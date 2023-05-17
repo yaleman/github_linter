@@ -6,7 +6,7 @@ from ..repolinter import RepoLinter
 
 
 class DefaultConfig(TypedDict):
-    """ config object """
+    """config object"""
 
     codeowners: Optional[Dict[str, Union[List[str], str]]]
     filepath: str
@@ -15,11 +15,10 @@ class DefaultConfig(TypedDict):
 CATEGORY = "codeowners"
 DEFAULT_CONFIG: DefaultConfig = {
     "codeowners": None,
-    "filepath" : "CODEOWNERS",
+    "filepath": "CODEOWNERS",
 }
 
-LANGUAGES = [ "ALL" ]
-
+LANGUAGES = ["ALL"]
 
 
 def check_codeowners_exists(repo: RepoLinter) -> None:
@@ -37,7 +36,7 @@ def check_codeowners_exists(repo: RepoLinter) -> None:
 
 
 def fix_codeowners_exists(repo: RepoLinter) -> None:
-    """ makes a basic CODEOWNERS file based on the input """
+    """makes a basic CODEOWNERS file based on the input"""
 
     repo.skip_on_archived()
 

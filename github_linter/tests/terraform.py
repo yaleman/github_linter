@@ -20,14 +20,14 @@ CATEGORY = "terraform"
 
 DEFAULT_CONFIG = {
     "minimum_terraform_version": "0.14.0",
-    "minimum_aws_version" : "3.41.0",
-    "provider_file_list" : [
-    "providers.tf",
-    "terraform/providers.tf",
-    "terraform.tf",
-    "terraform/terraform.tf",
-]
-    }
+    "minimum_aws_version": "3.41.0",
+    "provider_file_list": [
+        "providers.tf",
+        "terraform/providers.tf",
+        "terraform.tf",
+        "terraform/terraform.tf",
+    ],
+}
 
 LANGUAGES = [
     "HCL",
@@ -44,18 +44,19 @@ def load_hclfile(
     repo: RepoLinter,
     filename: str,
 ) -> Dict[str, Any]:
-    """ loads the given filename using hcl2 """
+    """loads the given filename using hcl2"""
     filecontent = repo.cached_get_file(filename)
     if not filecontent or not filecontent.decoded_content:
         logger.debug("Couldn't find file (or it was empty): {}", filename)
         return {}
     logger.debug("Found {}", filename)
-    return hcl2.loads(filecontent.decoded_content.decode("utf-8")) # type: ignore
+    return hcl2.loads(filecontent.decoded_content.decode("utf-8"))  # type: ignore
+
 
 def check_providers_tf_exists(
     repo: RepoLinter,
 ) -> None:
-    """ checks the data for the pyproject.toml file """
+    """checks the data for the pyproject.toml file"""
 
     for filename in repo.config[CATEGORY]["provider_file_list"]:
         hclfile = load_hclfile(repo, filename)
@@ -71,7 +72,7 @@ def check_providers_tf_exists(
 def check_providers_for_modules(
     repo: RepoLinter,
 ) -> None:
-    """ Checks that there's providers listed under each "terraform" section in the providers.tf """
+    """Checks that there's providers listed under each "terraform" section in the providers.tf"""
     provider_list = []
     found_files = []
 
@@ -124,7 +125,7 @@ def check_providers_for_modules(
 def check_terraform_version(
     repo: RepoLinter,
 ) -> None:
-    """ Checks that there's a 'required_version' setting in the terraform section of providers.tf, which sets a minimum version of terraform itself """
+    """Checks that there's a 'required_version' setting in the terraform section of providers.tf, which sets a minimum version of terraform itself"""
 
     found_required_version = False
     found_version = Version.parse("0.0.0")
@@ -165,7 +166,6 @@ def check_terraform_version(
             continue
 
         for tf_config in hclfile["terraform"]:
-
             if "required_version" not in tf_config:
                 # return logger.debug("{} not found in {}", "required_version", filename )
                 continue

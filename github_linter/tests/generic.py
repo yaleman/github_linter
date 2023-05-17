@@ -24,7 +24,8 @@ OptionalListOrStr = Optional[Union[List[str], str]]
 
 class FundingDict(TypedDict):
     """typing object for the funding section
-    based on https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository"""
+    based on https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+    """
 
     community_bridge: Optional[str]
     custom: OptionalListOrStr
@@ -39,7 +40,7 @@ class FundingDict(TypedDict):
 
 
 class DefaultConfig(TypedDict):
-    """ config object """
+    """config object"""
 
     files_to_remove: List[str]
     funding: FundingDict
@@ -70,13 +71,13 @@ DEFAULT_CONFIG: DefaultConfig = {
 
 
 def parse_funding_file(input_string: Union[str, bytes]) -> FundingDict:
-    """ parses the FUNDING.yml file into a FundingDict """
+    """parses the FUNDING.yml file into a FundingDict"""
     parsed_data: FundingDict = YAML(pure=True).load(input_string)
     return parsed_data
 
 
 def generate_funding_file(input_data: FundingDict) -> str:
-    """ generates an object of a funding file based on a FundingDict """
+    """generates an object of a funding file based on a FundingDict"""
     output_data = {}
 
     for key in input_data.keys():
@@ -100,7 +101,7 @@ def generate_funding_file(input_data: FundingDict) -> str:
 def check_files_to_remove(
     repo: RepoLinter,
 ) -> None:
-    """ check for files to remove """
+    """check for files to remove"""
     try:
         contents = repo.repository.get_contents("")
     except GithubException as error_message:
@@ -112,8 +113,8 @@ def check_files_to_remove(
         logger.error(
             "Failed to query repo contents {} ({})",
             error_message.data["message"],
-            docs_url
-            )
+            docs_url,
+        )
         return
     if isinstance(contents, ContentFile):
         contents = [contents]
@@ -127,7 +128,7 @@ def check_files_to_remove(
 
 
 def fix_funding_file(repo: RepoLinter) -> None:
-    """ updates the funding file """
+    """updates the funding file"""
 
     filename = ".github/FUNDING.yml"
     expected_file = generate_funding_file(repo.config[CATEGORY]["funding"])

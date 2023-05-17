@@ -8,27 +8,28 @@ from loguru import logger
 
 
 from . import (
-    codeowners, # noqa: F401
-    dependabot, # noqa: F401
-    docs, # noqa: F401
-    generic, # noqa: F401
-    github_actions, # noqa: F401
-    homebrew, # noqa: F401
-    issues, # noqa: F401
-    mkdocs, # noqa: F401
+    codeowners,  # noqa: F401
+    dependabot,  # noqa: F401
+    docs,  # noqa: F401
+    generic,  # noqa: F401
+    github_actions,  # noqa: F401
+    homebrew,  # noqa: F401
+    issues,  # noqa: F401
+    mkdocs,  # noqa: F401
     # pylintrc,
-    pyproject, # noqa: F401
-    security_md, # noqa: F401
-    testing, # noqa: F401
-    terraform, # noqa: F401
+    pyproject,  # noqa: F401
+    security_md,  # noqa: F401
+    testing,  # noqa: F401
+    terraform,  # noqa: F401
 )
 
 CATEGORY = "tests"
 LANGUAGES = ["all"]
 DEFAULT_CONFIG: Dict[str, Any] = {}
 
-def load_modules(module_allowlist: Optional[List[str]]=None) -> Dict[str, ModuleType]:
-    """ loads the modules """
+
+def load_modules(module_allowlist: Optional[List[str]] = None) -> Dict[str, ModuleType]:
+    """loads the modules"""
     module_list: Dict[str, Any] = {}
 
     for module in sys.modules:
@@ -55,5 +56,6 @@ def load_modules(module_allowlist: Optional[List[str]]=None) -> Dict[str, Module
                     module,
                 )
     return module_list
+
 
 MODULES = load_modules()

@@ -13,7 +13,7 @@ LANGUAGES = ["all"]
 
 
 class DefaultConfig(TypedDict):
-    """ config typing for module config """
+    """config typing for module config"""
 
     stale_file: str
 
@@ -22,11 +22,12 @@ DEFAULT_CONFIG: DefaultConfig = {
     "stale_file": ".github/stale.yml",
 }
 
+
 # pylint: disable=unused-argument
 def check_open_issues(
     repo: RepoLinter,
 ) -> None:
-    """ Adds a warning if there's open issues """
+    """Adds a warning if there's open issues"""
     if repo.repository.open_issues:
         repo.warning(
             CATEGORY,
@@ -38,7 +39,7 @@ def check_open_issues(
 def check_open_prs(
     repo: RepoLinter,
 ) -> None:
-    """ Adds a warning if there's open PRs """
+    """Adds a warning if there's open PRs"""
 
     pulls = repo.repository.get_pulls("open")
     repo_full_name = repo.repository.full_name
@@ -55,7 +56,7 @@ def check_open_prs(
 def check_stale_yml(
     repo: RepoLinter,
 ) -> None:
-    """ checks that .github/stale.yml exists and has the right content """
+    """checks that .github/stale.yml exists and has the right content"""
     repo.skip_on_archived()
 
     filename = repo.config[CATEGORY]["stale_file"]
@@ -71,7 +72,7 @@ def check_stale_yml(
 def fix_stale_yml(
     repo: RepoLinter,
 ) -> None:
-    """ fixes the .github/stale.yml file """
+    """fixes the .github/stale.yml file"""
     repo.skip_on_archived()
 
     filename = repo.config[CATEGORY]["stale_file"]

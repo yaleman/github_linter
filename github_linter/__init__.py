@@ -15,8 +15,8 @@ from loguru import logger
 from github import Github
 from github.ContentFile import ContentFile
 from github.Repository import Repository
-import github3 #type: ignore
-from github3.repos.repo import ShortRepository #type: ignore
+import github3  # type: ignore
+from github3.repos.repo import ShortRepository  # type: ignore
 import pydantic
 import pytz
 import wildcard_matcher
@@ -41,10 +41,10 @@ RATELIMIT_TYPES = {
 
 
 class GithubLinter:
-    """ does things """
+    """does things"""
 
     def __init__(self) -> None:
-        """ setup """
+        """setup"""
         self.config = load_config()
         if not self.config:
             self.config = {}
@@ -60,7 +60,7 @@ class GithubLinter:
         self.do_login3()
 
     def do_login3(self) -> github3.GitHub:
-        """ Does the login phase for github3.py"""
+        """Does the login phase for github3.py"""
 
         if os.getenv("GITHUB_TOKEN"):
             logger.debug("Using GITHUB_TOKEN environment variable for login.")
@@ -69,21 +69,19 @@ class GithubLinter:
             return self.github3
         if (
             "ignore_auth" in self.config["github"]
-                and self.config["github"]["ignore_auth"]
-            ):
+            and self.config["github"]["ignore_auth"]
+        ):
             self.github = Github()
             return self.github
         if "token" in self.config["github"]:
-            self.github3=github3.login(
-                token=self.config["github"]["token"]
-            )
+            self.github3 = github3.login(token=self.config["github"]["token"])
             return self.github3
 
         logger.error("Can't login using the github3 library without a token.")
         raise ValueError("No authentication method was found!")
 
     def do_login(self) -> Github:
-        """ does the login/auth bit """
+        """does the login/auth bit"""
 
         if os.getenv("GITHUB_TOKEN"):
             logger.debug("Using GITHUB_TOKEN environment variable for login.")
@@ -97,9 +95,7 @@ class GithubLinter:
                 self.github = Github()
                 return self.github
             if "token" in self.config["github"]:
-                self.github=Github(
-                    login_or_token=self.config["github"]["token"]
-                )
+                self.github = Github(login_or_token=self.config["github"]["token"])
                 return self.github
             if (
                 "username" in self.config["github"]
@@ -114,11 +110,11 @@ class GithubLinter:
 
     @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
     def add_module(self, module_name: str, module: ModuleType) -> None:
-        """ adds a module to modules """
+        """adds a module to modules"""
         self.modules[module_name] = module
 
     def check_rate_limits(self) -> int:
-        """ checks the rate limits and returns a number of seconds to wait """
+        """checks the rate limits and returns a number of seconds to wait"""
         rate_limits = self.github.get_rate_limit()
         logger.debug(json.dumps(rate_limits, indent=4, default=str, ensure_ascii=False))
         sleep_time = 0
@@ -152,7 +148,7 @@ class GithubLinter:
         return sleep_time
 
     def display_report(self) -> None:
-        """ displays a report """
+        """displays a report"""
         for repo_name in self.report:
             repo = self.report[repo_name]
             if not repo:
@@ -202,7 +198,6 @@ class GithubLinter:
             else:
                 logger.info("Repository {} checks out OK", repo_name)
 
-
     # @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
     def handle_repo(
         self,
@@ -210,7 +205,7 @@ class GithubLinter:
         check: Optional[Tuple[str]],
         fix: bool,
     ) -> None:
-        """ Runs modules against the given repo """
+        """Runs modules against the given repo"""
 
         github_repo = self.github.get_repo(repo.full_name)
 
@@ -247,8 +242,10 @@ class GithubLinter:
 
 
 @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
-def get_all_user_repos(github: GithubLinter, config: Optional[Dict[str, Any]]=None) -> List[str]:
-    """ simpler filtered listing """
+def get_all_user_repos(
+    github: GithubLinter, config: Optional[Dict[str, Any]] = None
+) -> List[str]:
+    """simpler filtered listing"""
     if config is None:
         config = load_config()
 
@@ -257,24 +254,30 @@ def get_all_user_repos(github: GithubLinter, config: Optional[Dict[str, Any]]=No
 
         for owner in config["linter"]["owner_list"]:
             logger.debug("Pulling all the repositories for {}", owner)
-            if config.get("linter", {}).get("repo_filter") is not None  :
-                for repo in github.github3.repositories_by(username=owner, type='owner'):
+            if config.get("linter", {}).get("repo_filter") is not None:
+                for repo in github.github3.repositories_by(
+                    username=owner, type="owner"
+                ):
                     if repo.name in config["linter"]["repo_filter"]:
                         repolist.append(repo.full_name)
             else:
-                repolist.extend([repo.full_name for repo in github.github3.repositories(owner)])
+                repolist.extend(
+                    [repo.full_name for repo in github.github3.repositories(owner)]
+                )
     else:
         logger.debug("Pulling all the repositories I own")
-        repolist = [ repo.full_name for repo in github.github3.repositories(type='owner')]
+        repolist = [
+            repo.full_name for repo in github.github3.repositories(type="owner")
+        ]
     logger.debug("Repo list: {}", ", ".join(repolist))
     return repolist
 
+
 @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
 def filter_by_repo(
-    repo_list: List[Repository],
-    repo_filters: List[str]
+    repo_list: List[Repository], repo_filters: List[str]
 ) -> List[Repository]:
-    """ filter repositories by name """
+    """filter repositories by name"""
     retval = []
     for repository in repo_list:
         if repository.name in repo_filters:
@@ -293,26 +296,31 @@ def filter_by_repo(
     return retval
 
 
-class RepoSearchString(pydantic.BaseModel): #pylint: disable=no-member
-    """ Result of running generate_repo_search_string"""
+class RepoSearchString(pydantic.BaseModel):  # pylint: disable=no-member
+    """Result of running generate_repo_search_string"""
+
     needs_post_filtering: bool
     search_string: str
+
 
 @pydantic.validate_arguments
 def generate_repo_search_string(
     repo_filter: List[str],
     owner_filter: List[str],
-    ) -> RepoSearchString:
-    """ generates the search string,
-        if there's wildcards in repo_filter, then you
-        have to search for *everything* then filter it later
+) -> RepoSearchString:
+    """generates the search string,
+    if there's wildcards in repo_filter, then you
+    have to search for *everything* then filter it later
     """
 
     has_repo_wildcard = False
     for filterstring in repo_filter:
         if "*" in filterstring:
             has_repo_wildcard = True
-            logger.debug("Falling back to owner-only search because of a wildcard in the repo_filter ({})", filterstring)
+            logger.debug(
+                "Falling back to owner-only search because of a wildcard in the repo_filter ({})",
+                filterstring,
+            )
             break
 
     if has_repo_wildcard or not repo_filter:
@@ -320,7 +328,9 @@ def generate_repo_search_string(
         logger.debug("Adding owner filter")
         search_string += " ".join([f"user:{owner.strip()}" for owner in owner_filter])
         logger.debug("Search string: {}", search_string)
-        return RepoSearchString(needs_post_filtering=has_repo_wildcard, search_string=search_string)
+        return RepoSearchString(
+            needs_post_filtering=has_repo_wildcard, search_string=search_string
+        )
 
     search_chunks = []
     for owner, repo in itertools.product(owner_filter, repo_filter):
@@ -331,20 +341,24 @@ def generate_repo_search_string(
     logger.debug("Search string: {}", search_string)
     return RepoSearchString(needs_post_filtering=False, search_string=search_string)
 
+
 @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
 def search_repos(
     github: GithubLinter,
     repo_filter: List[str],
     owner_filter: List[str],
 ) -> List[github3.repos.repo.ShortRepository]:
-    """ search repos based on cli input """
+    """search repos based on cli input"""
 
     username = github.github3.me().login
     logger.debug("Logged in as username {}", username)
 
     if not owner_filter:
         logger.info("Pulling owner filter from config")
-        if "owner_list" in github.config["linter"] and len(github.config["linter"]["owner_list"]) != 0:
+        if (
+            "owner_list" in github.config["linter"]
+            and len(github.config["linter"]["owner_list"]) != 0
+        ):
             owner_filter = github.config["linter"]["owner_list"]
         else:
             logger.info("No owner filter, using username")
@@ -362,7 +376,9 @@ def search_repos(
         for repo_name in repo_filter:
             for owner in owner_filter:
                 try:
-                    repo_get = github.github3.repository(owner=owner, repository=repo_name)
+                    repo_get = github.github3.repository(
+                        owner=owner, repository=repo_name
+                    )
                     if repo_get is not None:
                         logger.debug("Adding {}", repo_get.name)
                         results.append(repo_get)
@@ -371,7 +387,7 @@ def search_repos(
     else:
         # pull the private ones because that's a thing
         if username in owner_filter:
-            repos = github.github3.repositories(type='private')
+            repos = github.github3.repositories(type="private")
             logger.debug("Found repos: {}", repos)
             for repo in repos:
                 if len(repo_filter) > 0:
@@ -386,7 +402,7 @@ def search_repos(
         # pull everything else
         for owner in owner_filter:
             logger.debug("Pulling repos for {}", owner)
-            repos = github.github3.repositories_by(username=owner, type='owner')
+            repos = github.github3.repositories_by(username=owner, type="owner")
             logger.debug("Found repos: {}", repos)
             for repo in repos:
                 if len(repo_filter) > 0:
@@ -399,7 +415,7 @@ def search_repos(
                     results.append(repo)
     # filter by repo.owner.login
 
-    results = [ repo for repo in set(results) if repo.owner.login in owner_filter ]
+    results = [repo for repo in set(results) if repo.owner.login in owner_filter]
 
     logger.debug("Found repos: {}", ", ".join([str(result) for result in results]))
     logger.debug("Found {} repos", len(results))

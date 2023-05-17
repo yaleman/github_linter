@@ -13,12 +13,11 @@ import json5 as json
 from loguru import logger
 
 
-
 from ..defaults import DEFAULT_LINTER_CONFIG
 
 
 def get_fix_file_path(category: str, filename: str) -> Path:
-    """ gets a Path object for a filename within the fixes dir for the given category """
+    """gets a Path object for a filename within the fixes dir for the given category"""
     if __file__.rsplit("/", maxsplit=1)[-1] == "__init__.py":
         module_parent = Path(__file__).parent.parent
     else:
@@ -38,13 +37,13 @@ def get_fix_file_path(category: str, filename: str) -> Path:
             sys.exit(1)
     return fixes_path
 
+
 def load_config() -> Dict[str, Any]:
-    """ loads config """
+    """loads config"""
     for configfile in [
         Path("./github_linter.json"),
         Path(os.path.expanduser("~/.config/github_linter.json")),
     ]:
-
         configfile = configfile.expanduser().resolve()
 
         if not configfile.exists():
@@ -77,7 +76,7 @@ def generate_jinja2_template_file(
     context: Optional[Dict[str, Any]],
     module_path: str = ".",
 ) -> Optional[str]:
-    """ generates a file """
+    """generates a file"""
 
     if context is None:
         context = {}
@@ -96,8 +95,9 @@ def generate_jinja2_template_file(
         return None
     return rendered_template
 
+
 def setup_logging(debug: bool) -> None:
-    """ sets up logging """
+    """sets up logging"""
 
     if not debug:
         logger.remove()

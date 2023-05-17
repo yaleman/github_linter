@@ -13,6 +13,7 @@ MODULE_CHOICES = [
     key for key in list(MODULES.keys()) if not key.startswith("github_linter")
 ]
 
+
 @click.command()
 @click.option("--repo", "-r", multiple=True, help="Filter repos")
 @click.option("--owner", "-o", multiple=True, help="Filter owners")
@@ -35,9 +36,7 @@ MODULE_CHOICES = [
 @click.option(
     "--check", "-k", multiple=True, help="Filter by check name, eg check_example"
 )
-@click.option(
-    "--debug", "-d", is_flag=True, default=False, help="Enable debug logging"
-)
+@click.option("--debug", "-d", is_flag=True, default=False, help="Enable debug logging")
 # pylint: disable=too-many-arguments,too-many-locals
 def cli(
     repo: Optional[Tuple[str]] = None,
@@ -47,8 +46,8 @@ def cli(
     no_progress: bool = False,
     debug: bool = False,
     module: Optional[List[str]] = None,
-    ) -> None:
-    """ Github linter for checking your repositories for various things. """
+) -> None:
+    """Github linter for checking your repositories for various things."""
 
     setup_logging(debug)
     load_modules(module)
@@ -56,8 +55,12 @@ def cli(
     github = GithubLinter()
 
     # these just set defaults
-    repo_filter = [] if repo is None else [ element for element in repo if element is not None ]
-    owner_filter = [] if owner is None else [ element for element in owner if element is not None ]
+    repo_filter = (
+        [] if repo is None else [element for element in repo if element is not None]
+    )
+    owner_filter = (
+        [] if owner is None else [element for element in owner if element is not None]
+    )
 
     logger.debug("Getting repos")
     repos = search_repos(github, repo_filter, owner_filter)
@@ -87,7 +90,6 @@ def cli(
             )
             continue
         github.handle_repo(repository, check=check, fix=fix)
-
 
         if len(repos) > 3 and not no_progress:
             pct_done = round((index / len(repos) * 100), 1)

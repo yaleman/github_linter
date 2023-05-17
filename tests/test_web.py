@@ -11,19 +11,20 @@ client = TestClient(app)
 
 
 def test_read_main() -> None:
-    """ test that the home page renders """
+    """test that the home page renders"""
     response = client.get("/")
     assert response.status_code == 200
     assert b"<title>Github Linter</title>" in response.content
 
+
 @pytest.mark.network
 def test_get_all_user_repos() -> None:
-    """ tests what we get back from it """
+    """tests what we get back from it"""
     linter = GithubLinter()
     linter.do_login()
     config = {
-        "linter" : {
-            "owner_list" : [
+        "linter": {
+            "owner_list": [
                 "yaleman",
             ]
         }

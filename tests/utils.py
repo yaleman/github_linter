@@ -2,8 +2,10 @@
 
 from github.Repository import Repository
 from github.Requester import Requester
+
+
 def generate_test_repo() -> Repository:
-    """ gets you a test repo """
+    """gets you a test repo"""
     test_requester = Requester(
         login_or_token="",
         retry=False,
@@ -21,8 +23,8 @@ def generate_test_repo() -> Repository:
     testrepo = Repository(
         test_requester,
         {},
-        attributes={"full_name" : "testuser/test1", "name" : "test1"},
+        attributes={"full_name": "testuser/test1", "name": "test1"},
         completed=True,
-        )
+    )
 
     return testrepo

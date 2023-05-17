@@ -9,7 +9,9 @@ from typing import TypedDict
 CATEGORY = "testing"
 LANGUAGES = ["all"]
 
+
 class DefaultConfig(TypedDict):
-    """ config object """
+    """config object"""
+
 
 DEFAULT_CONFIG: DefaultConfig = {}

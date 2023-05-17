@@ -28,7 +28,6 @@ LANGUAGES = [
 ]
 
 
-
 # CONFIG = {
 #     "version": "2",
 #     "updates": [
@@ -45,32 +44,37 @@ LANGUAGES = [
 # }
 
 
-
 DEFAULT_CONFIG: DefaultConfig = {
-    "config_filename" : ".github/dependabot.yml",
-    "schedule" : DependabotSchedule.parse_obj({
-        "interval" : "weekly",
-        "day" : "monday",
-        "time" : DoubleQuotedScalarString("00:00"),
-        "timezone" : "Etc/UTC" # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-    }).dict()
+    "config_filename": ".github/dependabot.yml",
+    "schedule": DependabotSchedule.parse_obj(
+        {
+            "interval": "weekly",
+            "day": "monday",
+            "time": DoubleQuotedScalarString("00:00"),
+            "timezone": "Etc/UTC",  # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+        }
+    ).dict(),
 }
 
 
 def generate_expected_update_config(
     repo: RepoLinter,
-    ) -> DependabotConfigFile:
-    """ generates the required configuration """
+) -> DependabotConfigFile:
+    """generates the required configuration"""
 
     updates: List[DependabotUpdateConfig] = []
     for language in repo.repository.get_languages():
         if find_language_in_ecosystem(language):
-            logger.debug("Found lang/eco: {}, {}", language, find_language_in_ecosystem(language))
-            new_config = DependabotUpdateConfig.parse_obj({
-                "package-ecosystem": find_language_in_ecosystem(language),
-                "schedule": repo.config[CATEGORY]["schedule"],
-                "directory" : "/",
-            })
+            logger.debug(
+                "Found lang/eco: {}, {}", language, find_language_in_ecosystem(language)
+            )
+            new_config = DependabotUpdateConfig.parse_obj(
+                {
+                    "package-ecosystem": find_language_in_ecosystem(language),
+                    "schedule": repo.config[CATEGORY]["schedule"],
+                    "directory": "/",
+                }
+            )
             updates.append(new_config)
     github_actions_exists = False
     for update in updates:
@@ -78,11 +82,13 @@ def generate_expected_update_config(
             github_actions_exists = True
     if not github_actions_exists:
         updates.append(
-            DependabotUpdateConfig.parse_obj({
-                "package-ecosystem" : "github-actions",
-                "directory" : "/",
-                "schedule" : repo.config[CATEGORY]["schedule"]
-                })
+            DependabotUpdateConfig.parse_obj(
+                {
+                    "package-ecosystem": "github-actions",
+                    "directory": "/",
+                    "schedule": repo.config[CATEGORY]["schedule"],
+                }
+            )
         )
     config_file = DependabotConfigFile(
         version=2,
@@ -92,9 +98,10 @@ def generate_expected_update_config(
     logger.debug(json.dumps(config_file.dict(), indent=4, default=str))
     return config_file
 
+
 # pylint: disable=too-many-branches
 def check_updates_for_languages(repo: RepoLinter) -> None:
-    """ ensures that for every known language/package ecosystem, there's a configured update task """
+    """ensures that for every known language/package ecosystem, there's a configured update task"""
 
     repo.skip_on_archived()
     dependabot = load_dependabot_config_file(repo, CATEGORY)
@@ -107,12 +114,12 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
         return
 
     required_package_managers = [
-        "github-actions", # included by default because ... y'know.
+        "github-actions",  # included by default because ... y'know.
     ]
 
     # get the languages from the repo
     languages = repo.repository.get_languages()
-    logger.debug("Found the following languages: {}", ','.join(languages))
+    logger.debug("Found the following languages: {}", ",".join(languages))
 
     # compare them to the ecosystem languages
     for language in languages:
@@ -131,9 +138,9 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
                     logger.debug("Adding github-actions to required checks..")
                     break
     except TypeError:
-        logger.debug("Couldn't get contents of dir '.github/workflows', skipping." )
+        logger.debug("Couldn't get contents of dir '.github/workflows', skipping.")
     except UnknownObjectException:
-        logger.debug("Couldn't get contents of dir '.github/workflows', skipping." )
+        logger.debug("Couldn't get contents of dir '.github/workflows', skipping.")
 
     if not required_package_managers:
         logger.debug("No languages matched dependabot providers, stopping.")
@@ -151,17 +158,18 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
         if update.package_ecosystem in required_package_managers:
             if update.package_ecosystem not in package_managers_covered:
                 package_managers_covered.append(update.package_ecosystem)
-                logger.debug(
-                    "Satisified requirement for {}", update.package_ecosystem
-                )
+                logger.debug("Satisified requirement for {}", update.package_ecosystem)
             else:
-                logger.debug("Found {} already in package_managers_covered", update.package_ecosystem)
+                logger.debug(
+                    "Found {} already in package_managers_covered",
+                    update.package_ecosystem,
+                )
         else:
             logger.warning(
                 "Found unexpected package-ecosystem setting: '{}', not in {}",
                 update.package_ecosystem,
-                ','.join(required_package_managers),
-                )
+                ",".join(required_package_managers),
+            )
             logger.debug(update.dict())
 
     # check that the repo has full coverage
@@ -177,19 +185,23 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
                 f"Package manager needs to be configured for {manager}",
             )
 
-        extra_package_managers =  [
-            manager for manager in package_managers_covered if manager not in required_package_managers
+        extra_package_managers = [
+            manager
+            for manager in package_managers_covered
+            if manager not in required_package_managers
         ]
 
         for extra_manager in extra_package_managers:
             repo.error(
                 CATEGORY,
-                f"Package manager {extra_manager} is configured but not needed",)
+                f"Package manager {extra_manager} is configured but not needed",
+            )
+
 
 def check_dependabot_config_valid(
     repo: RepoLinter,
 ) -> None:
-    """ checks update config exists and is slightly valid """
+    """checks update config exists and is slightly valid"""
 
     repo.skip_on_archived()
     try:
@@ -209,13 +221,13 @@ def check_dependabot_config_valid(
     for update in dependabot.updates:
         logger.debug(json.dumps(update.json(), indent=4))
         # if "package-ecosystem" not in update:
-            # repo.error(CATEGORY, "package-ecosystem not set in an update")
+        # repo.error(CATEGORY, "package-ecosystem not set in an update")
 
         # checks there's a schedule and it has a valid timezone
         # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates
         # if not update."schedule" not in update:
-            # repo.error(CATEGORY, f"Schedule missing from update {json.dumps(update)}")
-            # return
+        # repo.error(CATEGORY, f"Schedule missing from update {json.dumps(update)}")
+        # return
 
         # schedule: DependabotSchedule = update.schedule
         # if "interval" not in schedule.dict():
@@ -235,10 +247,11 @@ def check_dependabot_config_valid(
         #         )
     return None
 
+
 def check_updates_have_directory_set(
     repo: RepoLinter,
 ) -> None:
-    """ checks that each update config has 'directory' set """
+    """checks that each update config has 'directory' set"""
 
     repo.skip_on_archived()
 
@@ -251,7 +264,7 @@ def check_updates_have_directory_set(
 def check_dependabot_config(
     repo: RepoLinter,
 ) -> None:
-    """ checks for dependabot config """
+    """checks for dependabot config"""
 
     repo.skip_on_archived()
     # TODO: finish check_dependabot_config
@@ -264,28 +277,35 @@ def check_dependabot_config(
 def check_dependabot_vulnerability_enabled(
     repo: RepoLinter,
 ) -> None:
-    """ checks for dependabot vulnerability alert config """
+    """checks for dependabot vulnerability alert config"""
     repo.skip_on_archived()
     if not repo.repository.get_vulnerability_alert():
         repo.error(CATEGORY, "Vulnerability reports on repository are not enabled.")
 
+
 def check_dependabot_automerge_workflow(repo: RepoLinter) -> None:
-    """ checks the repo config file and see if auto-merge is enabled """
+    """checks the repo config file and see if auto-merge is enabled"""
     # TODO: the github module doesn't support directly querying the settings for this?
     repo.skip_on_archived()
     filepath = ".github/workflows/dependabot_auto_merge.yml"
     fileresult = repo.get_file(filepath)
-    if fileresult is None or fileresult.decoded_content.decode('utf-8').strip() == "":
+    if fileresult is None or fileresult.decoded_content.decode("utf-8").strip() == "":
         return repo.error(CATEGORY, f"{filepath} missing")
-    if fileresult.decoded_content.decode('utf-8') != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
-
+    if (
+        fileresult.decoded_content.decode("utf-8")
+        != get_fix_file_path(category=CATEGORY, filename=filepath).read_text()
+    ):
         repo.warning(CATEGORY, f"Content differs for {filepath}")
         # show the diff between the two files
-        repo.diff_file(fileresult.decoded_content.decode('utf-8'), get_fix_file_path(category=CATEGORY, filename=filepath).read_text())
+        repo.diff_file(
+            fileresult.decoded_content.decode("utf-8"),
+            get_fix_file_path(category=CATEGORY, filename=filepath).read_text(),
+        )
     return None
 
+
 def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
-    """ adds the automerge config """
+    """adds the automerge config"""
     repo.skip_on_archived()
     repo.skip_on_protected()
 
@@ -296,23 +316,28 @@ def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
             filepath=filepath,
             newfile=get_fix_file_path(category=CATEGORY, filename=filepath),
             oldfile=fileresult,
-            message=f"Created {filepath}"
-            )
+            message=f"Created {filepath}",
+        )
         return repo.fix(CATEGORY, f"Created {filepath}, commit url: {result}")
-    if fileresult.decoded_content.decode('utf-8') != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
+    if (
+        fileresult.decoded_content.decode("utf-8")
+        != get_fix_file_path(category=CATEGORY, filename=filepath).read_text()
+    ):
         result = repo.create_or_update_file(
             filepath=filepath,
             newfile=get_fix_file_path(category=CATEGORY, filename=filepath),
             oldfile=fileresult,
-            message=f"Updated {filepath} to latest version"
-            )
-        return repo.fix(CATEGORY, f"Updated {filepath} to latest version, commit url: {result}")
+            message=f"Updated {filepath} to latest version",
+        )
+        return repo.fix(
+            CATEGORY, f"Updated {filepath} to latest version, commit url: {result}"
+        )
     logger.debug("{} already exists and has the right contents!", filepath)
     return None
 
 
 def fix_dependabot_vulnerability_enabled(repo: RepoLinter) -> None:
-    """ enables vulnerability alerts on a repository """
+    """enables vulnerability alerts on a repository"""
     repo.skip_on_archived()
     if repo.repository.enable_vulnerability_alert():
         repo.fix(CATEGORY, "Enabled vulnerability reports on repository.")
@@ -321,52 +346,63 @@ def fix_dependabot_vulnerability_enabled(repo: RepoLinter) -> None:
 
 
 def fix_enable_automated_security_fixes(repo: RepoLinter) -> None:
-    """ enables dependabot on a repository, there doesn't seem to be a way to *check* this? """
+    """enables dependabot on a repository, there doesn't seem to be a way to *check* this?"""
     repo.skip_on_archived()
     if repo.repository.enable_automated_security_fixes():
         repo.fix(CATEGORY, "Enabled automated security fixes on repository.")
     else:
         repo.error(CATEGORY, "Failed to enable automated security fixes.")
 
+
 def fix_create_dependabot_config(repo: RepoLinter) -> None:
-    """ creates the dependabot config file """
+    """creates the dependabot config file"""
 
     repo.skip_on_archived()
 
     expected_config = generate_expected_update_config(repo)
 
-    updates = [ val.dict(by_alias=True, exclude_unset=True, exclude_none=True) for val in expected_config.updates ]
+    updates = [
+        val.dict(by_alias=True, exclude_unset=True, exclude_none=True)
+        for val in expected_config.updates
+    ]
     update_dict = {
-        "version" : expected_config.version,
-        "updates" : updates,
+        "version": expected_config.version,
+        "updates": updates,
     }
 
     logger.debug(json.dumps(update_dict, indent=4))
     yaml = YAML()
-    yaml.preserve_quotes = False # type: ignore
+    yaml.preserve_quotes = False  # type: ignore
     # yaml.default_flow_style = None
     buf = StringIO()
-    yaml.dump(
-        data=update_dict,
-        stream=buf
-        )
+    yaml.dump(data=update_dict, stream=buf)
     buf.seek(0)
     newfilecontents = buf.read()
     logger.debug("New contents: \n{}", newfilecontents)
     # raise NotImplementedError
-    if newfilecontents != repo.cached_get_file(repo.config[CATEGORY]["config_filename"],True):
+    if newfilecontents != repo.cached_get_file(
+        repo.config[CATEGORY]["config_filename"], True
+    ):
         logger.debug("Updating file")
         try:
             result = repo.create_or_update_file(
                 filepath=repo.config[CATEGORY]["config_filename"],
                 newfile=newfilecontents,
                 oldfile=repo.cached_get_file(repo.config[CATEGORY]["config_filename"]),
-                message=f"github_linter - {CATEGORY} - updating config"
+                message=f"github_linter - {CATEGORY} - updating config",
             )
             if result is not None:
-                repo.fix(CATEGORY, f"Updated {repo.config[CATEGORY]['config_filename']} - {result}")
+                repo.fix(
+                    CATEGORY,
+                    f"Updated {repo.config[CATEGORY]['config_filename']} - {result}",
+                )
             else:
                 logger.debug("No changes to {}, file content matched.")
         except GithubException as ghe:
-            logger.error("Failed to update file, bailing now! repo={}, filename={} error={}", repo.repository.full_name, repo.config[CATEGORY]["config_filename"], ghe)
+            logger.error(
+                "Failed to update file, bailing now! repo={}, filename={} error={}",
+                repo.repository.full_name,
+                repo.config[CATEGORY]["config_filename"],
+                ghe,
+            )
             sys.exit(1)

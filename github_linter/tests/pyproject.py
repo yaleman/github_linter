@@ -40,7 +40,7 @@ def validate_pyproject_authors(
     repo: RepoLinter,
     project_object: Dict[str, Any],
 ) -> None:
-    """ checks the authors exist and are valid """
+    """checks the authors exist and are valid"""
 
     config_expected = repo.config.get("pyproject.toml")
     if "authors" not in project_object:
@@ -60,7 +60,7 @@ def validate_project_name(
     repo: RepoLinter,
     project_object: Dict[str, Any],
 ) -> bool:
-    """ validates that the project name matches the repo name """
+    """validates that the project name matches the repo name"""
 
     if "name" not in project_object:
         repo.error(CATEGORY, "No 'name' field in [project] section of config")
@@ -80,7 +80,7 @@ def validate_readme_configured(
     repo: RepoLinter,
     project_object: Dict[str, Any],
 ) -> bool:
-    """ validates that the project has a readme configured """
+    """validates that the project has a readme configured"""
     if "readme" not in project_object:
         repo.error(CATEGORY, "No 'readme' field in [project] section of config")
         return False
@@ -101,7 +101,7 @@ def validate_scripts(
     repo: RepoLinter,
     project_object: Dict[str, Any],
 ) -> bool:
-    """ validates that the project has a readme configured """
+    """validates that the project has a readme configured"""
 
     if "scripts" not in project_object:
         logger.debug("No scripts configured in pyproject.toml")
@@ -126,9 +126,8 @@ def validate_scripts(
     return retval
 
 
-
 def check_pyproject_build_backend(repo: RepoLinter) -> None:
-    """ gets the pyproject.toml file and looks for the key build-system.build-backend """
+    """gets the pyproject.toml file and looks for the key build-system.build-backend"""
     pyproject = repo.load_pyproject()
 
     if not pyproject:
@@ -155,7 +154,7 @@ def check_pyproject_build_backend(repo: RepoLinter) -> None:
 def check_pyproject_toml(
     repo: RepoLinter,
 ) -> None:
-    """ checks the data for the pyproject.toml file """
+    """checks the data for the pyproject.toml file"""
 
     # config_expected = repo.config.get(CATEGORY)
 
@@ -229,30 +228,33 @@ def check_pyproject_toml(
 #             repo.error(CATEGORY, f"tool.flit.sdist section missing '{entry}' entry.")
 #     return
 
+
 def transfer_poetry_field(
     repo: RepoLinter,
     fieldname: str,
-    poetry: Dict[str,Any],
+    poetry: Dict[str, Any],
     project: Dict[str, Any],
-    ) -> None:
-    """ copy tool.poetry fields into the project section of pyproject.toml """
+) -> None:
+    """copy tool.poetry fields into the project section of pyproject.toml"""
     logger.debug(f"checking {fieldname=}")
     if fieldname in poetry:
         if fieldname not in project or project[fieldname] != poetry[fieldname]:
             if project.get(fieldname) != poetry[fieldname]:
-                repo.fix(CATEGORY,
-                    f"Project {fieldname} didn't match, was {project.get(fieldname, 'unset')}, is now {poetry[fieldname]}"
-                    )
+                repo.fix(
+                    CATEGORY,
+                    f"Project {fieldname} didn't match, was {project.get(fieldname, 'unset')}, is now {poetry[fieldname]}",
+                )
                 project[fieldname] = poetry[fieldname]
+
 
 def transfer_poetry_authors(
     repo: RepoLinter,
     poetry: Dict[str, Any],
     project: Dict[str, Any],
-    ) -> None:
-    """ transfers authors """
+) -> None:
+    """transfers authors"""
 
-    if "authors" not in  project:
+    if "authors" not in project:
         project["authors"] = []
 
     re_poetry_author = re.compile(r"(?P<name>[^\<]+) \<(?P<email>[^\>]+)\>$")
@@ -267,10 +269,12 @@ def transfer_poetry_authors(
             project["authors"].append(details)
             repo.fix(
                 CATEGORY,
-                f"Transferred the following author from poetry to pyproject: {details}")
+                f"Transferred the following author from poetry to pyproject: {details}",
+            )
+
 
 def fix_copy_poetry_to_project(repo: RepoLinter) -> None:
-    """ fix tool.poetry fields into the project section of pyproject.toml
+    """fix tool.poetry fields into the project section of pyproject.toml
 
     PEP621 says a dict of name / email https://www.python.org/dev/peps/pep-0621/#authors-maintainers
 
@@ -280,7 +284,10 @@ def fix_copy_poetry_to_project(repo: RepoLinter) -> None:
     pyproject = repo.load_pyproject()
 
     if not pyproject:
-        repo.error(CATEGORY, "fix_copy_poetry_to_project failed - attempted to fix pyproject but doesn't exist")
+        repo.error(
+            CATEGORY,
+            "fix_copy_poetry_to_project failed - attempted to fix pyproject but doesn't exist",
+        )
         return
 
     # check the name field
@@ -304,12 +311,10 @@ def fix_copy_poetry_to_project(repo: RepoLinter) -> None:
         "description",
         "license",
         "version",
-
         "readme",
         "homepage",
         "documentation",
         "repository",
-
         "keywords",
         "classifiers",
         # TODO: Check how this maps to pyproject.toml
@@ -327,15 +332,15 @@ def fix_copy_poetry_to_project(repo: RepoLinter) -> None:
 
     filecontents = repo.cached_get_file("pyproject.toml", clear_cache=True)
     if filecontents and newfilecontents != filecontents.decoded_content.decode("utf-8"):
-        commit = repo.create_or_update_file("pyproject.toml",
+        commit = repo.create_or_update_file(
+            "pyproject.toml",
             newfile=newfilecontents,
             oldfile=filecontents,
             message="github-linter.fix_copy_poetry_to_project updating pyproject.toml",
-            )
+        )
         repo.fix(CATEGORY, f"fixed pyproject.toml - commit url {commit}")
     else:
         logger.debug("pyproject.toml is up to date")
-
 
     # TODO: copy the scripts settings around
     # [tool.poetry.scripts]
@@ -346,7 +351,7 @@ def fix_copy_poetry_to_project(repo: RepoLinter) -> None:
 
 
 def check_mypy_pydantic_plugin(repo: RepoLinter) -> None:
-    """ checks that the pydantic plugin's enabled for mypy """
+    """checks that the pydantic plugin's enabled for mypy"""
 
     # [tool.mypy]
     # plugins = "pydantic.mypy"
@@ -358,30 +363,48 @@ def check_mypy_pydantic_plugin(repo: RepoLinter) -> None:
         logger.info("No pyproject file found in repo {}", repo.repository.full_name)
         raise NoChangeNeeded
 
-
-    if not any(line for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n") if line.strip().startswith("mypy")):
+    if not any(
+        line
+        for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n")
+        if line.strip().startswith("mypy")
+    ):
         logger.info("mypy not found in pyproject.toml")
         raise NoChangeNeeded
 
-    if not any(line for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n") if line.strip().startswith("pydantic")):
+    if not any(
+        line
+        for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n")
+        if line.strip().startswith("pydantic")
+    ):
         logger.info("pydantic not found in pyproject.toml")
         raise NoChangeNeeded
 
     if "tool" not in pyproject:
-        repo.error(CATEGORY, "section 'tool' not found while checking for mypy pydantic plugin")
+        repo.error(
+            CATEGORY, "section 'tool' not found while checking for mypy pydantic plugin"
+        )
         return
     if "mypy" not in pyproject["tool"]:
-        repo.error(CATEGORY, "section 'tool.mypy' not found while checking for mypy pydantic plugin")
+        repo.error(
+            CATEGORY,
+            "section 'tool.mypy' not found while checking for mypy pydantic plugin",
+        )
         return
     if "plugins" not in pyproject["tool"]["mypy"]:
-        repo.error(CATEGORY, "section 'tool.mypy.plugins' not found while checking for mypy pydantic plugin")
+        repo.error(
+            CATEGORY,
+            "section 'tool.mypy.plugins' not found while checking for mypy pydantic plugin",
+        )
         return
-    if "pydantic.mypy" not in pyproject['tool']['mypy']['plugins']:
-        repo.error(CATEGORY, "section 'tool.mypy.plugins' does not contain pydantic.mypy")
+    if "pydantic.mypy" not in pyproject["tool"]["mypy"]["plugins"]:
+        repo.error(
+            CATEGORY, "section 'tool.mypy.plugins' does not contain pydantic.mypy"
+        )
         return
 
+
 def fix_mypy_pydantic_plugin(repo: RepoLinter) -> None:
-    """ ensures that the pydantic plugin's enabled for mypy """
+    """ensures that the pydantic plugin's enabled for mypy"""
     repo.skip_on_archived()
     try:
         check_mypy_pydantic_plugin(repo)
@@ -394,7 +417,6 @@ def fix_mypy_pydantic_plugin(repo: RepoLinter) -> None:
         logger.info("No pyproject file found in repo {}", repo.repository.full_name)
         return
 
-
     if "tool" not in pyproject:
         pyproject["tool"] = {}
 
@@ -405,5 +427,10 @@ def fix_mypy_pydantic_plugin(repo: RepoLinter) -> None:
         pyproject["tool"]["mypy"]["plugins"] = "pydantic.mypy"
 
     logger.debug(tomli_w.dumps(pyproject))
-    result = repo.create_or_update_file("pyproject.toml", tomli_w.dumps(pyproject),repo.cached_get_file("pyproject.toml"),"Added pydantic plugin to mypy config in pyproject.toml")
+    result = repo.create_or_update_file(
+        "pyproject.toml",
+        tomli_w.dumps(pyproject),
+        repo.cached_get_file("pyproject.toml"),
+        "Added pydantic plugin to mypy config in pyproject.toml",
+    )
     logger.success("Added pydantic plugin to mypy config in pyproject.toml {}", result)
