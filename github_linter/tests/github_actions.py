@@ -32,28 +32,30 @@ LANGUAGES = ["all"]
 
 
 class DefaultConfig(TypedDict):
-    """ config typing for module config """
+    """config typing for module config"""
+
     tests_per_language: Dict[str, List[str]]
     # dev_packages: Dict[str, List[str]] # TODO: move this to pyproject.toml
     dependency_review: str
 
+
 DEFAULT_CONFIG: DefaultConfig = {
-    "tests_per_language" : {
-        "Python" : [
+    "tests_per_language": {
+        "Python": [
             "mypy.yml",
             "pylint.yml",
             "pytest.yml",
         ],
-        "Rust" : [
+        "Rust": [
             "rust_test.yml",
             "clippy.yml",
         ],
-        "Shell" : [
+        "Shell": [
             "shellcheck.yml",
         ],
-        "Dockerfile" : [
+        "Dockerfile": [
             "build_container.yml",
-        ]
+        ],
     },
     # "dev_packages" : {
     #     "Python" : [
@@ -63,14 +65,14 @@ DEFAULT_CONFIG: DefaultConfig = {
     #         "black",
     # #     ]
     # },
-    "dependency_review" : ".github/workflows/dependency_review.yml",
+    "dependency_review": ".github/workflows/dependency_review.yml",
 }
 
 # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#scheduletimezone
 
 
 def check_a_workflow_dir_exists(repo: RepoLinter) -> None:
-    """ checks '.github/workflows/' exists """
+    """checks '.github/workflows/' exists"""
     if not repo.cached_get_file(".github", clear_cache=True):
         repo.error(CATEGORY, ".github dir not found")
         return
@@ -84,12 +86,12 @@ def check_a_workflow_dir_exists(repo: RepoLinter) -> None:
 
 
 def check_language_workflows(repo: RepoLinter) -> None:
-    """ Checks that the config files exist and then validates they have the **required** fields """
+    """Checks that the config files exist and then validates they have the **required** fields"""
 
     for language in repo.repository.get_languages():
         logger.debug("Checking config for {} language files", language)
 
-        if language in  repo.config[CATEGORY]["tests_per_language"]:
+        if language in repo.config[CATEGORY]["tests_per_language"]:
             logger.info("Found {}-related files", language)
             expected_files = repo.config[CATEGORY]["tests_per_language"][language]
 
@@ -111,16 +113,19 @@ def check_language_workflows(repo: RepoLinter) -> None:
                     "jobs",
                 ]:
                     if required_key not in config_file:
-                        repo.error(CATEGORY, f"Missing key in action file {filepath}: {required_key}")
+                        repo.error(
+                            CATEGORY,
+                            f"Missing key in action file {filepath}: {required_key}",
+                        )
 
 
 def fix_language_workflows(repo: RepoLinter) -> None:
-    """ Creates the config files per-language """
+    """Creates the config files per-language"""
 
     for language in repo.repository.get_languages():
         logger.debug("Checking config for {} language files", language)
 
-        if language in  repo.config[CATEGORY]["tests_per_language"]:
+        if language in repo.config[CATEGORY]["tests_per_language"]:
             logger.info("Found {}-related files", language)
             expected_files = repo.config[CATEGORY]["tests_per_language"][language]
 
@@ -132,22 +137,28 @@ def fix_language_workflows(repo: RepoLinter) -> None:
                 logger.debug(json.dumps(config_file, indent=4))
                 if not config_file:
                     # create the file
-                    newfile = get_fix_file_path(CATEGORY, f"templates/{language}/{filename}")
+                    newfile = get_fix_file_path(
+                        CATEGORY, f"templates/{language}/{filename}"
+                    )
                     if not newfile.exists():
-                        raise ValueError(f"Can't find {newfile.resolve()} to create fix for {language}/{filename}")
+                        raise ValueError(
+                            f"Can't find {newfile.resolve()} to create fix for {language}/{filename}"
+                        )
 
                     commit_url = repo.create_or_update_file(
                         filepath=filepath,
                         newfile=newfile,
                         oldfile=None,
-                        message=f'github_linter: Created {filepath} from fix_language_workflows'
+                        message=f"github_linter: Created {filepath} from fix_language_workflows",
                     )
-                    repo.fix(CATEGORY, f"Created {filepath} from fix_language_workflows: {commit_url}")
-
+                    repo.fix(
+                        CATEGORY,
+                        f"Created {filepath} from fix_language_workflows: {commit_url}",
+                    )
 
 
 def check_shellcheck(repo: RepoLinter) -> None:
-    """ If 'Shell' exists in repo languages, check for a shellcheck action """
+    """If 'Shell' exists in repo languages, check for a shellcheck action"""
     repo_langs = repo.repository.get_languages()
 
     if "Shell" not in repo_langs:
@@ -173,26 +184,32 @@ def check_shellcheck(repo: RepoLinter) -> None:
             f"Shellcheck action string missing, expected {shellcheck_action}",
         )
 
+
 class DependencyReviewFilePaths(TypedDict):
-    """ typing """
+    """typing"""
+
     repo_file_path: str
     fix_file_path: Path
 
+
 def get_dependency_review_file_paths(
     repo: RepoLinter,
-    ) -> DependencyReviewFilePaths:
-    """ gets the paths """
-    retval = DependencyReviewFilePaths({
-        "repo_file_path" : repo.config[CATEGORY]["dependency_review"],
-        "fix_file_path" : get_fix_file_path(
-        CATEGORY,
-        "dependency_review.yml",
-        ),
-    })
+) -> DependencyReviewFilePaths:
+    """gets the paths"""
+    retval = DependencyReviewFilePaths(
+        {
+            "repo_file_path": repo.config[CATEGORY]["dependency_review"],
+            "fix_file_path": get_fix_file_path(
+                CATEGORY,
+                "dependency_review.yml",
+            ),
+        }
+    )
     return retval
 
+
 def check_dependency_review_file(repo: RepoLinter) -> None:
-    """ checks for .github/workflows/dependency_review.yml
+    """checks for .github/workflows/dependency_review.yml
 
     and ensures it matches the template
     """
@@ -207,12 +224,15 @@ def check_dependency_review_file(repo: RepoLinter) -> None:
         repo.error(
             CATEGORY,
             f"Dependency review action is missing or needs update {filepaths['repo_file_path']}",
-            )
+        )
         return
-    logger.debug(f"Dependency review action is up to date {filepaths['repo_file_path']}")
+    logger.debug(
+        f"Dependency review action is up to date {filepaths['repo_file_path']}"
+    )
+
 
 def nested_get(haystack: Dict[str, Any], needle: str) -> Optional[Any]:
-    """ digs into the haystack looking for the needle, layers are like "one.two.three.four" """
+    """digs into the haystack looking for the needle, layers are like "one.two.three.four" """
     if "." not in needle:
         return haystack.get(needle)
     split_needle = needle.split(".")
@@ -222,13 +242,16 @@ def nested_get(haystack: Dict[str, Any], needle: str) -> Optional[Any]:
         return None
     return nested_get(haystack[first_layer_needle], ".".join(split_needle[1:]))
 
+
 def pylint_to_ruff_check_pyproject(repo: RepoLinter) -> None:
-    """ handles the pyproject.toml file if we're moving from pylint to ruff """
+    """handles the pyproject.toml file if we're moving from pylint to ruff"""
     pyproject = repo.load_pyproject()
     if pyproject is None:
         return
 
-    logger.debug("tool.poetry.dependencies: {}", pyproject.get('tool.poetry.dependencies'))
+    logger.debug(
+        "tool.poetry.dependencies: {}", pyproject.get("tool.poetry.dependencies")
+    )
 
     stanzas = [
         "tool.poetry.dependencies",
@@ -243,10 +266,14 @@ def pylint_to_ruff_check_pyproject(repo: RepoLinter) -> None:
             continue
         logger.debug("{}: {}", stanza, dependencies)
         if "pylint" in dependencies:
-            repo.warning(CATEGORY, f"pylint found in pyproject dependency stanza: {stanza}, please migrate to ruff")
+            repo.warning(
+                CATEGORY,
+                f"pylint found in pyproject dependency stanza: {stanza}, please migrate to ruff",
+            )
+
 
 def pylint_to_ruff_check_github_workflows(repo: RepoLinter) -> None:
-    """ checks for github actions with pylint mentioned in the run field of job steps """
+    """checks for github actions with pylint mentioned in the run field of job steps"""
 
     filename = ".github/workflows/pylint.yml"
 
@@ -271,7 +298,7 @@ def pylint_to_ruff_check_github_workflows(repo: RepoLinter) -> None:
         if "steps" not in job:
             logger.debug("Couldn't find steps for job {}", job_name)
             continue
-        steps: List[Dict[str, Any]] = job['steps']
+        steps: List[Dict[str, Any]] = job["steps"]
 
         for step_index, step in enumerate(steps):
             logger.info(step)
@@ -279,14 +306,14 @@ def pylint_to_ruff_check_github_workflows(repo: RepoLinter) -> None:
             if "run" not in step:
                 logger.debug("No 'run' in step '{}', skipping!", step_name)
                 continue
-            if 'pylint' in step['run']:
-                logger.debug("Found pylint in run: {}", step['run'])
-                message = f"Github Action Workflow filename=\"{filename}\" job=\"{job_name}\" step=\"{step_name}\" contains pylint in the run argument, please migrate to `ruff`."
+            if "pylint" in step["run"]:
+                logger.debug("Found pylint in run: {}", step["run"])
+                message = f'Github Action Workflow filename="{filename}" job="{job_name}" step="{step_name}" contains pylint in the run argument, please migrate to `ruff`.'
                 repo.warning(CATEGORY, message)
 
+
 def check_migrate_pylint_to_ruff(repo: RepoLinter) -> None:
-    """ checks if pylint's in the package list or run commands and suggests moving to ruff
-    """
+    """checks if pylint's in the package list or run commands and suggests moving to ruff"""
     repo.skip_on_archived()
     repo.requires_language("Python")
 
@@ -300,7 +327,7 @@ def check_migrate_pylint_to_ruff(repo: RepoLinter) -> None:
 
 
 def fix_dependency_review_file(repo: RepoLinter) -> None:
-    """ checks for .github/workflows/dependency_review.yml
+    """checks for .github/workflows/dependency_review.yml
 
     and ensures it matches the template
     """
@@ -314,7 +341,7 @@ def fix_dependency_review_file(repo: RepoLinter) -> None:
     if existing_file is not None and existing_file.decoded_content == fix_file_content:
         logger.debug(
             f"Dependency review action is up to date {filepaths['repo_file_path']}",
-            )
+        )
         return
     result = repo.create_or_update_file(
         filepaths["repo_file_path"],
@@ -322,13 +349,11 @@ def fix_dependency_review_file(repo: RepoLinter) -> None:
         oldfile=existing_file,
         message="github_actions - update dependency_review workflow",
     )
-    repo.fix(
-        CATEGORY,
-        f"Updated dependency_review workflow commit URL: {result}"
-    )
+    repo.fix(CATEGORY, f"Updated dependency_review workflow commit URL: {result}")
+
 
 def fix_dependency_review_file_remove_private(repo: RepoLinter) -> None:
-    """ checks for .github/workflows/dependency_review.yml
+    """checks for .github/workflows/dependency_review.yml
 
     and ensures it doesn't exist in private repos
     """
@@ -340,17 +365,13 @@ def fix_dependency_review_file_remove_private(repo: RepoLinter) -> None:
     existing_file = repo.cached_get_file(filepaths["repo_file_path"])
 
     if existing_file is not None:
-
         commit_result = repo.repository.delete_file(
             path=filepaths["repo_file_path"],
             message="github_linter - removing dependency checker github action",
             sha=existing_file.sha,
         )
         if "commit" not in commit_result:
-            result= "Unknown Commit URL"
+            result = "Unknown Commit URL"
         else:
             result = getattr(commit_result["commit"], "html_url", "")
-        repo.fix(
-            CATEGORY,
-            f"Removed dependency_review workflow, commit URL: {result}"
-        )
+        repo.fix(CATEGORY, f"Removed dependency_review workflow, commit URL: {result}")

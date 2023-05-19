@@ -10,19 +10,26 @@ import difflib
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
-from github3.repos.repo import ShortRepository #type: ignore
+from github3.repos.repo import ShortRepository  # type: ignore
 from loguru import logger
 import tomli
 import wildcard_matcher
 
-from .exceptions import NoChangeNeeded, SkipNoLanguage, SkipOnArchived, SkipOnPrivate, SkipOnProtected, SkipOnPublic
+from .exceptions import (
+    NoChangeNeeded,
+    SkipNoLanguage,
+    SkipOnArchived,
+    SkipOnPrivate,
+    SkipOnProtected,
+    SkipOnPublic,
+)
 
 from .types import DICTLIST
 from .utils import load_config
 
 
 def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]) -> None:
-    """ digs into a dict, shoving the defaults in """
+    """digs into a dict, shoving the defaults in"""
     if not source:
         return
     logger.debug("Processing {}, {}", source, type(source))
@@ -40,8 +47,8 @@ def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]) -> None:
 def get_filtered_commands(
     checklist: List[str], check_filter: Optional[Tuple[str]]
 ) -> List[str]:
-    """ filters the checks, the input is the list of wanted modules
-        from click.option()
+    """filters the checks, the input is the list of wanted modules
+    from click.option()
     """
     if not check_filter:
         return list(checklist)
@@ -57,13 +64,14 @@ def get_filtered_commands(
 
 
 class RepoLinter:
-    """ handles the repository object, its parent and the report details """
+    """handles the repository object, its parent and the report details"""
 
-    def __init__(self,
-            repo: Repository,
-            repo3: ShortRepository,
-            ) -> None:
-        """ startup things """
+    def __init__(
+        self,
+        repo: Repository,
+        repo3: ShortRepository,
+    ) -> None:
+        """startup things"""
         self.config = load_config()
         if not self.config:
             self.config = {}
@@ -84,7 +92,7 @@ class RepoLinter:
         self.languages: Optional[List[str]] = None
 
     def clear_file_cache(self, filepath: str) -> bool:
-        """ removes a file from the file cache, returns bool if it was in there """
+        """removes a file from the file cache, returns bool if it was in there"""
         if filepath in self.filecache:
             del self.filecache[filepath]
             return True
@@ -108,7 +116,6 @@ class RepoLinter:
         try:
             self.filecache[filepath] = self.get_file(filepath)
         except GithubException as error_message:
-
             if "documentation_url" in error_message.data:
                 docs_url = error_message.data["documentation_url"]
             else:
@@ -118,8 +125,8 @@ class RepoLinter:
                 "Failed to pull file '{}' : {} ({})",
                 filepath,
                 error_message.data["message"],
-                docs_url
-                )
+                docs_url,
+            )
             return None
         return self.filecache[filepath]
 
@@ -137,7 +144,10 @@ class RepoLinter:
         """
 
         if self.repository3.branch(self.repository3.default_branch).protected:
-            logger.warning("Can't update file on  {} as the default branch is protected", self.repository3.full_name)
+            logger.warning(
+                "Can't update file on  {} as the default branch is protected",
+                self.repository3.full_name,
+            )
             raise SkipOnProtected("Can't make changes to a protected branch")
 
         if not message:
@@ -169,11 +179,23 @@ class RepoLinter:
                     if error.status != 404:
                         print(error)
                         sys.exit(1)
-                    logger.debug(f"404'd looking for branch {commit_branch}, will commit one.")
-                    source_branch = self.repository.get_branch(self.repository.default_branch)
-                    branch_create = self.repository.create_git_ref(ref='refs/heads/' + commit_branch, sha=source_branch.commit.sha)
-                    logger.debug(f"result of creating {commit_branch} from {self.repository.default_branch}: {branch_create}")
-                    logger.info("Created branch {} in {}", commit_branch, self.repository.full_name)
+                    logger.debug(
+                        f"404'd looking for branch {commit_branch}, will commit one."
+                    )
+                    source_branch = self.repository.get_branch(
+                        self.repository.default_branch
+                    )
+                    branch_create = self.repository.create_git_ref(
+                        ref="refs/heads/" + commit_branch, sha=source_branch.commit.sha
+                    )
+                    logger.debug(
+                        f"result of creating {commit_branch} from {self.repository.default_branch}: {branch_create}"
+                    )
+                    logger.info(
+                        "Created branch {} in {}",
+                        commit_branch,
+                        self.repository.full_name,
+                    )
             target_branch = self.repository.get_branch(commit_branch)
         else:
             target_branch = self.repository.get_branch(self.repository.default_branch)
@@ -183,7 +205,7 @@ class RepoLinter:
             message=message,
             content=newfile_contents,
             sha=blobsha,
-            branch=target_branch.name
+            branch=target_branch.name,
         )
         if "commit" not in commit_result:
             return "Unknown Commit URL"
@@ -209,7 +231,7 @@ class RepoLinter:
     #     return self.filecache[filepath]
 
     def get_files(self, path: str) -> Optional[List[ContentFile]]:
-        """ give it a path and it'll return the match(es). If it's a single file it'll get that, if it's a path it'll get up to 1000 files """
+        """give it a path and it'll return the match(es). If it's a single file it'll get that, if it's a path it'll get up to 1000 files"""
         try:
             fileresult = self.repository.get_contents(path)
             if not fileresult:
@@ -227,7 +249,7 @@ class RepoLinter:
             return None
 
     def get_file(self, filename: str) -> Optional[ContentFile]:
-        """ looks for a file or returns none"""
+        """looks for a file or returns none"""
         try:
             fileresult = self.get_files(filename)
             if not fileresult:
@@ -265,7 +287,7 @@ class RepoLinter:
 
     @classmethod
     def add_result(cls, result_object: DICTLIST, category: str, value: str) -> None:
-        """ adds an result to the target object"""
+        """adds an result to the target object"""
         if category not in result_object:
             result_object[category] = []
         if value not in result_object[category]:
@@ -273,17 +295,17 @@ class RepoLinter:
         logger.debug("{} - {}", category, value)
 
     def error(self, category: str, value: str) -> None:
-        """ adds an error """
+        """adds an error"""
         logger.error("{} - {}", category, value)
         self.add_result(self.errors, category, value)
 
     def fix(self, category: str, value: str) -> None:
-        """ adds a fixed item """
+        """adds a fixed item"""
         logger.success("{} - {}", category, value)
         self.add_result(self.fixes, category, value)
 
     def warning(self, category: str, value: str) -> None:
-        """ adds a warning """
+        """adds a warning"""
         logger.warning("{} - {}", category, value)
         self.add_result(self.warnings, category, value)
 
@@ -291,7 +313,7 @@ class RepoLinter:
         self,
         module: ModuleType,
     ) -> None:
-        """ mixes the config defaults in from the module with the config in the repository """
+        """mixes the config defaults in from the module with the config in the repository"""
         if not hasattr(module, "DEFAULT_CONFIG"):
             return
         module_name = module.__name__.split(".")[-1]
@@ -305,32 +327,28 @@ class RepoLinter:
         # logger.debug(json.dumps(self.config, indent=4, default=str, ensure_ascii=False))
 
     def skip_on_archived(self) -> None:
-        """ Add this to a check to skip it if the repository is archived. """
+        """Add this to a check to skip it if the repository is archived."""
         if self.repository.archived:
             raise SkipOnArchived(
                 "This repository is archived so this test doesn't need to run."
             )
 
     def skip_on_protected(self) -> None:
-        """ Add this to a check to skip it if the repository has a protected main branch. """
+        """Add this to a check to skip it if the repository has a protected main branch."""
         if self.repository.archived:
             raise SkipOnProtected(
                 "This repository has a protected main branch so we can't run here."
             )
 
     def skip_on_private(self) -> None:
-        """ Add this to a check to skip it if the repository is private. """
+        """Add this to a check to skip it if the repository is private."""
         if self.repository.private:
-            raise SkipOnPrivate(
-                "This repository is private so this test can't run."
-            )
+            raise SkipOnPrivate("This repository is private so this test can't run.")
 
     def skip_on_public(self) -> None:
-        """ Add this to a check to skip it if the repository is public. """
+        """Add this to a check to skip it if the repository is public."""
         if not self.repository.private:
-            raise SkipOnPublic(
-                "This repository is public so this test can't run."
-            )
+            raise SkipOnPublic("This repository is public so this test can't run.")
 
     def run_module(
         self,
@@ -338,10 +356,10 @@ class RepoLinter:
         check_filter: Optional[Tuple[str]],
         do_fixes: bool,
     ) -> bool:
-        """ runs a given module """
+        """runs a given module"""
         self.load_module_config(module)
 
-        if hasattr(module, "LANGUAGES") and 'ALL' not in getattr(module, "LANGUAGES"):
+        if hasattr(module, "LANGUAGES") and "ALL" not in getattr(module, "LANGUAGES"):
             if not self.module_language_check(module):
                 logger.debug(
                     "Module {} not required after language check, module langs: {}, repo langs: {}",
@@ -358,21 +376,36 @@ class RepoLinter:
                     getattr(module, check)(
                         repo=self,
                     )
-                except (SkipOnArchived, SkipOnPrivate, SkipOnPublic, SkipNoLanguage, NoChangeNeeded):
+                except (
+                    SkipOnArchived,
+                    SkipOnPrivate,
+                    SkipOnPublic,
+                    SkipNoLanguage,
+                    NoChangeNeeded,
+                ):
                     pass
             if do_fixes:
                 if check.startswith("fix_"):
                     logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
                     try:
                         getattr(module, check)(repo=self)
-                    except (NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic, NoChangeNeeded, SkipOnProtected):
+                    except (
+                        NoChangeNeeded,
+                        SkipOnArchived,
+                        SkipOnPrivate,
+                        SkipOnPublic,
+                        NoChangeNeeded,
+                        SkipOnProtected,
+                    ):
                         pass
         return True
 
     def requires_language(self, language: str) -> None:
-        """ raises a skip exception if the repository doesn't have this language """
+        """raises a skip exception if the repository doesn't have this language"""
         if self.languages is None:
-            self.languages = [ str(key) for key in self.repository.get_languages().keys() ]
+            self.languages = [
+                str(key) for key in self.repository.get_languages().keys()
+            ]
         logger.debug("Languages in repo: {}", ",".join(self.languages))
         if language not in self.languages:
             logger.debug("Didn't find {} in language list, raising SkipNoLanguage")
@@ -380,9 +413,7 @@ class RepoLinter:
         logger.debug("Found {} in repo's language list", language)
 
     def load_pyproject(self) -> Optional[Dict[str, Any]]:
-        """ loads the pyproject.toml file
-
-        """
+        """loads the pyproject.toml file"""
 
         fileresult = self.cached_get_file("pyproject.toml")
         if not fileresult:
@@ -400,7 +431,9 @@ class RepoLinter:
             return None
 
     def diff_file(self, old_file: str, new_file: str) -> None:
-        """ diffs two files using difflib """
-        diff = difflib.unified_diff(old_file.splitlines(), new_file.splitlines(), fromfile="old", tofile="new")
+        """diffs two files using difflib"""
+        diff = difflib.unified_diff(
+            old_file.splitlines(), new_file.splitlines(), fromfile="old", tofile="new"
+        )
         for line in diff:
             logger.warning(line)

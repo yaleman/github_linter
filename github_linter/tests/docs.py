@@ -13,17 +13,18 @@ from ..repolinter import RepoLinter
 
 
 class DefaultConfig(TypedDict):
-    """ default config for the test module """
+    """default config for the test module"""
+
     contributing_file: str
 
+
 CATEGORY = "docs"
-DEFAULT_CONFIG: DefaultConfig = {
-    "contributing_file" : ".github/CONTRIBUTING.md"
-}
-LANGUAGES = [ "ALL" ]
+DEFAULT_CONFIG: DefaultConfig = {"contributing_file": ".github/CONTRIBUTING.md"}
+LANGUAGES = ["ALL"]
+
 
 def check_contributing_exists(repo: RepoLinter) -> None:
-    """ checks that .github/CONTRIBUTING.md exists """
+    """checks that .github/CONTRIBUTING.md exists"""
     # don't need to run this if it's archived
     repo.skip_on_archived()
 
@@ -36,8 +37,9 @@ def check_contributing_exists(repo: RepoLinter) -> None:
     logger.debug("Found {}", filepath)
     return None
 
+
 def generate_contributing_file(repo: Repository) -> Optional[str]:
-    """ generates the 'CONTRIBUTING.md' file """
+    """generates the 'CONTRIBUTING.md' file"""
 
     # start up jinja2
     jinja2_env = Environment(
@@ -52,9 +54,9 @@ def generate_contributing_file(repo: Repository) -> Optional[str]:
         logger.error("Failed to load template: {}", template_error)
         return None
 
-def fix_contributing_exists(repo:RepoLinter) -> None:
-    """ creates a templated file """
 
+def fix_contributing_exists(repo: RepoLinter) -> None:
+    """creates a templated file"""
 
     filepath = repo.config[CATEGORY]["contributing_file"]
     new_filecontents = generate_contributing_file(repo.repository)
@@ -64,7 +66,10 @@ def fix_contributing_exists(repo:RepoLinter) -> None:
 
     oldfile = repo.cached_get_file(filepath)
 
-    if oldfile is not None and oldfile.decoded_content.decode("utf-8") == new_filecontents:
+    if (
+        oldfile is not None
+        and oldfile.decoded_content.decode("utf-8") == new_filecontents
+    ):
         logger.debug("Don't need to update {}", filepath)
         return
 

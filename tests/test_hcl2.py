@@ -3,8 +3,9 @@
 
 import hcl2  # type: ignore
 
+
 def test_load_basic_hcl2() -> None:
-    """ tests loading an example file """
+    """tests loading an example file"""
     examplefile = """terraform {
     backend "s3" {
         bucket = "example-bucket"

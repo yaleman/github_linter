@@ -13,7 +13,7 @@ LANGUAGES = ["Ruby"]
 
 
 class DefaultConfig(TypedDict):
-    """ config typing for module config """
+    """config typing for module config"""
 
     required_files: List[str]
 
@@ -28,8 +28,9 @@ DEFAULT_CONFIG: DefaultConfig = {
 
 WrappedFunction = TypeVar("WrappedFunction", bound=Callable[[RepoLinter], None])
 
+
 def should_this_run(func: WrappedFunction) -> WrappedFunction:
-    """ if the repo name doesn't match then don't run """
+    """if the repo name doesn't match then don't run"""
 
     def inner(repo: RepoLinter) -> None:
         if not repo.repository.name.startswith("homebrew-"):
@@ -44,7 +45,7 @@ def should_this_run(func: WrappedFunction) -> WrappedFunction:
 
 @should_this_run
 def check_update_files_exist(repo: RepoLinter) -> None:
-    """ checks that the required files exist """
+    """checks that the required files exist"""
     for filename in repo.config[CATEGORY]["required_files"]:
         filecontents = repo.cached_get_file(filename)
         if not filecontents:
@@ -53,10 +54,9 @@ def check_update_files_exist(repo: RepoLinter) -> None:
 
 @should_this_run
 def fix_update_files_exist(repo: RepoLinter) -> None:
-    """ updates the homebrew files from the templates """
+    """updates the homebrew files from the templates"""
 
     for filename in repo.config[CATEGORY]["required_files"]:
-
         updatefile = get_fix_file_path(CATEGORY, filename)
         if not updatefile.exists():
             logger.error("Running fix, can't find fix file {}!", updatefile.as_posix())
