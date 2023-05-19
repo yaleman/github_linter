@@ -106,9 +106,7 @@ class RepoLinter:
         """
 
         if clear_cache:
-            if self.clear_file_cache(filepath) is False:
-                logger.error("Failed to clear cache for {}", filepath)
-                sys.exit(1)
+            self.clear_file_cache(filepath)
         elif filepath in self.filecache:
             return self.filecache[filepath]
         # cache and then return
