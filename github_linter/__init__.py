@@ -354,7 +354,7 @@ def search_repos(
     logger.debug("Logged in as username {}", username)
 
     if not owner_filter:
-        logger.info("Pulling owner filter from config")
+        logger.debug("Pulling owner filter from config")
         if (
             "owner_list" in github.config["linter"]
             and len(github.config["linter"]["owner_list"]) != 0
@@ -366,8 +366,8 @@ def search_repos(
     else:
         logger.debug("Using owner filter: {}", owner_filter)
 
-    logger.info("Username: {}", username)
-    logger.info("Repo Filter: {}", repo_filter)
+    logger.debug("Username: {}", username)
+    logger.debug("Repo Filter: {}", repo_filter)
 
     results = []
 

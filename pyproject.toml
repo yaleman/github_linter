@@ -46,7 +46,7 @@ black = "^23.3.0"
 
 [tool.poetry]
 name = "github_linter"
-version = "0.0.2"
+version = "0.0.3"
 description = "A curiously complex tool to fit up things in my github repos."
 authors = [
     "James Hodgkinson <james@terminaloutcomes.com>"

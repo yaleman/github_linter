@@ -36,6 +36,7 @@ MODULE_CHOICES = [
 @click.option(
     "--check", "-k", multiple=True, help="Filter by check name, eg check_example"
 )
+@click.option("--list-repos", is_flag=True, default=False, help="List repos and exit")
 @click.option("--debug", "-d", is_flag=True, default=False, help="Enable debug logging")
 # pylint: disable=too-many-arguments,too-many-locals
 def cli(
@@ -46,6 +47,7 @@ def cli(
     no_progress: bool = False,
     debug: bool = False,
     module: Optional[List[str]] = None,
+    list_repos: bool = False,
 ) -> None:
     """Github linter for checking your repositories for various things."""
 
@@ -64,6 +66,12 @@ def cli(
 
     logger.debug("Getting repos")
     repos = search_repos(github, repo_filter, owner_filter)
+
+    repos.sort(key=lambda x: x.full_name)
+    if list_repos:
+        for repo_lister in repos:
+            logger.info(repo_lister.full_name)
+        return
 
     if not repos:
         return
