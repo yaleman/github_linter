@@ -123,6 +123,9 @@ class GithubLinter:
             if hasattr(rate_limits, rate_type):
                 remaining = getattr(rate_limits, rate_type).remaining
                 reset = getattr(rate_limits, rate_type).reset.astimezone(pytz.utc)
+                logger.debug("Rate limit remaining: {}", remaining)
+                logger.debug("Rate limit reset time: {}", reset)
+
                 if RATELIMIT_TYPES[rate_type]["minlimit"] >= remaining:
                     logger.debug("Need to wait until {}", reset)
                     now = datetime.now(tz=pytz.utc)
