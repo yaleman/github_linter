@@ -67,7 +67,7 @@ def cli(
     logger.debug("Getting repos")
     repos = search_repos(github, repo_filter, owner_filter)
 
-    repos.sort(key=lambda x: x.full_name)
+    repos.sort(key=lambda x: x.full_name)  # type: ignore
     if list_repos:
         for repo_lister in repos:
             logger.info(repo_lister.full_name)

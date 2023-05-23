@@ -297,11 +297,10 @@ def check_dependabot_automerge_workflow(repo: RepoLinter) -> None:
     ):
         repo.warning(CATEGORY, f"Content differs for {filepath}")
         # show the diff between the two files
-        repo.diff_file(
-            fileresult.decoded_content.decode("utf-8"),
-            get_fix_file_path(category=CATEGORY, filename=filepath).read_text(),
-        )
-    return None
+        # repo.diff_file(
+        #     fileresult.decoded_content.decode("utf-8"),
+        #     get_fix_file_path(category=CATEGORY, filename=filepath).read_text(),
+        # )
 
 
 def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
