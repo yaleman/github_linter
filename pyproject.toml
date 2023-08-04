@@ -41,7 +41,7 @@ dev = [
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.0.280"
+ruff = "^0.0.282"
 black = "^23.3.0"
 
 [tool.poetry]
