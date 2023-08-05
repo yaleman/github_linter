@@ -1,6 +1,6 @@
 """ types for gihtub_linter dependabot tests """
 
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict, Union
 
 import pydantic
 import pytz
@@ -17,7 +17,7 @@ class DependabotSchedule(pydantic.BaseModel):
 
     interval: str
     day: Optional[str] = None
-    time: Optional[DoubleQuotedScalarString] = None
+    time: Optional[Union[DoubleQuotedScalarString, str]] = None
     timezone: Optional[str] = None  # needs to be one of pytz.all_timezones
 
     @pydantic.field_validator("interval")
@@ -124,23 +124,29 @@ class DependabotUpdateConfig(pydantic.BaseModel):
     )
     ignore: Optional[List[str]] = None
     insecure_external_code_execution: Optional[str] = pydantic.Field(
-        alias="insecure-external-code-execution"
+        alias="insecure-external-code-execution",
+        default=None,
     )
     labels: Optional[List[str]] = None
     milestone: Optional[int] = None
     open_pull_requests_limit: Optional[int] = pydantic.Field(
-        alias="open-pull-requests-limit"
+        alias="open-pull-requests-limit",
+        default=None,
     )
     # noqa: E501 pylint: disable=line-too-long
     # TODO: this needs to be a thing - https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#pull-request-branch-nameseparator
     # pull-request-branch-name.separator
-    rebase_strategy: Optional[str] = pydantic.Field(alias="rebase-strategy")
+    rebase_strategy: Optional[str] = pydantic.Field(
+        alias="rebase-strategy", default=None
+    )
     # TODO: registries typing for DependabotUpdateConfig
     registries: Optional[Any] = None
     reviewers: Optional[List[str]] = None
-    target_branch: Optional[str] = pydantic.Field(alias="target-branch")
+    target_branch: Optional[str] = pydantic.Field(alias="target-branch", default=None)
     vendor: Optional[bool] = None
-    versioning_strategy: Optional[str] = pydantic.Field(alias="versioning-strategy")
+    versioning_strategy: Optional[str] = pydantic.Field(
+        alias="versioning-strategy", default=None
+    )
 
     # TODO: write tests for this
     @pydantic.field_validator("package_ecosystem")

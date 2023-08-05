@@ -7,17 +7,14 @@ from github.Requester import Requester
 def generate_test_repo() -> Repository:
     """gets you a test repo"""
     test_requester = Requester(
-        login_or_token="",
+        auth=None,
         retry=False,
-        password=None,
-        jwt=None,
         base_url="https://github.com/yaleman/github_linter/",
         timeout=30,
         pool_size=10,
         per_page=100,
         user_agent="",
         verify=False,
-        app_auth=None,
     )
 
     testrepo = Repository(

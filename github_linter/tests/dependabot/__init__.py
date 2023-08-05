@@ -73,7 +73,7 @@ def generate_expected_update_config(
                     "package-ecosystem": find_language_in_ecosystem(language),
                     "schedule": repo.config[CATEGORY]["schedule"],
                     "directory": "/",
-                }
+                },
             )
             updates.append(new_config)
     github_actions_exists = False

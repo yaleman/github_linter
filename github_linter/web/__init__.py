@@ -76,8 +76,8 @@ class MetaData(BaseModel):
 async def create_db() -> None:
     """do the initial DB creation"""
     async with engine.begin() as conn:
-        result = await conn.run_sync(Base.metadata.create_all)
-        logger.info("Result of creating DB: {}", result)
+        await conn.run_sync(Base.metadata.create_all)
+        # logger.info("Result of creating DB: {}", result)
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
@@ -118,7 +118,7 @@ async def set_update_time(update_time: float, conn: Any) -> None:
     lastupdated = {"name": "last_updated", "value": update_time}
 
     await conn.run_sync(Base.metadata.create_all)
-    insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(**lastupdated)  # type: ignore
+    insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(**lastupdated)
     do_update = insert_row.on_conflict_do_update(
         index_elements=["name"],
         set_=lastupdated,
@@ -151,7 +151,9 @@ async def update_stored_repo(repo: Repository) -> None:
             strict=True,
         )
 
-        insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos).values(**repoobject.model_dump())  # type: ignore
+        insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos).values(
+            **repoobject.model_dump()
+        )
 
         do_update = insert_row.on_conflict_do_update(
             index_elements=["full_name"],

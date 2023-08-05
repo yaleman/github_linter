@@ -120,15 +120,22 @@ class RepoLinter:
         try:
             self.filecache[filepath] = self.get_file(filepath)
         except GithubException as error_message:
-            if "documentation_url" in error_message.data:
+            if "documentation_url" in error_message.data and isinstance(
+                error_message.data, dict
+            ):
                 docs_url = error_message.data["documentation_url"]
             else:
                 docs_url = "Unknown docs URL"
 
+            if isinstance(error_message.data, dict):
+                message = str(error_message.data["message"])
+            else:
+                message = str(error_message.data)
+
             logger.error(
                 "Failed to pull file '{}' : {} ({})",
                 filepath,
-                error_message.data["message"],
+                message,
                 docs_url,
             )
             return None

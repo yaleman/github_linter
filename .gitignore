@@ -8,7 +8,6 @@ config.py
 build/
 dist/
 .coverage
-poetry.lock
 github_linter.json
 .env
 .envrc
