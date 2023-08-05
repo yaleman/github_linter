@@ -4,40 +4,51 @@ This is mainly for me, but it's a way of going through the Github repositories t
 
 Because I've got like ~100 repos and keep changing how I do things, and it annoys me to work on an old one and hit all the weird edge cases I've fixed elsewhere.
 
-## Current tests
+## Current Modules
 
-- Dependabot
-    - Has a (valid-ish) config
-- Generic
-    - Files you want gone
-    - `CODEOWNERS` generation
-    - generation of `.github/FUNDING`.yml
-- GitHub Actions
-    - Checks for github actions tests and stuff
-- (GitHub) Issues
-    - Checks for open Issues
-    - Checks for open Pull Requests
-- `pyproject.toml`
+### Dependabot
 
-Only runs if you've got Python.
+* Checks for a (valid-ish) config
 
-    - Checks authors based on a list.
-    - Check module name matches repo
-    - TODO: Check for imports, maybe?
+### Generic Things
 
-Only runs if you've got python.
+* Files you want gone
+* `CODEOWNERS` generation
+* generation of `.github/FUNDING`.yml
 
-    - Checks it exists
-    - Checks for max line length configuration
-    - TODO: Checks for other things (typically I disable TODO's, IE W0501)
-- Terraform
-    - TODO: flesh this out
-    - Checks for provider versions
-    - Checks you have provider config for all your required providers.
-- Testing
-    - Doesn't check for much - have moved this to github_actions
-- mkdocs
-    - checks if you've got mkdocs-looking things and then makes sure you've got a github actions thing to run them
+### GitHub Actions
+
+* Checks for github actions tests and stuff
+
+### (GitHub) Issues
+  
+* Checks for open Issues
+* Checks for open Pull Requests
+
+### `pyproject.toml`
+
+  Only runs if you've got Python.
+
+* Checks authors based on a list.
+* Check module name matches repo
+* TODO: Check for imports, maybe?
+* Checks it exists
+* Checks for max line length configuration
+* TODO: Checks for other things (typically I disable TODO's, IE W0501)
+
+### Terraform
+
+* TODO: flesh this out
+* Checks for provider versions
+* Checks you have provider config for all your required providers.
+
+### Testing
+
+* Doesn't check for much - have moved this to github_actions
+
+### mkdocs
+
+* checks if you've got mkdocs-looking things and then makes sure you've got a github actions thing to run them
 
 ## Configuration
 
@@ -47,7 +58,7 @@ Each test module has its defaults, in the `DEFAULT_CONFIG` attribute.
 
 For an example:
 
-``` python
+```python
 >>> import github_linter.tests.pyproject
 >>> print(github_linter.tests.pyproject.DEFAULT_CONFIG)
 {'build-system': ['flit_core.buildapi', 'poetry.core.masonry.api'], 'readme': 'README.md'}
@@ -55,49 +66,40 @@ For an example:
 
 ### Authentication
 
-1. Use the "GITHUB_TOKEN" auth method.
-2. Set the following in your config file:
-    
-    Using a Personal Access Token (Recommended):
+#### Using a Personal Access Token (Recommended)
 
-    ```json
-    "github" : { 
-        "token" : "<pat>"
-    }
-    ```
+```json
+"github" : { 
+    "token" : "<pat>"
+}
+```
 
-    Using username/password:
-    
-    ```json
-    "github" : { 
-        "username" : "<your_username>", 
-        "password" : "<your_password>" 
-    }
-    ```
+#### Using username/password
 
-3. Set the following in your config file to bypass auth and YOLO it.
-    
-    ```json
-    "github" : { 
-        "ignore_auth" : true 
-    }
-    ```
+```json
+"github" : { 
+    "username" : "<your_username>", 
+    "password" : "<your_password>" 
+}
+```
+
+#### Set the following in your config file to bypass auth and YOLO it
+
+```json
+"github" : { 
+    "ignore_auth" : true 
+}
+```
 
 ## Adding new test modules
 
 1. Add a module under `github_linter/tests/`
-    - Set `CATEGORY: str = "nameofmodule"` to a name which will go in the reports.
-    - Set `LANGUAGES: List[str] = []` to a list of lower case languages, eg:
-        - python
-        - javascript
-        - rust
-        - shell
-        - "all" is allowed to match all
-2. Call check functions `check_<something>`
-3. Call fix functions `fix_<something>`
-4. Import the module in `tests/__init__.py` as part of the big `from . import ()` block.
-5. Eat cake.
-
+2. Set `CATEGORY: str = "nameofmodule"` to a name which will go in the reports.
+3. Set `LANGUAGES: List[str] = []` to a list of lower case languages, eg: python / javascript / rust / shell / "all" which matches all. This is based on GitHub's auto-detection.
+4. Call check functions `check_<something>`
+5. Call fix functions `fix_<something>`
+6. Import the module in `tests/__init__.py` as part of the big `from . import ()` block.
+7. Eat cake.
 
 ## Docker container
 
@@ -119,9 +121,9 @@ Running the web server.
 
 ```shell
 docker run --rm -it \
-    -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
-    -v "$(pwd)/github_linter.json:/home/useruser/github_linter.json" \
-    -p '8000:8000' \
+* e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
+* v "$(pwd)/github_linter.json:/home/useruser/github_linter.json" \
+* p '8000:8000' \
     ghcr.io/yaleman/github_linter:latest \
     python -m github_linter.web
 ```

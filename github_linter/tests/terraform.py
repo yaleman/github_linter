@@ -6,7 +6,7 @@ import re
 import sys
 
 from loguru import logger
-import hcl2  # type: ignore
+import hcl2
 import json5 as json
 from semver.version import Version
 

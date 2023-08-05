@@ -21,6 +21,13 @@ from typing import Any, Dict, List, Optional, TypedDict
 
 import json5 as json
 from loguru import logger
+from pydantic import BaseModel, field_validator
+
+from github_linter.fixes.github_actions import (
+    get_repo_default_workflow_permissions,
+    set_repo_default_workflow_permissions,
+    VALID_DEFAULT_WORKFLOW_PERMISSIONS,
+)
 
 from ..loaders import load_yaml_file
 from ..repolinter import RepoLinter
@@ -31,42 +38,57 @@ CATEGORY = "github_actions"
 LANGUAGES = ["all"]
 
 
-class DefaultConfig(TypedDict):
+class DefaultConfig(BaseModel):
     """config typing for module config"""
 
     tests_per_language: Dict[str, List[str]]
     # dev_packages: Dict[str, List[str]] # TODO: move this to pyproject.toml
     dependency_review: str
+    default_workflow_permissions: str
+    can_approve_pull_request_reviews: bool
+
+    @field_validator("default_workflow_permissions")
+    def validate_default_workflow_permissions(cls, value: str) -> str:
+        """validate the default_workflow_permissions value"""
+        if value not in VALID_DEFAULT_WORKFLOW_PERMISSIONS:
+            raise ValueError(
+                f"default_workflow_permissions must be one of {','.join(VALID_DEFAULT_WORKFLOW_PERMISSIONS)}"
+            )
+        return value
 
 
-DEFAULT_CONFIG: DefaultConfig = {
-    "tests_per_language": {
-        "Python": [
-            "mypy.yml",
-            "pylint.yml",
-            "pytest.yml",
-        ],
-        "Rust": [
-            "rust_test.yml",
-            "clippy.yml",
-        ],
-        "Shell": [
-            "shellcheck.yml",
-        ],
-        "Dockerfile": [
-            "build_container.yml",
-        ],
-    },
-    # "dev_packages" : {
-    #     "Python" : [
-    #         "mypy",
-    #         "ruff",
-    #         "pytest",
-    #         "black",
-    # #     ]
-    # },
-    "dependency_review": ".github/workflows/dependency_review.yml",
-}
+DEFAULT_CONFIG = DefaultConfig.model_validate(
+    {
+        "tests_per_language": {
+            "Python": [
+                "mypy.yml",
+                "pylint.yml",
+                "pytest.yml",
+            ],
+            "Rust": [
+                "rust_test.yml",
+                "clippy.yml",
+            ],
+            "Shell": [
+                "shellcheck.yml",
+            ],
+            "Dockerfile": [
+                "build_container.yml",
+            ],
+        },
+        # "dev_packages" : {
+        #     "Python" : [
+        #         "mypy",
+        #         "ruff",
+        #         "pytest",
+        #         "black",
+        # #     ]
+        # },
+        "dependency_review": ".github/workflows/dependency_review.yml",
+        "default_workflow_permissions": "read",
+        "can_approve_pull_request_reviews": True,
+    }
+)
 
 # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#scheduletimezone
 
@@ -375,3 +397,46 @@ def fix_dependency_review_file_remove_private(repo: RepoLinter) -> None:
         else:
             result = getattr(commit_result["commit"], "html_url", "")
         repo.fix(CATEGORY, f"Removed dependency_review workflow, commit URL: {result}")
+
+
+def check_repo_workflow_permissions(repo: RepoLinter) -> bool:
+    """check that the workflow permissions match expected settings"""
+    repo.skip_on_archived()
+    result = True
+    api_response = get_repo_default_workflow_permissions(repo)
+    if (
+        api_response.default_workflow_permissions
+        != repo.config[CATEGORY]["default_workflow_permissions"]
+    ):
+        repo.error(
+            CATEGORY,
+            f"default_workflow_permissions={api_response.default_workflow_permissions} expected {repo.config[CATEGORY]['default_workflow_permissions']}",
+        )
+        result = False
+    if (
+        api_response.can_approve_pull_request_reviews
+        != repo.config[CATEGORY]["can_approve_pull_request_reviews"]
+    ):
+        repo.error(
+            CATEGORY,
+            f"can_approve_pull_request_reviews={api_response.can_approve_pull_request_reviews} expected {repo.config[CATEGORY]['can_approve_pull_request_reviews']}",
+        )
+        result = False
+    return result
+
+
+def fix_repo_workflow_permissions(repo: RepoLinter) -> None:
+    """set the default workflow permissions"""
+    repo.skip_on_archived()
+    dwp = repo.config[CATEGORY]["default_workflow_permissions"]
+    caprr = repo.config[CATEGORY]["can_approve_pull_request_reviews"]
+    # TODO: make this only take action if the check doesn't pass
+    if set_repo_default_workflow_permissions(
+        repo,
+        dwp,
+        caprr,
+    ):
+        repo.fix(
+            CATEGORY,
+            f"Updated default workflow permissions to default_workflow_permissions={dwp} can_approve_pull_request_reviews={caprr}",
+        )

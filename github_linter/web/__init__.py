@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse, FileResponse, Response
 from github.Repository import Repository
 from jinja2 import Environment, PackageLoader, select_autoescape
 from loguru import logger
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 import sqlalchemy
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -70,18 +70,14 @@ class MetaData(BaseModel):
 
     name: str
     value: str
-
-    class Config:
-        """config"""
-
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 async def create_db() -> None:
     """do the initial DB creation"""
     async with engine.begin() as conn:
-        result = await conn.run_sync(Base.metadata.create_all)
-        logger.info("Result of creating DB: {}", result)
+        await conn.run_sync(Base.metadata.create_all)
+        # logger.info("Result of creating DB: {}", result)
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
@@ -95,22 +91,18 @@ class RepoData(BaseModel):
 
     full_name: str
     name: str
-    owner: Optional[str]
+    owner: Optional[str] = None
     default_branch: str
     archived: bool
-    description: Optional[str]
+    description: Optional[str] = None
     fork: bool
     open_issues: int
     open_prs: int
     last_updated: float
     private: bool
-    organization: Optional[str]
-    parent: Optional[str]
-
-    class Config:
-        """config"""
-
-        orm_mode = True
+    organization: Optional[str] = None
+    parent: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 def githublinter_factory() -> Generator[GithubLinter, None, None]:
@@ -126,7 +118,7 @@ async def set_update_time(update_time: float, conn: Any) -> None:
     lastupdated = {"name": "last_updated", "value": update_time}
 
     await conn.run_sync(Base.metadata.create_all)
-    insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(**lastupdated)  # type: ignore
+    insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(**lastupdated)
     do_update = insert_row.on_conflict_do_update(
         index_elements=["name"],
         set_=lastupdated,
@@ -140,7 +132,7 @@ async def set_update_time(update_time: float, conn: Any) -> None:
 async def update_stored_repo(repo: Repository) -> None:
     """updates a single repository"""
     async with engine.begin() as conn:
-        repoobject = RepoData.parse_obj(
+        repoobject = RepoData.model_validate(
             {
                 "full_name": repo.full_name,
                 "name": repo.name,
@@ -155,14 +147,17 @@ async def update_stored_repo(repo: Repository) -> None:
                 "last_updated": time(),
                 "private": repo.private,
                 "parent": repo.parent.full_name if repo.parent else None,
-            }
+            },
+            strict=True,
         )
 
-        insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos).values(**repoobject.dict())  # type: ignore
+        insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos).values(
+            **repoobject.model_dump()
+        )
 
         do_update = insert_row.on_conflict_do_update(
             index_elements=["full_name"],
-            set_=repoobject.dict(),
+            set_=repoobject.model_dump(),
         )
         await conn.execute(do_update)
         logger.info("Done with {}", repo.full_name)

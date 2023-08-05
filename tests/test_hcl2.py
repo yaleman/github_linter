@@ -1,7 +1,7 @@
 """ tests things interacting with HCL-format files (terraform, hopefully)"""
 
 
-import hcl2  # type: ignore
+import hcl2.api
 
 
 def test_load_basic_hcl2() -> None:
@@ -14,7 +14,7 @@ def test_load_basic_hcl2() -> None:
     }
 }"""
 
-    value = hcl2.loads(examplefile)
+    value = hcl2.api.loads(examplefile)
 
     assert value["terraform"]
     print(value["terraform"])

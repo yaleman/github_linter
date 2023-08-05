@@ -108,7 +108,7 @@ class GithubLinter:
                 return self.github
         raise ValueError("No authentication method was found!")
 
-    @pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
+    @pydantic.validate_call(config={"arbitrary_types_allowed": True})
     def add_module(self, module_name: str, module: ModuleType) -> None:
         """adds a module to modules"""
         self.modules[module_name] = module
@@ -244,7 +244,7 @@ class GithubLinter:
         time.sleep(self.check_rate_limits())
 
 
-@pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
+@pydantic.validate_call(config={"arbitrary_types_allowed": True})
 def get_all_user_repos(
     github: GithubLinter, config: Optional[Dict[str, Any]] = None
 ) -> List[str]:
@@ -276,7 +276,7 @@ def get_all_user_repos(
     return repolist
 
 
-@pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
+@pydantic.validate_call(config={"arbitrary_types_allowed": True})
 def filter_by_repo(
     repo_list: List[Repository], repo_filters: List[str]
 ) -> List[Repository]:
@@ -306,7 +306,7 @@ class RepoSearchString(pydantic.BaseModel):  # pylint: disable=no-member
     search_string: str
 
 
-@pydantic.validate_arguments
+@pydantic.validate_call
 def generate_repo_search_string(
     repo_filter: List[str],
     owner_filter: List[str],
@@ -345,7 +345,7 @@ def generate_repo_search_string(
     return RepoSearchString(needs_post_filtering=False, search_string=search_string)
 
 
-@pydantic.validate_arguments(config={"arbitrary_types_allowed": True})
+@pydantic.validate_call(config={"arbitrary_types_allowed": True})
 def search_repos(
     github: GithubLinter,
     repo_filter: List[str],

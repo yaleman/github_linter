@@ -19,7 +19,6 @@ from . import (
     # pylintrc,
     pyproject,  # noqa: F401
     security_md,  # noqa: F401
-    testing,  # noqa: F401
     terraform,  # noqa: F401
 )
 

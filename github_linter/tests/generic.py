@@ -105,16 +105,15 @@ def check_files_to_remove(
     try:
         contents = repo.repository.get_contents("")
     except GithubException as error_message:
-        if "documentation_url" in error_message.data:
-            docs_url = error_message.data["documentation_url"]
+        if isinstance(error_message.data, dict):
+            logger.error(
+                "Failed to query repo contents {} ({})",
+                error_message.data["message"],
+                error_message.data["documentation_url"],
+            )
         else:
-            docs_url = "Unknown docs URL"
+            logger.error("Failed to query repo contents {}", error_message.data)
 
-        logger.error(
-            "Failed to query repo contents {} ({})",
-            error_message.data["message"],
-            docs_url,
-        )
         return
     if isinstance(contents, ContentFile):
         contents = [contents]

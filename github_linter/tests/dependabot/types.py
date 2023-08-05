@@ -1,6 +1,6 @@
 """ types for gihtub_linter dependabot tests """
 
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict, Union
 
 import pydantic
 import pytz
@@ -13,12 +13,14 @@ from .constants import DEPENDABOT_SCHEDULE_INTERVALS, PACKAGE_ECOSYSTEM
 class DependabotSchedule(pydantic.BaseModel):
     """schedule"""
 
-    interval: str
-    day: Optional[str]
-    time: Optional[DoubleQuotedScalarString]
-    timezone: Optional[str]  # needs to be one of pytz.all_timezones
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    @pydantic.validator("interval")
+    interval: str
+    day: Optional[str] = None
+    time: Optional[Union[DoubleQuotedScalarString, str]] = None
+    timezone: Optional[str] = None  # needs to be one of pytz.all_timezones
+
+    @pydantic.field_validator("interval")
     def validate_interval(cls, value: str) -> str:
         """validates the schedule interval"""
         if value not in DEPENDABOT_SCHEDULE_INTERVALS:
@@ -29,7 +31,7 @@ class DependabotSchedule(pydantic.BaseModel):
         return value
 
     # TODO: write tests for this
-    @pydantic.validator("timezone")
+    @pydantic.field_validator("timezone")
     def validate_timezone(
         cls, value: Optional[DoubleQuotedScalarString]
     ) -> Optional[DoubleQuotedScalarString]:
@@ -39,7 +41,7 @@ class DependabotSchedule(pydantic.BaseModel):
         return DoubleQuotedScalarString(value)
 
     # TODO: write tests for this
-    @pydantic.validator("time")
+    @pydantic.field_validator("time")
     def validate_time(
         cls, value: Optional[DoubleQuotedScalarString]
     ) -> Optional[DoubleQuotedScalarString]:
@@ -48,15 +50,23 @@ class DependabotSchedule(pydantic.BaseModel):
             return DoubleQuotedScalarString(value)
         return value
 
-    @pydantic.validator("day")
-    def validate_day_value(cls, value: str, values: Dict[str, str]) -> str:
+    @pydantic.model_validator(mode="after")
+    def validate_day_value(self) -> "DependabotSchedule":
         """check you're specifying a valid day of the week"""
-        if values.get("day"):
-            if "interval" in values and values.get("day") not in [
-                "monday" "tuesday" "wednesday" "thursday" "friday" "saturday" "sunday"
+        if self.day is not None:
+            if self.interval != "weekly":
+                raise ValueError("You set a day but didn't set interval to 'weekly'.")
+            if self.day not in [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
             ]:
-                raise ValueError(f"Invalid day: {values['day']}")
-        return value
+                raise ValueError(f"Invalid day in dependabot schedule: {self.day}")
+        return self
 
 
 class DefaultConfig(TypedDict):
@@ -72,11 +82,11 @@ class DependabotCommitMessage(pydantic.BaseModel):
 
     """
 
-    prefix: Optional[str]
+    prefix: Optional[str] = None
     prefix_development: Optional[str] = pydantic.Field(alias="prefix-development")
-    include: Optional[str]
+    include: Optional[str] = None
 
-    @pydantic.validator("include")
+    @pydantic.field_validator("include")
     def validate_include(cls, value: str) -> str:
         """checks for a valid entry"""
         if value != "scope":
@@ -107,33 +117,39 @@ class DependabotUpdateConfig(pydantic.BaseModel):
     schedule: DependabotSchedule
     allow: Optional[
         Dict[str, str]
-    ]  # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#allow
-    assignees: Optional[List[str]]
+    ] = None  # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#allow
+    assignees: Optional[List[str]] = None
     commit_message: Optional[DependabotCommitMessage] = pydantic.Field(
         None, alias="commit-message"
     )
-    ignore: Optional[List[str]]
+    ignore: Optional[List[str]] = None
     insecure_external_code_execution: Optional[str] = pydantic.Field(
-        alias="insecure-external-code-execution"
+        alias="insecure-external-code-execution",
+        default=None,
     )
-    labels: Optional[List[str]]
-    milestone: Optional[int]
+    labels: Optional[List[str]] = None
+    milestone: Optional[int] = None
     open_pull_requests_limit: Optional[int] = pydantic.Field(
-        alias="open-pull-requests-limit"
+        alias="open-pull-requests-limit",
+        default=None,
     )
     # noqa: E501 pylint: disable=line-too-long
     # TODO: this needs to be a thing - https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#pull-request-branch-nameseparator
     # pull-request-branch-name.separator
-    rebase_strategy: Optional[str] = pydantic.Field(alias="rebase-strategy")
+    rebase_strategy: Optional[str] = pydantic.Field(
+        alias="rebase-strategy", default=None
+    )
     # TODO: registries typing for DependabotUpdateConfig
-    registries: Optional[Any]
-    reviewers: Optional[List[str]]
-    target_branch: Optional[str] = pydantic.Field(alias="target-branch")
-    vendor: Optional[bool]
-    versioning_strategy: Optional[str] = pydantic.Field(alias="versioning-strategy")
+    registries: Optional[Any] = None
+    reviewers: Optional[List[str]] = None
+    target_branch: Optional[str] = pydantic.Field(alias="target-branch", default=None)
+    vendor: Optional[bool] = None
+    versioning_strategy: Optional[str] = pydantic.Field(
+        alias="versioning-strategy", default=None
+    )
 
     # TODO: write tests for this
-    @pydantic.validator("package_ecosystem")
+    @pydantic.field_validator("package_ecosystem")
     def validate_package_ecosystem(cls, value: str) -> str:
         """validates you're getting the right value"""
         if value not in PACKAGE_ECOSYSTEM:
@@ -141,7 +157,7 @@ class DependabotUpdateConfig(pydantic.BaseModel):
         return value
 
     # TODO: write tests for this
-    @pydantic.validator("rebase_strategy")
+    @pydantic.field_validator("rebase_strategy")
     def validate_rebase_strategy(cls, value: str) -> str:
         """validates you're getting the right value"""
         if value not in ["disabled", "auto"]:
@@ -149,7 +165,7 @@ class DependabotUpdateConfig(pydantic.BaseModel):
         return value
 
     # TODO: write tests for this
-    @pydantic.validator("rebase_strategy")
+    @pydantic.field_validator("rebase_strategy")
     def validate_execution_permissions(cls, value: str) -> str:
         """validates you're getting the right value"""
         if value not in ["deny", "allow"]:
@@ -164,9 +180,4 @@ class DependabotConfigFile(pydantic.BaseModel):
 
     version: int
     updates: List[DependabotUpdateConfig]
-
-    # pylint: disable=too-few-public-methods
-    class Config:
-        """meta config for class"""
-
-        arbitrary_types_allowed = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
