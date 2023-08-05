@@ -36,10 +36,16 @@ def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]) -> None:
     for key in source:
         logger.debug("Adding key={} {}", key, type(key))
         logger.debug("{}, {}", dest, type(dest))
-        if key not in dest:
-            dest[key] = source[key]
-            continue
 
+        if hasattr(dest, str(key)):
+            dest[key] = source[key]
+        elif isinstance(dest, dict):
+            logger.debug("Checking for {} in {}", key, dest)
+            if key not in dest:
+                dest[key] = source[key]
+                continue
+
+        # TODO: work out how to do this with a pydantic BaseModel
         if isinstance(dest[key], dict):
             add_from_dict(source[key], dest[key])
 
@@ -320,9 +326,15 @@ class RepoLinter:
             self.config[module_name] = {}
 
         module_config = self.config[module_name]
-        # logger.debug(json.dumps(self.config, indent=4, default=str, ensure_ascii=False))
-        add_from_dict(module.DEFAULT_CONFIG, module_config)
-        # logger.debug(json.dumps(self.config, indent=4, default=str, ensure_ascii=False))
+        if isinstance(module.DEFAULT_CONFIG, dict):
+            add_from_dict(module.DEFAULT_CONFIG, module_config)
+        elif hasattr(module.DEFAULT_CONFIG, "model_validate"):
+            # we're dealing with a pydantic model
+            add_from_dict(module.DEFAULT_CONFIG.model_dump(), module_config)
+        else:
+            raise ValueError(
+                f"The default config for {module_name} isn't a dict or pydantic BaseModel!"
+            )
 
     def skip_on_archived(self) -> None:
         """Add this to a check to skip it if the repository is archived."""

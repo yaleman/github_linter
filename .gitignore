@@ -1,6 +1,7 @@
 **/__pycache__/*
 venv/
 .vscode/
+.*_cache/
 .DS_Store
 config.py
 *.egg-info/
@@ -9,3 +10,6 @@ dist/
 .coverage
 poetry.lock
 github_linter.json
+.env
+.envrc
+.venv

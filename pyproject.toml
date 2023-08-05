@@ -43,10 +43,16 @@ dev = [
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.282"
 black = "^23.3.0"
+types-requests = "^2.31.0.2"
+mypy = "^1.4.1"
+pytest = "^7.4.0"
+flit = "^3.9.0"
+types-pyyaml = "^6.0.12.11"
+types-pytz = "^2023.3.0.0"
 
 [tool.poetry]
 name = "github_linter"
-version = "0.0.3"
+version = "0.0.4"
 description = "A curiously complex tool to fit up things in my github repos."
 authors = [
     "James Hodgkinson <james@terminaloutcomes.com>"

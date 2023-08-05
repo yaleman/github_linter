@@ -46,14 +46,14 @@ LANGUAGES = [
 
 DEFAULT_CONFIG: DefaultConfig = {
     "config_filename": ".github/dependabot.yml",
-    "schedule": DependabotSchedule.parse_obj(
+    "schedule": DependabotSchedule.model_validate(
         {
             "interval": "weekly",
             "day": "monday",
             "time": DoubleQuotedScalarString("00:00"),
             "timezone": "Etc/UTC",  # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
         }
-    ).dict(),
+    ).model_dump(),
 }
 
 
@@ -68,7 +68,7 @@ def generate_expected_update_config(
             logger.debug(
                 "Found lang/eco: {}, {}", language, find_language_in_ecosystem(language)
             )
-            new_config = DependabotUpdateConfig.parse_obj(
+            new_config = DependabotUpdateConfig.model_validate(
                 {
                     "package-ecosystem": find_language_in_ecosystem(language),
                     "schedule": repo.config[CATEGORY]["schedule"],
@@ -82,7 +82,7 @@ def generate_expected_update_config(
             github_actions_exists = True
     if not github_actions_exists:
         updates.append(
-            DependabotUpdateConfig.parse_obj(
+            DependabotUpdateConfig.model_validate(
                 {
                     "package-ecosystem": "github-actions",
                     "directory": "/",
@@ -95,7 +95,7 @@ def generate_expected_update_config(
         updates=updates,
     )
     logger.debug("Dumping expected_update_config")
-    logger.debug(json.dumps(config_file.dict(), indent=4, default=str))
+    logger.debug(json.dumps(config_file.model_dump(), indent=4, default=str))
     return config_file
 
 
@@ -170,7 +170,7 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
                 update.package_ecosystem,
                 ",".join(required_package_managers),
             )
-            logger.debug(update.dict())
+            logger.debug(update.model_dump())
 
     # check that the repo has full coverage
     if set(required_package_managers) != set(package_managers_covered):
@@ -230,7 +230,7 @@ def check_dependabot_config_valid(
         # return
 
         # schedule: DependabotSchedule = update.schedule
-        # if "interval" not in schedule.dict():
+        # if "interval" not in schedule.model_dump():
         #     repo.error(
         #         CATEGORY, f"Interval missing from schedule {json.dumps(schedule)}"
         #     )

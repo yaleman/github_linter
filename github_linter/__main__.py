@@ -67,7 +67,9 @@ def cli(
     logger.debug("Getting repos")
     repos = search_repos(github, repo_filter, owner_filter)
 
-    repos.sort(key=lambda x: x.full_name)  # type: ignore
+    # doing the type-ignore thing here because "x.full_name" can be assumed to exist, but is typed as Any
+    # and this makes mypy sad.
+    repos.sort(key=lambda x: x.full_name)
     if list_repos:
         for repo_lister in repos:
             logger.info(repo_lister.full_name)

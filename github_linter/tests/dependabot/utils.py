@@ -49,9 +49,9 @@ def load_dependabot_config_file(
         #         updates.append(DependabotUpdateConfig(**update))
         #     yaml_config["updates"] = updates
 
-        retval = DependabotConfigFile.parse_obj(yaml_config)
+        retval = DependabotConfigFile.model_validate(yaml_config)
         logger.debug("dumping DependabotConfigFile")
-        logger.debug(json.dumps(retval.dict(), indent=4, default=str))
+        logger.debug(json.dumps(retval.model_dump(), indent=4, default=str))
         for update in retval.updates:
             logger.debug("Package: {}", update.package_ecosystem)
         return retval
