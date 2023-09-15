@@ -41,7 +41,7 @@ dev = [
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.0.287"
+ruff = "^0.0.289"
 black = "^23.3.0"
 types-requests = "^2.31.0.2"
 mypy = "^1.4.1"
