@@ -8,6 +8,7 @@ from typing import List
 from github.GithubException import GithubException, UnknownObjectException
 from loguru import logger
 import pydantic
+from requests import JSONDecodeError
 from ruyaml import YAML
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
@@ -54,6 +55,7 @@ DEFAULT_CONFIG: DefaultConfig = {
             "timezone": "Etc/UTC",  # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
         }
     ).model_dump(),
+    "allow_auto_merge": False,
 }
 
 
@@ -405,3 +407,65 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
                 ghe,
             )
             sys.exit(1)
+
+
+def check_repository_automerge(repo: RepoLinter) -> None:
+    """checks that a repository has auto-merge enabled"""
+
+    # API docs: https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#update-a-repository
+
+    # GitHub support - update this setting from the Update a repository endpoint. pass that configuration using the `allow_auto_merge` parameter on the body of that request.
+    repo.skip_on_archived()
+
+    expected_result = repo.config.get(CATEGORY, {}).get("allow_auto_merge", False)
+    res = repo.repository3._get(url=repo.repository3.url)
+    try:
+        configured = res.json().get("allow_auto_merge")
+    except JSONDecodeError as error:
+        repo.error(
+            CATEGORY, f"Failed to decode JSON while checking allow_auto_merge: {error}"
+        )
+        return None
+    if configured is None:
+        repo.error(CATEGORY, "None result in allow_auto_merge")
+    if configured == expected_result:
+        logger.debug(
+            "allow_auto_merge matches expected setting, is set to  {}", configured
+        )
+    else:
+        repo.error(
+            CATEGORY,
+            f"allow_auto_merge is set to {configured}, expected {expected_result}",
+        )
+
+
+def fix_repository_automerge(repo: RepoLinter) -> None:
+    """ensures that a repository has auto-merge enabled"""
+
+    # API docs: https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#update-a-repository
+
+    # GitHub support - update this setting from the Update a repository endpoint. pass that configuration using the `allow_auto_merge` parameter on the body of that request.
+
+    repo.skip_on_archived()
+
+    auto_merge_setting = repo.config.get(CATEGORY, {}).get("allow_auto_merge", False)
+
+    logger.debug("Setting auto_merge_setting to {}", auto_merge_setting)
+    request_body = {
+        "allow_auto_merge": auto_merge_setting,
+    }
+    # url = f"/repos/{repo.repository.full_name}"
+    res = repo.repository3._patch(url=repo.repository3.url, json=request_body)
+    logger.debug(res.json())
+    if (
+        res.status_code == 200
+        and res.json().get("allow_auto_merge") == auto_merge_setting
+    ):
+        repo.fix(
+            CATEGORY, f"Updated repository auto-merge setting to {auto_merge_setting}"
+        )
+    else:
+        repo.error(
+            CATEGORY,
+            f"Failed to update repository auto-merge setting to {auto_merge_setting} status code: {res.status_code} response['allow_auto_merge']: {res.json().get('allow_auto_merge')}",
+        )
