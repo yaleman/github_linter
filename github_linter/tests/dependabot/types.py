@@ -74,6 +74,7 @@ class DefaultConfig(TypedDict):
 
     config_filename: str
     schedule: Dict[str, Any]
+    allow_auto_merge: bool
 
 
 class DependabotCommitMessage(pydantic.BaseModel):
