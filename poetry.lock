@@ -1811,13 +1811,13 @@ files = [
 
 [[package]]
 name = "types-pytz"
-version = "2023.3.0.0"
+version = "2023.3.1.1"
 description = "Typing stubs for pytz"
 optional = false
 python-versions = "*"
 files = [
-    {file = "types-pytz-2023.3.0.0.tar.gz", hash = "sha256:ecdc70d543aaf3616a7e48631543a884f74205f284cefd6649ddf44c6a820aac"},
-    {file = "types_pytz-2023.3.0.0-py3-none-any.whl", hash = "sha256:4fc2a7fbbc315f0b6630e0b899fd6c743705abe1094d007b0e612d10da15e0f3"},
+    {file = "types-pytz-2023.3.1.1.tar.gz", hash = "sha256:cc23d0192cd49c8f6bba44ee0c81e4586a8f30204970fc0894d209a6b08dab9a"},
+    {file = "types_pytz-2023.3.1.1-py3-none-any.whl", hash = "sha256:1999a123a3dc0e39a2ef6d19f3f8584211de9e6a77fe7a0259f04a524e90a5cf"},
 ]
 
 [[package]]
@@ -2026,4 +2026,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "cccaceb24c951fa0aa7b2deff210d2dd1d2b051de52387425c91b6e9c2427da6"
+content-hash = "e5896671695d399537adde9217aff9309de0166b94102041f12cfa34c1981947"
