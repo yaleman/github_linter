@@ -86,7 +86,7 @@ github3-py = "^4.0.1"
 greenlet = "^3.0.0"
 
 [tool.poetry.dev-dependencies]
-mypy = "^1.5"
+mypy = "^1.6"
 types-PyYAML = "^6.0.12"
 types-pytz = "^2023.3.1"
 pytest = "^7.4.2"
