@@ -1,3 +1,6 @@
+FULLNAME ?= kanidm/kanidm
+
+
 .DEFAULT: precommit
 
 .PHONY: precommit
@@ -15,3 +18,6 @@ mypy:
 pytest:
 	poetry run pytest github_linter tests
 
+.PHONY: container/workflow_stats
+container/workflow_stats:
+	docker run --rm -it --env-file .envrc -e "GITHUB_TOKEN=${GITHUB_TOKEN}" 'ghcr.io/yaleman/github_linter:latest' python -m github_linter.workflow_stats -f $(FULLNAME)
