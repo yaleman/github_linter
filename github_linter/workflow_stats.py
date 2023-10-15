@@ -1,7 +1,6 @@
 """ pulls stats on workflow runs and returns them in a parseable way """
 
 from datetime import datetime, timedelta
-import json
 from pathlib import Path
 import sys
 from typing import Any, List, Optional
@@ -169,9 +168,9 @@ class WorkflowRuns(BaseModel):
     total_count: int
     workflow_runs: List[RunData]
 
-    def has_more_runs(self):
+    def has_more_runs(self) -> bool:
         """ave we more runs than were returned?"""
-        self.total_count > len(self.workflow_runs)
+        return self.total_count > len(self.workflow_runs)
 
 
 status_log_map = {
@@ -227,7 +226,7 @@ def main(
     owner: Optional[str] = None,
     repo: Optional[str] = None,
     fullname: Optional[str] = None,
-    filename: Optional[click.File(mode="a", encoding="utf-8")] = None,
+    filename: Optional[str] = None,
     earliest: Optional[str] = None,
     parse: bool = False,
 ) -> None:
@@ -251,7 +250,7 @@ def main(
     else:
         if owner is None or repo is None:
             logger.error("Specify either fullname or owner and repo")
-            return False
+            return
         fullname = f"{owner}/{repo}"
 
     linter = GithubLinter()
