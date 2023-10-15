@@ -1,16 +1,22 @@
 version: 2
 updates:
-- package-ecosystem: pip
-  directory: /
-  schedule:
-    interval: weekly
-    day: saturday
-    time: "02:00"
-    timezone: "Australia/Brisbane"
-- package-ecosystem: github-actions
-  directory: /
-  schedule:
-    interval: weekly
-    day: saturday
-    time: "02:00"
-    timezone: "Australia/Brisbane"
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "02:00"
+      timezone: "Australia/Brisbane"
+    groups:
+      all:
+        dependency-type: all
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: saturday
+      time: "02:00"
+      timezone: "Australia/Brisbane"
+    groups:
+      all:
+        dependency-type: all
