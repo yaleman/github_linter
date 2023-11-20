@@ -114,7 +114,7 @@ class RunData(BaseModel):
     run_number: int
     event: str
     status: str
-    conclusion: str
+    conclusion: Optional[str]
     workflow_id: int
     check_suite_id: int
     check_suite_node_id: str
@@ -197,10 +197,13 @@ def parse_file(filename: str) -> None:
         run = RunData.model_validate_json(line)
         run.calculate_runtime()
         log_action = status_log_map.get(run.conclusion, logger.info)
+        run_conclusion = (
+            run.conclusion if run.conclusion is not None else "<unknown conclusion>"
+        )
         log_action(
             "{}\t{}{}\t{}\t{}",
             run.id,
-            run.conclusion,
+            run_conclusion,
             f"\t(in {run.runtime})" if run.runtime is not None else "",
             run.head_branch,
             run.name,
