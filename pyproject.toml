@@ -91,7 +91,7 @@ mypy = "^1.7"
 types-PyYAML = "^6.0.12"
 types-pytz = "^2023.3.1"
 pytest = "^7.4.3"
-pylint-pydantic = "^0.3.1"
+pylint-pydantic = "^0.3.2"
 SQLAlchemy = { version = "^2.0.23"}
 bandit = "^1.7.6"
 coverage = "^7.3.3"
