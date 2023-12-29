@@ -94,7 +94,7 @@ pytest = "^7.4.3"
 pylint-pydantic = "^0.3.2"
 SQLAlchemy = { version = "^2.0.24"}
 bandit = "^1.7.6"
-coverage = "^7.3.3"
+coverage = "^7.4.0"
 httpx = "^0.26.0"
 
 [tool.pylint.MASTER]
