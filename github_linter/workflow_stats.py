@@ -196,7 +196,10 @@ def parse_file(filename: str) -> None:
     for line in Path(filename).open(encoding="utf-8").readlines():
         run = RunData.model_validate_json(line)
         run.calculate_runtime()
-        log_action = status_log_map.get(run.conclusion, logger.info)
+        if run.conclusion in status_log_map:
+            log_action = status_log_map[run.conclusion]
+        else:
+            log_action = logger.info
         run_conclusion = (
             run.conclusion if run.conclusion is not None else "<unknown conclusion>"
         )
