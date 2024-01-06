@@ -226,12 +226,23 @@ class GithubLinter:
             logger.warning("Parent: {}", repolinter.repository.parent.full_name)
 
         logger.debug("Enabled modules: {}", self.modules)
-        for module in self.modules:
-            repolinter.run_module(
-                module=self.modules[module],
-                check_filter=check,
-                do_fixes=fix,
-            )
+
+        if repo.archived and fix:
+            logger.warning("Not doing fixes on archived repository {}", repo.full_name)
+
+            for module in self.modules:
+                repolinter.run_module(
+                    module=self.modules[module],
+                    check_filter=check,
+                    do_fixes=False,
+                )
+        else:
+            for module in self.modules:
+                repolinter.run_module(
+                    module=self.modules[module],
+                    check_filter=check,
+                    do_fixes=fix,
+                )
 
         if not repolinter.errors or repolinter.warnings:
             logger.debug("{} all good", repolinter.repository.full_name)
