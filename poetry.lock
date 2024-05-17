@@ -1648,14 +1648,14 @@ tests = ["hypothesis (>=3.27.0)", "pytest (>=3.2.1,!=3.3.0)"]
 
 [[package]]
 name = "pyre-check"
-version = "0.9.19"
+version = "0.9.21"
 description = "A performant type checker for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pyre-check-0.9.19.tar.gz", hash = "sha256:0c6b24c9c0950588dab056a13f25322a76e302b575bee479a3ad738d74c4a135"},
-    {file = "pyre_check-0.9.19-py3-none-macosx_10_11_x86_64.whl", hash = "sha256:1189a5ce672684ed79929783e80483ed4ed958e4f94c8f6fbe2dae306f2fdf6a"},
-    {file = "pyre_check-0.9.19-py3-none-manylinux1_x86_64.whl", hash = "sha256:de580f56e6241d792ec3b164b557610023b40914f0506cf166189989e2d13d0c"},
+    {file = "pyre-check-0.9.21.tar.gz", hash = "sha256:9f350c222e62864b696a548e87ad117d894e230fc2e2a8084e43ee43487724eb"},
+    {file = "pyre_check-0.9.21-py3-none-macosx_10_11_x86_64.whl", hash = "sha256:3be3a4b8526527c5f334b48164906fc9195d000bd4568233dda0e916a88734df"},
+    {file = "pyre_check-0.9.21-py3-none-manylinux1_x86_64.whl", hash = "sha256:dff2db71ff6ebc546aab15be165b258f9f86f46a2127829a9b33e62a5c75660e"},
 ]
 
 [package.dependencies]
@@ -2718,4 +2718,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "d8d9f7bbf8f01ce71d83113c48f2de21c0675e1164fb178015de4cad153785dd"
+content-hash = "cd85f7e87b6c8a397acc64f5c80bfffd0da4a76ae8a2449c741374df9dfb91bc"
