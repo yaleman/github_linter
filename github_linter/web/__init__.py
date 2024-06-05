@@ -4,7 +4,7 @@ from pathlib import Path
 from time import time
 from typing import Any, AsyncGenerator, Generator, List, Optional, Union
 
-from fastapi import BackgroundTasks, FastAPI, Depends
+from fastapi import BackgroundTasks, FastAPI, Depends, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse, Response
 from github.Repository import Repository
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -171,6 +171,7 @@ async def update_stored_repos() -> None:
     githublinter = GithubLinter()
     base = declarative_base()
 
+    await set_db_update_running(True)
     async with engine.begin() as conn:
         await conn.run_sync(base.metadata.create_all)
 
@@ -194,6 +195,7 @@ async def update_stored_repos() -> None:
                     SQLRepos.full_name == dbrepo.full_name
                 )
                 await conn.execute(deleterepo_query)
+    await set_db_update_running(False)
 
 
 async def cron_update() -> None:
@@ -235,6 +237,75 @@ async def github_linter_js() -> Union[Response, FileResponse]:
     if jspath.exists():
         return FileResponse(jspath)
     return Response(status_code=404)
+
+
+@app.get("/db/updating", response_model=None)
+async def db_update_running() -> bool:
+    """check if a db update is running"""
+    async with engine.begin() as conn:
+        try:
+            stmt = sqlalchemy.select(SQLMetadata).where(
+                SQLMetadata.name == "update_running"
+            )
+            result: sqlalchemy.engine.result.Result = await conn.execute(stmt)  # type: ignore
+
+            if result is None:
+                logger.debug("No response from db")
+                await set_db_update_running(False)
+                return False
+            row = result.fetchone()
+
+            if row is None:
+                logger.debug("no row data querying update_running: {}", row)
+                await set_db_update_running(False)
+                return False
+            # print(row)
+            data = MetaData.model_validate(row)
+            try:
+                return bool(data.value)
+            except ValueError:
+                logger.debug(
+                    "Failed to turn update_running metadata value '{}' into bool",
+                    data.value,
+                )
+                await set_db_update_running(False)
+                return False
+        # pylint: disable=broad-except
+        except Exception as error_message:
+            logger.warning(f"Failed to pull update_running: {error_message}")
+            try:
+                await set_db_update_running(False)
+                logger.success("Set it to False instead")
+            # pylint: disable=broad-except
+            except Exception as error:
+                logger.error(
+                    "Tried to set update_running to False but THAT went wrong too! {}",
+                    error,
+                )
+        return False
+
+
+@app.post("/db/updating", response_model=None)
+async def set_db_update_running(value: bool) -> bool:
+    """set that a db update is running, returns if it worked or not"""
+    async with engine.begin() as conn:
+        try:
+            await conn.run_sync(Base.metadata.create_all)
+            update_running = {"name": "update_running", "value": value}
+
+            insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(
+                **update_running
+            )
+            do_update = insert_row.on_conflict_do_update(
+                index_elements=["name"],
+                set_=update_running,
+            )
+            await conn.execute(do_update)
+            await conn.commit()
+            return True
+        except Exception as error_message:
+            logger.warning(f"Failed to set update_running to {value}: {error_message}")
+            return False
 
 
 @app.get("/db/updated", response_model=None)
@@ -284,6 +355,12 @@ async def update_repos(
     background_tasks: BackgroundTasks,
 ) -> ResponseMessage:
     """Call this endpoint (/repos/update) to start the update process in the background."""
+
+    if not await set_db_update_running(True):
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to set update_running to True, something else is going on!",
+        )
 
     logger.info("Spawning an update process...")
     background_tasks.add_task(update_stored_repos)

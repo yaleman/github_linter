@@ -74,6 +74,8 @@ class DefaultConfig(TypedDict):
 
     config_filename: str
     schedule: Dict[str, Any]
+    # TODO: for merging under packages
+    # groups: Dict[str, Any]
     allow_auto_merge: bool
 
 
@@ -116,9 +118,9 @@ class DependabotUpdateConfig(pydantic.BaseModel):
     package_ecosystem: str = pydantic.Field(..., alias="package-ecosystem")
     directory: str = "/"
     schedule: DependabotSchedule
-    allow: Optional[
-        Dict[str, str]
-    ] = None  # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#allow
+    allow: Optional[Dict[str, str]] = (
+        None  # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#allow
+    )
     assignees: Optional[List[str]] = None
     commit_message: Optional[DependabotCommitMessage] = pydantic.Field(
         None, alias="commit-message"
