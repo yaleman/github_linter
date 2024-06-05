@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional, List, Tuple
 import json5 as json
 from loguru import logger
 from github import Github
+from github.Auth import Token as GithubAuthToken
 from github.ContentFile import ContentFile
 from github.Repository import Repository
 import github3  # type: ignore
@@ -82,10 +83,10 @@ class GithubLinter:
 
     def do_login(self) -> Github:
         """does the login/auth bit"""
-
-        if os.getenv("GITHUB_TOKEN"):
+        env_token = os.getenv("GITHUB_TOKEN")
+        if env_token is not None:
             logger.debug("Using GITHUB_TOKEN environment variable for login.")
-            self.github = Github(os.getenv("GITHUB_TOKEN"))
+            self.github = Github(auth=GithubAuthToken(env_token))
             return self.github
         if "github" in self.config and self.config["github"]:
             if (
@@ -95,14 +96,16 @@ class GithubLinter:
                 self.github = Github()
                 return self.github
             if "token" in self.config["github"]:
-                self.github = Github(login_or_token=self.config["github"]["token"])
+                self.github = Github(
+                    auth=GithubAuthToken(self.config["github"]["token"])
+                )
                 return self.github
             if (
                 "username" in self.config["github"]
                 and "password" in self.config["github"]
             ):
                 self.github = Github(
-                    login_or_token=self.config["github"]["username"],
+                    auth=GithubAuthToken(self.config["github"]["username"]),
                     password=self.config["github"]["password"],
                 )
                 return self.github

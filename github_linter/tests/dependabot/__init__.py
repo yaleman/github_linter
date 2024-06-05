@@ -45,18 +45,25 @@ LANGUAGES = [
 # }
 
 
-DEFAULT_CONFIG: DefaultConfig = {
-    "config_filename": ".github/dependabot.yml",
-    "schedule": DependabotSchedule.model_validate(
-        {
-            "interval": "weekly",
-            "day": "monday",
-            "time": DoubleQuotedScalarString("00:00"),
-            "timezone": "Etc/UTC",  # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-        }
-    ).model_dump(),
-    "allow_auto_merge": False,
-}
+DEFAULT_CONFIG: DefaultConfig = DefaultConfig(
+    **{
+        "config_filename": ".github/dependabot.yml",
+        "schedule": DependabotSchedule.model_validate(
+            {
+                "interval": "weekly",
+                "day": "monday",
+                "time": DoubleQuotedScalarString("00:00"),
+                "timezone": "Etc/UTC",  # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+            }
+        ).model_dump(),
+        # TODO: merge this under the packages
+        # "groups": {
+        #     "production-dependencies": {"dependency-type": "production"},
+        #     "development-dependencies": {"dependency-type": "development"},
+        # },
+        "allow_auto_merge": False,
+    }
+)
 
 
 def generate_expected_update_config(

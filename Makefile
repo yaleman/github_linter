@@ -6,9 +6,13 @@ FULLNAME ?= kanidm/kanidm
 .PHONY: precommit
 precommit: ruff mypy pytest
 
+.PHONY: jslint
+jslint:
+	biome check ./github_linter --json-formatter-enabled=false
+
 .PHONY: ruff
 ruff:
-	poetry run ruff github_linter tests
+	poetry run ruff check github_linter tests
 
 .PHONY: mypy
 mypy:
