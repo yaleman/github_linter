@@ -5,7 +5,7 @@ name: Dependabot auto-approval and auto-merge
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
 jobs:
   auto-merge:
