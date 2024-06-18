@@ -2,14 +2,14 @@
 name: Check for updates in brew definitions
 "on":
   schedule:
-    - cron: '0 5 * * *'
+    - cron: "0 5 * * *"
   push:
 jobs:
   check_updates:
     name: "Homebrew spec update checker"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run the check script
         run: bash homebrew_check_latest_release.sh
 
@@ -19,8 +19,8 @@ jobs:
           EXECUTE_COMMANDS: bash homebrew_check_latest_release.sh
           ONLY_DEFAULT_BRANCH: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMMIT_MESSAGE: 'Updated version automagically for ref: ${PR_HEAD_REF}'
-          COMMIT_NAME: 'Version bump'
-          COMMIT_EMAIL: 'james@terminaloutcomes.com'
-          PR_BRANCH_NAME: 'brew-update-${PR_HEAD_REF}'
-          PR_TITLE: 'Update to version'
+          COMMIT_MESSAGE: "Updated version automagically for ref: ${PR_HEAD_REF}"
+          COMMIT_NAME: "Version bump"
+          COMMIT_EMAIL: "james@terminaloutcomes.com"
+          PR_BRANCH_NAME: "brew-update-${PR_HEAD_REF}"
+          PR_TITLE: "Update to version"
