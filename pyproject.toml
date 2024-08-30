@@ -78,7 +78,7 @@ pylint-pydantic = "^0.3.2"
 SQLAlchemy = { version = "^2.0.32" }
 bandit = "^1.7.9"
 coverage = "^7.6.1"
-httpx = "^0.27.0"
+httpx = "^0.27.2"
 
 [tool.pylint.MASTER]
 max-line-length = 200
