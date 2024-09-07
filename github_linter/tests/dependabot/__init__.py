@@ -311,6 +311,15 @@ def check_dependabot_automerge_workflow(repo: RepoLinter) -> None:
         #     get_fix_file_path(category=CATEGORY, filename=filepath).read_text(),
         # )
 
+    # def check_dependabot_grouped_security_updates(repo: RepoLinter) -> None:
+    """Checks that grouped_security updates are configured in Dependabot"""
+    # TODO: can't find the REST endpoint for this :(
+    # repo.skip_on_archived()
+    # url = f"https://github.com/{repo.repository3.full_name}/settings/update_security_products_settings"
+    # payload = {"_method": "put", "vulnerability_updates_grouping_enabled": 1}
+    # logger.info(f"{url=}")
+    # logger.info(f"{payload=}")
+
 
 def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
     """adds the automerge config"""
