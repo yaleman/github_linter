@@ -33,7 +33,7 @@ mypy = "^1.11.2"
 pytest = "^8.3.2"
 flit = "^3.9.0"
 types-pyyaml = "^6.0.12.20240808"
-types-pytz = "^2024.1.0.20240417"
+types-pytz = "^2024.2.0.20240913"
 pyre-check = "^0.9.22"
 
 [tool.poetry]
@@ -72,7 +72,7 @@ greenlet = "^3.1.0"
 [tool.poetry.dev-dependencies]
 mypy = "^1.11"
 types-PyYAML = "^6.0.12"
-types-pytz = "^2024.1.0"
+types-pytz = "^2024.2.0"
 pytest = "^8.3.2"
 pylint-pydantic = "^0.3.2"
 SQLAlchemy = { version = "^2.0.34" }
