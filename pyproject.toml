@@ -28,7 +28,7 @@ dev = ["flit", "pytest", "pylint", "mypy", "types-PyYAML", "types-pytz"]
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.6.8"
 black = "^24.8.0"
-types-requests = "^2.32.0.20240907"
+types-requests = "^2.32.0.20240914"
 mypy = "^1.11.2"
 pytest = "^8.3.3"
 flit = "^3.9.0"
