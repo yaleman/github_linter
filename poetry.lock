@@ -1973,13 +1973,13 @@ files = [
 
 [[package]]
 name = "tomli-w"
-version = "1.0.0"
+version = "1.1.0"
 description = "A lil' TOML writer"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 files = [
-    {file = "tomli_w-1.0.0-py3-none-any.whl", hash = "sha256:9f2a07e8be30a0729e533ec968016807069991ae2fd921a78d42f429ae5f4463"},
-    {file = "tomli_w-1.0.0.tar.gz", hash = "sha256:f463434305e0336248cac9c2dc8076b707d8a12d019dd349f5c1e382dd1ae1b9"},
+    {file = "tomli_w-1.1.0-py3-none-any.whl", hash = "sha256:1403179c78193e3184bfaade390ddbd071cba48a32a2e62ba11aae47490c63f7"},
+    {file = "tomli_w-1.1.0.tar.gz", hash = "sha256:49e847a3a304d516a169a601184932ef0f6b61623fe680f836a2aa7128ed0d33"},
 ]
 
 [[package]]
@@ -2224,4 +2224,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "55ef51285496293937906d8aa19b18ff1279b45f5ef7d9f7b814fbfd57ecc48d"
+content-hash = "bfa48341a4189dbe48f9979d0b1d760770100b8460ac20d91eeb6726d7b686be"
