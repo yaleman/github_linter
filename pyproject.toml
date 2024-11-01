@@ -34,7 +34,7 @@ pytest = "^8.3.3"
 flit = "^3.9.0"
 types-pyyaml = "6.0.12.20240917"
 types-pytz = "^2024.2.0.20241003"
-pyre-check = "^0.9.22"
+pyre-check = "^0.9.23"
 
 [tool.poetry]
 name = "github_linter"
