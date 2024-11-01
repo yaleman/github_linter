@@ -816,19 +816,6 @@ files = [
 ]
 
 [[package]]
-name = "intervaltree"
-version = "3.1.0"
-description = "Editable interval tree data structure for Python 2 and 3"
-optional = false
-python-versions = "*"
-files = [
-    {file = "intervaltree-3.1.0.tar.gz", hash = "sha256:902b1b88936918f9b2a19e0e5eb7ccb430ae45cde4f39ea4b36932920d33952d"},
-]
-
-[package.dependencies]
-sortedcontainers = ">=2.0,<3.0"
-
-[[package]]
 name = "isort"
 version = "5.13.2"
 description = "A Python utility / library to sort Python imports."
@@ -1532,20 +1519,19 @@ tests = ["hypothesis (>=3.27.0)", "pytest (>=3.2.1,!=3.3.0)"]
 
 [[package]]
 name = "pyre-check"
-version = "0.9.22"
+version = "0.9.23"
 description = "A performant type checker for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pyre-check-0.9.22.tar.gz", hash = "sha256:e082f926dff71661959535c3936fca5ad40a44858b5fd3e99009a616a1b57083"},
-    {file = "pyre_check-0.9.22-py3-none-macosx_10_11_x86_64.whl", hash = "sha256:4bbd61dad5669dfef00e875bf8a573866595ecbd8240f595339a9781e8a1e22e"},
-    {file = "pyre_check-0.9.22-py3-none-manylinux1_x86_64.whl", hash = "sha256:d331e2687e194fa22505e0724b1536e61bf06fddc5416d7b83d542d2270c91ce"},
+    {file = "pyre-check-0.9.23.tar.gz", hash = "sha256:3f4baf99145e06af416a2444e50b9e90b183585c053ab476004729ed9ba6902c"},
+    {file = "pyre_check-0.9.23-py3-none-macosx_10_11_x86_64.whl", hash = "sha256:71ae076a75293a6fbb9025c3aa1e7a81a4dfd7a6da8a884f4c39deed2e4e3f3a"},
+    {file = "pyre_check-0.9.23-py3-none-manylinux1_x86_64.whl", hash = "sha256:6362f0d8af2d513c90fc863a142009d8d7cbf0aa762ec37cad194684bd962ae5"},
 ]
 
 [package.dependencies]
 click = ">=8.0"
 dataclasses-json = "0.5.7"
-intervaltree = "*"
 libcst = "*"
 psutil = "*"
 pyre-extensions = ">=0.0.29"
@@ -1828,17 +1814,6 @@ python-versions = ">=3.7"
 files = [
     {file = "sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2"},
     {file = "sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc"},
-]
-
-[[package]]
-name = "sortedcontainers"
-version = "2.4.0"
-description = "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set"
-optional = false
-python-versions = "*"
-files = [
-    {file = "sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
-    {file = "sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"},
 ]
 
 [[package]]
@@ -2264,4 +2239,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "5f5574042780b66a6ce538c894945db0211ae4a918f15bce699891e437ef1716"
+content-hash = "dc2851ab9cb255352abb9237d51479a9c67277deeb39a2250e8ca943b120436d"
