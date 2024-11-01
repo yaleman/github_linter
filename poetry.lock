@@ -596,18 +596,19 @@ standard = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.5)", "htt
 
 [[package]]
 name = "flit"
-version = "3.9.0"
+version = "3.10.0"
 description = "A simple packaging tool for simple packages."
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 files = [
-    {file = "flit-3.9.0-py3-none-any.whl", hash = "sha256:076c3aaba5ac24cf0ad3251f910900d95a08218e6bcb26f21fef1036cc4679ca"},
-    {file = "flit-3.9.0.tar.gz", hash = "sha256:d75edf5eb324da20d53570a6a6f87f51e606eee8384925cd66a90611140844c7"},
+    {file = "flit-3.10.0-py3-none-any.whl", hash = "sha256:b2d44935aeea65c90c8ad66e3d7d8937cfbc139011c86d6a1ba2b06a2c044f35"},
+    {file = "flit-3.10.0.tar.gz", hash = "sha256:dadca58d5097db62884d25d70b572f104954927daadc8cee449739215b7237fd"},
 ]
 
 [package.dependencies]
 docutils = "*"
-flit_core = ">=3.9.0"
+flit_core = ">=3.10.0"
+pip = "*"
 requests = "*"
 tomli-w = "*"
 
@@ -617,13 +618,13 @@ test = ["pytest (>=2.7.3)", "pytest-cov", "responses", "testpath", "tomli"]
 
 [[package]]
 name = "flit-core"
-version = "3.9.0"
+version = "3.10.0"
 description = "Distribution-building parts of Flit. See flit package for more information"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "flit_core-3.9.0-py3-none-any.whl", hash = "sha256:7aada352fb0c7f5538c4fafeddf314d3a6a92ee8e2b1de70482329e42de70301"},
-    {file = "flit_core-3.9.0.tar.gz", hash = "sha256:72ad266176c4a3fcfab5f2930d76896059851240570ce9a98733b658cb786eba"},
+    {file = "flit_core-3.10.0-py3-none-any.whl", hash = "sha256:ca888c3ae0a5a4dae39f2db64f181b8b45143a6650c4b9ce6d171e45a6fa290a"},
+    {file = "flit_core-3.10.0.tar.gz", hash = "sha256:6d904233178b3c924f665947ac7d286f2ac799fb69087e39e56ceb4084724a97"},
 ]
 
 [[package]]
@@ -1182,6 +1183,17 @@ python-versions = ">=2.6"
 files = [
     {file = "pbr-6.1.0-py2.py3-none-any.whl", hash = "sha256:a776ae228892d8013649c0aeccbb3d5f99ee15e005a4cbb7e61d55a067b28a2a"},
     {file = "pbr-6.1.0.tar.gz", hash = "sha256:788183e382e3d1d7707db08978239965e8b9e4e5ed42669bf4758186734d5f24"},
+]
+
+[[package]]
+name = "pip"
+version = "24.3.1"
+description = "The PyPA recommended tool for installing Python packages."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pip-24.3.1-py3-none-any.whl", hash = "sha256:3790624780082365f47549d032f3770eeb2b1e8bd1f7b2e02dace1afa361b4ed"},
+    {file = "pip-24.3.1.tar.gz", hash = "sha256:ebcb60557f2aefabc2e0f918751cd24ea0d56d8ec5445fe1807f1d2109660b99"},
 ]
 
 [[package]]
@@ -2239,4 +2251,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "665cdb9c2448b114713ed80bb8c272a4e91e85fe57d13d9c09c769da61ae1659"
+content-hash = "25c9228baa297d4ad4555909711ff14c1cd71bd753bb759dda783b3dda71f398"
