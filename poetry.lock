@@ -1393,13 +1393,13 @@ typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
 name = "pygithub"
-version = "2.4.0"
+version = "2.5.0"
 description = "Use the full Github API v3"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "PyGithub-2.4.0-py3-none-any.whl", hash = "sha256:81935aa4bdc939fba98fee1cb47422c09157c56a27966476ff92775602b9ee24"},
-    {file = "pygithub-2.4.0.tar.gz", hash = "sha256:6601e22627e87bac192f1e2e39c6e6f69a43152cfb8f307cee575879320b3051"},
+    {file = "PyGithub-2.5.0-py3-none-any.whl", hash = "sha256:b0b635999a658ab8e08720bdd3318893ff20e2275f6446fcf35bf3f44f2c0fd2"},
+    {file = "pygithub-2.5.0.tar.gz", hash = "sha256:e1613ac508a9be710920d26eb18b1905ebd9926aa49398e88151c1b526aad3cf"},
 ]
 
 [package.dependencies]
@@ -2251,4 +2251,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "a025dce2f6e8521af2ca3f6b7a253d4b26c95b43a72dbe3f07e2ef49b9471f99"
+content-hash = "0a1aa135db6b54ca6175a88434b436e021277c3f8963919714e0818d38858d24"
