@@ -849,13 +849,13 @@ i18n = ["Babel (>=2.7)"]
 
 [[package]]
 name = "json5"
-version = "0.9.28"
+version = "0.10.0"
 description = "A Python implementation of the JSON5 data format."
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "json5-0.9.28-py3-none-any.whl", hash = "sha256:29c56f1accdd8bc2e037321237662034a7e07921e2b7223281a5ce2c46f0c4df"},
-    {file = "json5-0.9.28.tar.gz", hash = "sha256:1f82f36e615bc5b42f1bbd49dbc94b12563c56408c6ffa06414ea310890e9a6e"},
+    {file = "json5-0.10.0-py3-none-any.whl", hash = "sha256:19b23410220a7271e8377f81ba8aacba2fdd56947fbb137ee5977cbe1f5e8dfa"},
+    {file = "json5-0.10.0.tar.gz", hash = "sha256:e66941c8f0a02026943c52c2eb34ebeb2a6f819a0be05920a6f5243cd30fd559"},
 ]
 
 [package.extras]
@@ -2292,4 +2292,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "1ce1856f85ba52dcd0917260a75f2bff9b2fc1b52625307e80669c742925ad8d"
+content-hash = "fe90a493404e20d779dd7aaedb1b2a15d00e661944c8342c87016d9c9b17c06e"
