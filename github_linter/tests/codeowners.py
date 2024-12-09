@@ -14,7 +14,7 @@ class DefaultConfig(TypedDict):
 
 CATEGORY = "codeowners"
 DEFAULT_CONFIG: DefaultConfig = {
-    "codeowners": None,
+    "codeowners": [],
     "filepath": "CODEOWNERS",
 }
 
@@ -48,7 +48,7 @@ def fix_codeowners_exists(repo: RepoLinter) -> None:
     if not repo.config[CATEGORY]["codeowners"]:
         logger.warning("Skipping fix as codeowners aren't configured.")
 
-    for codeowner_path in repo.config[CATEGORY]["codeowners"]:
+    for codeowner_path in repo.config[CATEGORY].get("codeowners", []):
         filecontents += f"{codeowner_path} "
         if repo.config[CATEGORY]["codeowners"][codeowner_path] is not None:
             owner = repo.config[CATEGORY]["codeowners"][codeowner_path]

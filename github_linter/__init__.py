@@ -373,7 +373,7 @@ def search_repos(
     if not owner_filter:
         logger.debug("Pulling owner filter from config")
         if (
-            "owner_list" in github.config["linter"]
+            "owner_list" in github.config.get("linter", {})
             and len(github.config["linter"]["owner_list"]) != 0
         ):
             owner_filter = github.config["linter"]["owner_list"]
