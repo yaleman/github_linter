@@ -1,4 +1,4 @@
-""" template test file """
+"""template test file"""
 
 from typing import TypedDict, Optional, Union, List, Dict
 from loguru import logger
@@ -14,7 +14,7 @@ class DefaultConfig(TypedDict):
 
 CATEGORY = "codeowners"
 DEFAULT_CONFIG: DefaultConfig = {
-    "codeowners": [],
+    "codeowners": None,
     "filepath": "CODEOWNERS",
 }
 
