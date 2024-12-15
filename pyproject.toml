@@ -26,7 +26,7 @@ dev = ["flit", "pytest", "pylint", "mypy", "types-PyYAML", "types-pytz"]
 'github-linter' = 'github_linter.__main__:cli'
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.8.2"
+ruff = "^0.8.3"
 black = "^24.10.0"
 types-requests = "^2.32.0.20241016"
 mypy = "^1.13.0"
