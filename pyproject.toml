@@ -29,7 +29,7 @@ dev = ["flit", "pytest", "pylint", "mypy", "types-PyYAML", "types-pytz"]
 ruff = "^0.8.3"
 black = "^24.10.0"
 types-requests = "^2.32.0.20241016"
-mypy = "^1.13.0"
+mypy = "^1.14.0"
 pytest = "^8.3.4"
 flit = "^3.10.1"
 types-pyyaml = "6.0.12.20240917"
@@ -70,7 +70,7 @@ github3-py = "^4.0.1"
 greenlet = "^3.1.1"
 
 [tool.poetry.dev-dependencies]
-mypy = "^1.13"
+mypy = "^1.14"
 types-PyYAML = "^6.0.12"
 types-pytz = "^2024.2.0"
 pytest = "^8.3.4"
