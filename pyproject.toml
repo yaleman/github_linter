@@ -47,7 +47,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-click = "^8.1.7"
+click = "^8.1.8"
 loguru = "^0.7.2"
 PyGithub = "^2.5"
 requests = "^2.32.3"
