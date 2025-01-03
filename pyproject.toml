@@ -32,7 +32,7 @@ types-requests = "^2.32.0.20241016"
 mypy = "^1.14.0"
 pytest = "^8.3.4"
 flit = "^3.10.1"
-types-pyyaml = "6.0.12.20241221"
+types-pyyaml = "6.0.12.20241230"
 types-pytz = "^2024.2.0.20241221"
 pyre-check = "^0.9.23"
 
