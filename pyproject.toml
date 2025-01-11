@@ -63,3 +63,8 @@ markers = ["network: things which need authentication, '-m \"not network\"'"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "bandit>=1.8.0",
+]
