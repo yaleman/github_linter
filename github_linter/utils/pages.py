@@ -4,7 +4,7 @@ import json
 
 from typing import Optional, TypedDict
 
-from loguru import logger  # type: ignore
+from loguru import logger
 
 from ..repolinter import RepoLinter
 from .. import GithubLinter
@@ -41,14 +41,18 @@ def get_repo_pages_data(repo: RepoLinter) -> PagesData:
     github.do_login()
     url = f"/repos/{repo.repository.full_name}/pages"
     # pylint: disable=protected-access
-    pagesdata = github.github._Github__requester.requestJson(verb="GET", url=url)
+    pagesdata = github.github._Github__requester.requestJson(verb="GET", url=url)  # type: ignore
 
     if len(pagesdata) != 3:
-        raise ValueError(f"Got {len(pagesdata)} from requesting the repo pages endpoint ({url}).")
+        raise ValueError(
+            f"Got {len(pagesdata)} from requesting the repo pages endpoint ({url})."
+        )
 
     pages: PagesData = json.loads(pagesdata[2])
     if pages is None:
-        raise ValueError(f"Invalid data returned from requesting the repo pages endpoint ({url}).")
+        raise ValueError(
+            f"Invalid data returned from requesting the repo pages endpoint ({url})."
+        )
 
     logger.debug(
         json.dumps(

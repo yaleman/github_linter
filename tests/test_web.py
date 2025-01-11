@@ -1,7 +1,7 @@
 """test the web interface a bit"""
 
 import pytest
-from fastapi.testclient import TestClient  # type: ignore
+from fastapi.testclient import TestClient
 
 from github_linter import GithubLinter
 from github_linter.web import app, get_all_user_repos

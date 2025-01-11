@@ -1,7 +1,7 @@
-""" test utils """
+"""test utils"""
 
-from github.Repository import Repository # type: ignore
-from github.Requester import Requester # type: ignore
+from github.Repository import Repository
+from github.Requester import Requester
 
 
 def generate_test_repo() -> Repository:

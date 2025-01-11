@@ -4,7 +4,7 @@ import sys
 from types import ModuleType
 from typing import Any, Dict, List, Optional
 
-from loguru import logger  # type: ignore
+from loguru import logger
 
 
 from . import (

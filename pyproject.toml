@@ -1,16 +1,37 @@
-[build-system]
-requires = ["setuptools", "poetry_core>=1.0"]
-build-backend = "poetry.core.masonry.api"
 
 [project]
+version = "0.0.5"
 name = "github_linter"
 authors = [{ name = "James Hodgkinson", email = "james@terminaloutcomes.com" }]
 classifiers = ["License :: OSI Approved :: MIT License"]
-
 readme = "README.md"
-dynamic = ["version", "description"]
 
 keywords = ["github"]
+
+requires-python = ">=3.12"
+dependencies = [
+    "aiosqlite>=0.20.0",
+    "click>=8.1.8",
+    "fastapi>=0.115.6",
+    "github3-py>=4.0.1",
+    "greenlet>=3.1.1",
+    "jinja2>=3.1.5",
+    "json5>=0.10.0",
+    "loguru>=0.7.3",
+    "pydantic>=2.10.5",
+    "pygithub>=2.5.0",
+    "python-hcl2>=5.1.1",
+    "pytz>=2024.2",
+    "pyyaml>=6.0.2",
+    "requests>=2.32.3",
+    "ruyaml>=0.91.0",
+    "semver>=3.0.2",
+    "sqlalchemy>=2.0.37",
+    "tomli>=2.2.1",
+    "tomli-w>=1.1.0",
+    "uvicorn>=0.34.0",
+    "wildcard-matcher>=0.0.3",
+]
 
 [project.urls]
 Home = "https://github.com/yaleman/github_linter"
@@ -21,58 +42,6 @@ dev = ["flit", "pytest", "pylint", "mypy", "types-PyYAML", "types-pytz"]
 [project.scripts]
 "github-linter" = 'github_linter.__main__:cli'
 "github-linter-web" = 'github_linter.web.__main__:cli'
-[tool.poetry.scripts]
-"github-linter-web" = 'github_linter.web.__main__:cli'
-'github-linter' = 'github_linter.__main__:cli'
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.8.5"
-black = "^24.10.0"
-types-requests = "^2.32.0.20241016"
-mypy = "^1.14.1"
-pytest = "^8.3.4"
-flit = "^3.10.1"
-types-pyyaml = "6.0.12.20241230"
-types-pytz = "^2024.2.0.20241221"
-pyre-check = "^0.9.23"
-pylint-pydantic = "^0.3.5"
-sqlalchemy = "^2.0.37"
-bandit = "^1.8.0"
-coverage = "^7.6.10"
-httpx = "^0.28.1"
-
-[tool.poetry]
-name = "github_linter"
-version = "0.0.4"
-description = "A curiously complex tool to fit up things in my github repos."
-authors = ["James Hodgkinson <james@terminaloutcomes.com>"]
-classifiers = ["License :: OSI Approved :: MIT License"]
-
-readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.9"
-click = "^8.1.8"
-loguru = "^0.7.2"
-PyGithub = "^2.5"
-requests = "^2.32.3"
-PyYAML = "^6.0"
-Jinja2 = "^3.1.5"
-json5 = "^0.10.0"
-pytz = "2024.2"
-python-hcl2 = "^5.1.1"
-pydantic = "^2.10.5"
-semver = ">=3.0.0.dev2"
-tomli = "^2.2.1"
-tomli-w = "^1.1.0"
-wildcard-matcher = "^0.0.3"
-fastapi = "0.115.6"
-uvicorn = "^0.34.0"
-aiosqlite = "^0.20.0"
-SQLAlchemy = "^2.0.36"
-ruyaml = "^0.91.0"
-github3-py = "^4.0.1"
-greenlet = "^3.1.1"
 
 [tool.pylint.MASTER]
 max-line-length = 200
@@ -90,3 +59,7 @@ exclude = ["W0511", "consider-using-dict-items", "duplicate-code"]
 
 [tool.pytest.ini_options]
 markers = ["network: things which need authentication, '-m \"not network\"'"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

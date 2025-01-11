@@ -1,6 +1,6 @@
 """GithubLinter Exceptions"""
 
-from loguru import logger  # type: ignore
+from loguru import logger
 
 __all__ = [
     "NoChangeNeeded",

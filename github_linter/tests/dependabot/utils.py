@@ -3,8 +3,8 @@
 from typing import Optional
 
 import json5 as json
-from loguru import logger  # type: ignore
-from ruyaml import YAML  # type: ignore
+from loguru import logger
+from ruyaml import YAML
 
 from ...repolinter import RepoLinter
 

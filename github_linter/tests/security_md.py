@@ -2,7 +2,7 @@
 
 from typing import TypedDict
 
-from loguru import logger  # type: ignore
+from loguru import logger
 
 from ..repolinter import RepoLinter
 from ..utils import generate_jinja2_template_file

@@ -5,8 +5,8 @@ from io import BytesIO
 import json
 from typing import Tuple
 
-from loguru import logger  # type: ignore
-from ruyaml import YAML  # type: ignore
+from loguru import logger
+from ruyaml import YAML
 
 from github_linter.repolinter import RepoLinter
 from github_linter.exceptions import NoChangeNeeded
@@ -40,7 +40,9 @@ def needs_mkdocs_workflow(repo: RepoLinter) -> bool:
 def check_mkdocs_workflow_exists(repo: RepoLinter) -> None:
     """checks that the mkdocs github actions workflow exists"""
     if needs_mkdocs_workflow(repo):
-        if not repo.cached_get_file(repo.config[CATEGORY]["workflow_filepath"], clear_cache=True):
+        if not repo.cached_get_file(
+            repo.config[CATEGORY]["workflow_filepath"], clear_cache=True
+        ):
             repo.error(CATEGORY, "MKDocs github actions configuration missing.")
         # TODO: check if the file differs from expected.
 
@@ -56,7 +58,9 @@ def fix_missing_mkdocs_workflow(repo: RepoLinter) -> None:
                 newfile=get_fix_file_path(CATEGORY, "mkdocs.yml"),
                 message="github-linter.mkdocs created MKDocs github actions configuration",
             )
-            repo.fix(CATEGORY, f"Created MKDocs github actions configuration: {commit_url}")
+            repo.fix(
+                CATEGORY, f"Created MKDocs github actions configuration: {commit_url}"
+            )
         else:
             fix_file = get_fix_file_path(CATEGORY, "mkdocs.yml")
 
@@ -70,7 +74,9 @@ def fix_missing_mkdocs_workflow(repo: RepoLinter) -> None:
                 oldfile=workflow_file,
                 message="github-linter.mkdocs updated MKDocs github actions configuration",
             )
-            repo.fix(CATEGORY, f"Updated MKDocs github actions configuration: {commit_url}")
+            repo.fix(
+                CATEGORY, f"Updated MKDocs github actions configuration: {commit_url}"
+            )
 
 
 def generate_expected_config(repo: RepoLinter) -> Tuple[str, bytes]:
@@ -121,10 +127,14 @@ def check_github_metadata(repo: RepoLinter) -> bool:
     current_file = repo.cached_get_file(current_filename)
 
     if current_file is None:
-        raise ValueError(f"Somehow you got an empty file from {current_filename}, the file may have gone missing while the script was running?")
+        raise ValueError(
+            f"Somehow you got an empty file from {current_filename}, the file may have gone missing while the script was running?"
+        )
 
     if current_file.decoded_content == expected_config:
-        logger.debug("Config is up to date, no action required from check_github_metadata")
+        logger.debug(
+            "Config is up to date, no action required from check_github_metadata"
+        )
         return True
 
     repo.error(CATEGORY, "mkdocs needs updating for github metadata")
@@ -142,9 +152,13 @@ def fix_github_metadata(repo: RepoLinter) -> None:
     current_file = repo.cached_get_file(current_filename)
 
     if current_file is None or current_file.content is None:
-        raise ValueError(f"Somehow you got an empty file from {current_filename}, the file may have gone missing while the script was running?")
+        raise ValueError(
+            f"Somehow you got an empty file from {current_filename}, the file may have gone missing while the script was running?"
+        )
     if current_file.decoded_content == expected_config:
-        logger.debug("Config is up to date, no action required from fix_github_metadata")
+        logger.debug(
+            "Config is up to date, no action required from fix_github_metadata"
+        )
         raise NoChangeNeeded
 
     # generate a diff for debugging purposes

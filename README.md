@@ -103,7 +103,7 @@ For an example:
 
 ## Docker container
 
-The container runs an entrypoint of `poetry shell` which puts you in an environment where the package and non-dev deps are installed.
+The container runs an entrypoint of `/bin/bash` which puts you in an environment where the package and non-dev deps are installed.
 
 The container name to pull is `ghcr.io/yaleman/github_linter:latest`.
 

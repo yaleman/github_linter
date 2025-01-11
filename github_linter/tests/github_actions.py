@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, TypedDict
 
 import json5 as json
-from loguru import logger  # type: ignore
+from loguru import logger
 from pydantic import BaseModel, field_validator
 
 from github_linter.fixes.github_actions import (
@@ -261,25 +261,28 @@ def pylint_to_ruff_check_pyproject(repo: RepoLinter) -> None:
     if pyproject is None:
         return
 
-    logger.debug("tool.poetry.dependencies: {}", pyproject.get("tool.poetry.dependencies"))
+    # TODO: fix this to take into account uv
+    # logger.debug(
+    #     "tool.poetry.dependencies: {}", pyproject.get("tool.poetry.dependencies")
+    # )
 
-    stanzas = [
-        "tool.poetry.dependencies",
-        "tool.poetry.dev-dependencies",
-        "tool.poetry.extras",
-        "tool.poetry.group.dev.dependencies",
-    ]
-    for stanza in stanzas:
-        dependencies = nested_get(pyproject, stanza)
-        if dependencies is None:
-            logger.debug("didn't find stanza {} in pyproject.toml", stanza)
-            continue
-        logger.debug("{}: {}", stanza, dependencies)
-        if "pylint" in dependencies:
-            repo.warning(
-                CATEGORY,
-                f"pylint found in pyproject dependency stanza: {stanza}, please migrate to ruff",
-            )
+    # stanzas = [
+    #     "tool.poetry.dependencies",
+    #     "tool.poetry.dev-dependencies",
+    #     "tool.poetry.extras",
+    #     "tool.poetry.group.dev.dependencies",
+    # ]
+    # for stanza in stanzas:
+    #     dependencies = nested_get(pyproject, stanza)
+    #     if dependencies is None:
+    #         logger.debug("didn't find stanza {} in pyproject.toml", stanza)
+    #         continue
+    #     logger.debug("{}: {}", stanza, dependencies)
+    #     if "pylint" in dependencies:
+    #         repo.warning(
+    #             CATEGORY,
+    #             f"pylint found in pyproject dependency stanza: {stanza}, please migrate to ruff",
+    #         )
 
 
 def pylint_to_ruff_check_github_workflows(repo: RepoLinter) -> None:

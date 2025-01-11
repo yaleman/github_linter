@@ -12,15 +12,15 @@ jslint:
 
 .PHONY: ruff
 ruff:
-	poetry run ruff check github_linter tests
+	uv run ruff check github_linter tests
 
 .PHONY: mypy
 mypy:
-	poetry run mypy --strict github_linter tests
+	uv run mypy --strict github_linter tests
 
 .PHONY: pytest
 pytest:
-	poetry run pytest github_linter tests
+	uv run pytest github_linter tests
 
 .PHONY: container/workflow_stats
 container/workflow_stats:

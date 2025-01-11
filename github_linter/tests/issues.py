@@ -2,7 +2,7 @@
 
 from typing import TypedDict
 
-from loguru import logger  # type: ignore
+from loguru import logger
 
 
 from ..repolinter import RepoLinter
@@ -44,7 +44,9 @@ def check_open_prs(
     pulls = repo.repository.get_pulls("open")
     repo_full_name = repo.repository.full_name
     if pulls.totalCount:
-        logger.warning("There's {} PRs... listing at least the latest 10.", pulls.totalCount)
+        logger.warning(
+            "There's {} PRs... listing at least the latest 10.", pulls.totalCount
+        )
         for pull in pulls.reversed[:10]:
             message = f"{repo_full_name} has an open PR: #{pull.number} - {pull.title} in {repo_full_name} (mergeable={pull.mergeable})"
             repo.warning(CATEGORY, message)

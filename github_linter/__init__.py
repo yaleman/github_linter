@@ -11,7 +11,7 @@ from types import ModuleType
 from typing import Any, Dict, Optional, List, Tuple
 
 import json5 as json
-from loguru import logger  # type: ignore
+from loguru import logger
 from github import Github
 from github.Auth import Token as GithubAuthToken
 from github.ContentFile import ContentFile
@@ -68,7 +68,10 @@ class GithubLinter:
             self.github3 = github3.login(token=os.getenv("GITHUB_TOKEN"))
             logger.debug("Checking github3 login: {}", self.github3.me())
             return self.github3
-        if "ignore_auth" in self.config["github"] and self.config["github"]["ignore_auth"]:
+        if (
+            "ignore_auth" in self.config["github"]
+            and self.config["github"]["ignore_auth"]
+        ):
             self.github = Github()
             return self.github
         if "token" in self.config["github"]:
@@ -86,13 +89,21 @@ class GithubLinter:
             self.github = Github(auth=GithubAuthToken(env_token))
             return self.github
         if "github" in self.config and self.config["github"]:
-            if "ignore_auth" in self.config["github"] and self.config["github"]["ignore_auth"]:
+            if (
+                "ignore_auth" in self.config["github"]
+                and self.config["github"]["ignore_auth"]
+            ):
                 self.github = Github()
                 return self.github
             if "token" in self.config["github"]:
-                self.github = Github(auth=GithubAuthToken(self.config["github"]["token"]))
+                self.github = Github(
+                    auth=GithubAuthToken(self.config["github"]["token"])
+                )
                 return self.github
-            if "username" in self.config["github"] and "password" in self.config["github"]:
+            if (
+                "username" in self.config["github"]
+                and "password" in self.config["github"]
+            ):
                 self.github = Github(
                     auth=GithubAuthToken(self.config["github"]["username"]),
                     password=self.config["github"]["password"],
@@ -156,7 +167,10 @@ class GithubLinter:
                     deque(
                         map(
                             errors.append,
-                            [f"{category} - {error}" for error in repo["errors"].get(category)],
+                            [
+                                f"{category} - {error}"
+                                for error in repo["errors"].get(category)
+                            ],
                         )
                     )
             if "warnings" in repo and repo["warnings"]:
@@ -164,7 +178,10 @@ class GithubLinter:
                     deque(
                         map(
                             warnings.append,
-                            [f"{category} - {warning}" for warning in repo["warnings"].get(category)],
+                            [
+                                f"{category} - {warning}"
+                                for warning in repo["warnings"].get(category)
+                            ],
                         )
                     )
             if "fixes" in repo and repo["fixes"]:
@@ -172,7 +189,10 @@ class GithubLinter:
                     deque(
                         map(
                             fixes.append,
-                            [f"{category} - {fix}" for fix in repo["fixes"].get(category)],
+                            [
+                                f"{category} - {fix}"
+                                for fix in repo["fixes"].get(category)
+                            ],
                         )
                     )
             if errors or warnings or fixes:
@@ -201,7 +221,9 @@ class GithubLinter:
 
         logger.info("Current repo: {}", repo.full_name)
         if repolinter.repository.archived:
-            logger.warning("Repository {} is archived!", repolinter.repository3.full_name)
+            logger.warning(
+                "Repository {} is archived!", repolinter.repository3.full_name
+            )
 
         if repolinter.repository.parent:
             logger.warning("Parent: {}", repolinter.repository.parent.full_name)
@@ -237,7 +259,9 @@ class GithubLinter:
 
 
 @pydantic.validate_call(config={"arbitrary_types_allowed": True})
-def get_all_user_repos(github: GithubLinter, config: Optional[Dict[str, Any]] = None) -> List[str]:
+def get_all_user_repos(
+    github: GithubLinter, config: Optional[Dict[str, Any]] = None
+) -> List[str]:
     """simpler filtered listing"""
     if config is None:
         config = load_config()
@@ -248,20 +272,28 @@ def get_all_user_repos(github: GithubLinter, config: Optional[Dict[str, Any]] = 
         for owner in config["linter"]["owner_list"]:
             logger.debug("Pulling all the repositories for {}", owner)
             if config.get("linter", {}).get("repo_filter") is not None:
-                for repo in github.github3.repositories_by(username=owner, type="owner"):
+                for repo in github.github3.repositories_by(
+                    username=owner, type="owner"
+                ):
                     if repo.name in config["linter"]["repo_filter"]:
                         repolist.append(repo.full_name)
             else:
-                repolist.extend([repo.full_name for repo in github.github3.repositories(owner)])
+                repolist.extend(
+                    [repo.full_name for repo in github.github3.repositories(owner)]
+                )
     else:
         logger.debug("Pulling all the repositories I own")
-        repolist = [repo.full_name for repo in github.github3.repositories(type="owner")]
+        repolist = [
+            repo.full_name for repo in github.github3.repositories(type="owner")
+        ]
     logger.debug("Repo list: {}", ", ".join(repolist))
     return repolist
 
 
 @pydantic.validate_call(config={"arbitrary_types_allowed": True})
-def filter_by_repo(repo_list: List[Repository], repo_filters: List[str]) -> List[Repository]:
+def filter_by_repo(
+    repo_list: List[Repository], repo_filters: List[str]
+) -> List[Repository]:
     """filter repositories by name"""
     retval = []
     for repository in repo_list:
@@ -313,7 +345,9 @@ def generate_repo_search_string(
         logger.debug("Adding owner filter")
         search_string += " ".join([f"user:{owner.strip()}" for owner in owner_filter])
         logger.debug("Search string: {}", search_string)
-        return RepoSearchString(needs_post_filtering=has_repo_wildcard, search_string=search_string)
+        return RepoSearchString(
+            needs_post_filtering=has_repo_wildcard, search_string=search_string
+        )
 
     search_chunks = []
     for owner, repo in itertools.product(owner_filter, repo_filter):
@@ -338,7 +372,10 @@ def search_repos(
 
     if not owner_filter:
         logger.debug("Pulling owner filter from config")
-        if "owner_list" in github.config.get("linter", {}) and len(github.config["linter"]["owner_list"]) != 0:
+        if (
+            "owner_list" in github.config.get("linter", {})
+            and len(github.config["linter"]["owner_list"]) != 0
+        ):
             owner_filter = github.config["linter"]["owner_list"]
         else:
             logger.info("No owner filter, using username")
@@ -356,7 +393,9 @@ def search_repos(
         for repo_name in repo_filter:
             for owner in owner_filter:
                 try:
-                    repo_get = github.github3.repository(owner=owner, repository=repo_name)
+                    repo_get = github.github3.repository(
+                        owner=owner, repository=repo_name
+                    )
                     if repo_get is not None:
                         logger.debug("Adding {}", repo_get.name)
                         results.append(repo_get)

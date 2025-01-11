@@ -4,7 +4,7 @@ from io import StringIO
 
 from typing import List, Optional, TypedDict, Union
 
-from loguru import logger  # type: ignore
+from loguru import logger
 from ruyaml import YAML
 
 from github.ContentFile import ContentFile

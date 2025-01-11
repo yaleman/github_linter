@@ -5,7 +5,7 @@ from typing import Optional, TypedDict
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 import jinja2.exceptions
-from loguru import logger  # type: ignore
+from loguru import logger
 
 
 from github.Repository import Repository
@@ -67,7 +67,10 @@ def fix_contributing_exists(repo: RepoLinter) -> None:
 
     oldfile = repo.cached_get_file(filepath)
 
-    if oldfile is not None and oldfile.decoded_content.decode("utf-8") == new_filecontents:
+    if (
+        oldfile is not None
+        and oldfile.decoded_content.decode("utf-8") == new_filecontents
+    ):
         logger.debug("Don't need to update {}", filepath)
         return
 

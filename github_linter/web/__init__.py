@@ -8,7 +8,7 @@ from fastapi import BackgroundTasks, FastAPI, Depends, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse, Response
 from github.Repository import Repository
 from jinja2 import Environment, PackageLoader, select_autoescape
-from loguru import logger  # type: ignore
+from loguru import logger
 from pydantic import ConfigDict, BaseModel
 import sqlalchemy
 from sqlalchemy.exc import OperationalError
@@ -151,7 +151,9 @@ async def update_stored_repo(repo: Repository) -> None:
             strict=True,
         )
 
-        insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos).values(**repoobject.model_dump())
+        insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos).values(
+            **repoobject.model_dump()
+        )
 
         do_update = insert_row.on_conflict_do_update(
             index_elements=["full_name"],
@@ -189,7 +191,9 @@ async def update_stored_repos() -> None:
             logger.debug("Checking {} for removal.", dbrepo.full_name)
             if dbrepo.full_name not in github_repos:
                 logger.info("Removing unlisted repo: {}", dbrepo.full_name)
-                deleterepo_query = sqlalchemy.delete(SQLRepos).where(SQLRepos.full_name == dbrepo.full_name)
+                deleterepo_query = sqlalchemy.delete(SQLRepos).where(
+                    SQLRepos.full_name == dbrepo.full_name
+                )
                 await conn.execute(deleterepo_query)
     await set_db_update_running(False)
 
@@ -240,7 +244,9 @@ async def db_update_running() -> bool:
     """check if a db update is running"""
     async with engine.begin() as conn:
         try:
-            stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name == "update_running")
+            stmt = sqlalchemy.select(SQLMetadata).where(
+                SQLMetadata.name == "update_running"
+            )
             result: sqlalchemy.engine.result.Result = await conn.execute(stmt)  # type: ignore
 
             if result is None:
@@ -287,7 +293,9 @@ async def set_db_update_running(value: bool) -> bool:
             await conn.run_sync(Base.metadata.create_all)
             update_running = {"name": "update_running", "value": value}
 
-            insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(**update_running)
+            insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(
+                **update_running
+            )
             do_update = insert_row.on_conflict_do_update(
                 index_elements=["name"],
                 set_=update_running,
@@ -306,7 +314,9 @@ async def db_updated() -> int:
 
     async with engine.begin() as conn:
         try:
-            stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name == "last_updated")
+            stmt = sqlalchemy.select(SQLMetadata).where(
+                SQLMetadata.name == "last_updated"
+            )
             result: sqlalchemy.engine.result.Result = await conn.execute(stmt)  # type: ignore
 
             if result is None:

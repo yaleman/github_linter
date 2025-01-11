@@ -20,7 +20,6 @@ jobs:
           python-version: '3.12'
       - name: Running pylint
         run: |
-            python -m pip install --quiet --no-cache-dir --upgrade poetry
-            poetry install
-            poetry run ruff check $(basename $(pwd))
-            poetry run ruff check tests
+            python --version
+            python -m pip install --quiet --no-cache-dir --upgrade uv
+            uv run ruff check $(basename $(pwd)) tests

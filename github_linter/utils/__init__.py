@@ -10,7 +10,7 @@ import sys
 from jinja2 import Environment, PackageLoader, select_autoescape
 import jinja2.exceptions
 import json5 as json
-from loguru import logger  # type: ignore
+from loguru import logger
 
 
 from ..defaults import DEFAULT_LINTER_CONFIG
