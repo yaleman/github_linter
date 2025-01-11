@@ -67,4 +67,14 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "bandit>=1.8.0",
+    "coverage>=7.6.10",
+    "flit>=3.10.1",
+    "httpx>=0.28.1",
+    "mypy>=1.14.1",
+    "pyre-check>=0.9.23",
+    "pytest>=8.3.4",
+    "ruff>=0.9.1",
+    "types-pytz>=2024.2.0.20241221",
+    "types-pyyaml>=6.0.12.20241230",
+    "types-requests>=2.32.0.20241016",
 ]
