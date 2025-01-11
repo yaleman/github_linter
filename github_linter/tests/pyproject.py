@@ -28,10 +28,10 @@ DefaultConfig = TypedDict(
 
 DEFAULT_CONFIG: DefaultConfig = {
     # TODO: FIX THIS TO USE UV/HATCHLING
-    # "build-system": [
+    "build-system": [
     #     "flit_core.buildapi",  # flit
     #     "poetry.core.masonry.api",  # poetry
-    # ],
+    ],
     "readme": "README.md",
 }
 
