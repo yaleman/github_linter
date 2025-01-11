@@ -1,10 +1,10 @@
-""" generic tests """
+"""generic tests"""
 
 from io import StringIO
 
 from typing import List, Optional, TypedDict, Union
 
-from loguru import logger
+from loguru import logger  # type: ignore
 from ruyaml import YAML
 
 from github.ContentFile import ContentFile

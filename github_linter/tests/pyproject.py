@@ -1,4 +1,4 @@
-""" pyproject.toml checks """
+"""pyproject.toml checks"""
 
 import json
 import re
@@ -7,7 +7,7 @@ from typing import Any, Dict, List, TypedDict
 
 # from github.Repository import Repository
 
-from loguru import logger
+from loguru import logger  # type: ignore
 import tomli_w
 
 from github_linter.exceptions import NoChangeNeeded
@@ -140,9 +140,7 @@ def check_pyproject_build_backend(repo: RepoLinter) -> None:
         return None
     if "build-backend" not in pyproject["build-system"]:
         logger.error("Can't find build-system.build-backend.")
-        logger.debug(
-            json.dumps(pyproject["build-system"], indent=4, ensure_ascii=False)
-        )
+        logger.debug(json.dumps(pyproject["build-system"], indent=4, ensure_ascii=False))
         return None
 
     backend = pyproject["build-system"]["build-backend"]
@@ -363,26 +361,16 @@ def check_mypy_pydantic_plugin(repo: RepoLinter) -> None:
         logger.info("No pyproject file found in repo {}", repo.repository.full_name)
         raise NoChangeNeeded
 
-    if not any(
-        line
-        for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n")
-        if line.strip().startswith("mypy")
-    ):
+    if not any(line for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n") if line.strip().startswith("mypy")):
         logger.info("mypy not found in pyproject.toml")
         raise NoChangeNeeded
 
-    if not any(
-        line
-        for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n")
-        if line.strip().startswith("pydantic")
-    ):
+    if not any(line for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n") if line.strip().startswith("pydantic")):
         logger.info("pydantic not found in pyproject.toml")
         raise NoChangeNeeded
 
     if "tool" not in pyproject:
-        repo.error(
-            CATEGORY, "section 'tool' not found while checking for mypy pydantic plugin"
-        )
+        repo.error(CATEGORY, "section 'tool' not found while checking for mypy pydantic plugin")
         return
     if "mypy" not in pyproject["tool"]:
         repo.error(
@@ -397,9 +385,7 @@ def check_mypy_pydantic_plugin(repo: RepoLinter) -> None:
         )
         return
     if "pydantic.mypy" not in pyproject["tool"]["mypy"]["plugins"]:
-        repo.error(
-            CATEGORY, "section 'tool.mypy.plugins' does not contain pydantic.mypy"
-        )
+        repo.error(CATEGORY, "section 'tool.mypy.plugins' does not contain pydantic.mypy")
         return
 
 

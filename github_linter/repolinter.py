@@ -11,7 +11,7 @@ from github.ContentFile import ContentFile
 from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
 from github3.repos.repo import ShortRepository  # type: ignore
-from loguru import logger
+from loguru import logger  # type: ignore
 import tomli  # type: ignore
 
 import wildcard_matcher
@@ -229,7 +229,7 @@ class RepoLinter:
     def get_files(self, path: str) -> Optional[List[ContentFile]]:
         """give it a path and it'll return the match(es). If it's a single file it'll get that, if it's a path it'll get up to 1000 files"""
         try:
-            fileresult = self.repository.get_contents(path)
+            fileresult: Optional[List[ContentFile] | ContentFile] = self.repository.get_contents(path)
             if not fileresult:
                 logger.debug("Couldn't find files matching '{}'", path)
                 return None

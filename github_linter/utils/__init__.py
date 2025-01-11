@@ -1,4 +1,4 @@
-""" utility functions """
+"""utility functions"""
 
 from json import JSONDecodeError
 from typing import Any, Dict, Optional
@@ -10,7 +10,7 @@ import sys
 from jinja2 import Environment, PackageLoader, select_autoescape
 import jinja2.exceptions
 import json5 as json
-from loguru import logger
+from loguru import logger  # type: ignore
 
 
 from ..defaults import DEFAULT_LINTER_CONFIG

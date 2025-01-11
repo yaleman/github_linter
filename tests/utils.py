@@ -1,7 +1,7 @@
 """ test utils """
 
-from github.Repository import Repository
-from github.Requester import Requester
+from github.Repository import Repository # type: ignore
+from github.Requester import Requester # type: ignore
 
 
 def generate_test_repo() -> Repository:

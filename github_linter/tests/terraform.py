@@ -1,11 +1,11 @@
-""" Terraform-related tests """
+"""Terraform-related tests"""
 
 from typing import Any, Dict
 import re
 
 import sys
 
-from loguru import logger
+from loguru import logger  # type: ignore
 import hcl2
 import json5 as json
 from semver.version import Version

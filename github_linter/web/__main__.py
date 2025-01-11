@@ -1,9 +1,9 @@
-""" cli for the web interface for the project that outgrew its intention """
+"""cli for the web interface for the project that outgrew its intention"""
 
 from typing import Optional
 
 import click
-import uvicorn
+import uvicorn  # type: ignore
 
 
 @click.command()

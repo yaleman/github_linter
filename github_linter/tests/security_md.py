@@ -1,8 +1,8 @@
-""" security.md test file """
+"""security.md test file"""
 
 from typing import TypedDict
 
-from loguru import logger
+from loguru import logger  # type: ignore
 
 from ..repolinter import RepoLinter
 from ..utils import generate_jinja2_template_file

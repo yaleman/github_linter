@@ -1,11 +1,11 @@
-""" docs tests """
+"""docs tests"""
 
 from typing import Optional, TypedDict
 
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 import jinja2.exceptions
-from loguru import logger
+from loguru import logger  # type: ignore
 
 
 from github.Repository import Repository
@@ -48,7 +48,8 @@ def generate_contributing_file(repo: Repository) -> Optional[str]:
     )
     try:
         template = jinja2_env.get_template(f"fixes/{CATEGORY}/CONTRIBUTING.md")
-        return template.render(repo=repo)
+        retval: str = template.render(repo=repo)
+        return retval
 
     except jinja2.exceptions.TemplateNotFound as template_error:
         logger.error("Failed to load template: {}", template_error)
@@ -66,10 +67,7 @@ def fix_contributing_exists(repo: RepoLinter) -> None:
 
     oldfile = repo.cached_get_file(filepath)
 
-    if (
-        oldfile is not None
-        and oldfile.decoded_content.decode("utf-8") == new_filecontents
-    ):
+    if oldfile is not None and oldfile.decoded_content.decode("utf-8") == new_filecontents:
         logger.debug("Don't need to update {}", filepath)
         return
 

@@ -1,8 +1,8 @@
-""" checks for homebrew things """
+"""checks for homebrew things"""
 
 import sys
 from typing import List, TypedDict, Callable, TypeVar, cast
-from loguru import logger
+from loguru import logger  # type: ignore
 
 from ..repolinter import RepoLinter
 from ..utils import get_fix_file_path

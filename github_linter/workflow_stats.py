@@ -1,11 +1,11 @@
-""" pulls stats on workflow runs and returns them in a parseable way """
+"""pulls stats on workflow runs and returns them in a parseable way"""
 
 from datetime import datetime, timedelta
 from pathlib import Path
 import sys
 from typing import Any, List, Optional
 import click
-from loguru import logger
+from loguru import logger  # type: ignore
 from pydantic import BaseModel
 
 from github_linter import GithubLinter
@@ -200,9 +200,7 @@ def parse_file(filename: str) -> None:
             log_action = status_log_map[run.conclusion]
         else:
             log_action = logger.info
-        run_conclusion = (
-            run.conclusion if run.conclusion is not None else "<unknown conclusion>"
-        )
+        run_conclusion = run.conclusion if run.conclusion is not None else "<unknown conclusion>"
         log_action(
             "{}\t{}{}\t{}\t{}",
             run.id,
@@ -222,12 +220,8 @@ def parse_file(filename: str) -> None:
     "--earliest",
     help="Earliest date-stamp to query. Ref: <https://docs.github.com/en/search-github/getting-started-with-searching-on-github/understanding-the-search-syntax#query-for-dates>",
 )
-@click.option(
-    "-F", "--filename", help="Output filename, otherwise it'll return to stdout"
-)
-@click.option(
-    "-p", "--parse", help="Parse existing run file", is_flag=True, default=False
-)
+@click.option("-F", "--filename", help="Output filename, otherwise it'll return to stdout")
+@click.option("-p", "--parse", help="Parse existing run file", is_flag=True, default=False)
 def main(
     owner: Optional[str] = None,
     repo: Optional[str] = None,

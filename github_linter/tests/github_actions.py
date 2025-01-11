@@ -1,4 +1,4 @@
-""" github actions tests
+"""github actions tests
 
 the tests_per_language config has keys which are the Github-validated languages, eg Python or Dockerfile or Shell
 
@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, TypedDict
 
 import json5 as json
-from loguru import logger
+from loguru import logger  # type: ignore
 from pydantic import BaseModel, field_validator
 
 from github_linter.fixes.github_actions import (
@@ -51,9 +51,7 @@ class DefaultConfig(BaseModel):
     def validate_default_workflow_permissions(cls, value: str) -> str:
         """validate the default_workflow_permissions value"""
         if value not in VALID_DEFAULT_WORKFLOW_PERMISSIONS:
-            raise ValueError(
-                f"default_workflow_permissions must be one of {','.join(VALID_DEFAULT_WORKFLOW_PERMISSIONS)}"
-            )
+            raise ValueError(f"default_workflow_permissions must be one of {','.join(VALID_DEFAULT_WORKFLOW_PERMISSIONS)}")
         return value
 
 
@@ -124,9 +122,7 @@ def check_language_workflows(repo: RepoLinter) -> None:
 
                 logger.debug(json.dumps(config_file, indent=4))
                 if not config_file:
-                    repo.error(
-                        CATEGORY, f"Couldn't find/load github actions file: {filepath}"
-                    )
+                    repo.error(CATEGORY, f"Couldn't find/load github actions file: {filepath}")
                     continue
 
                 for required_key in [
@@ -159,13 +155,9 @@ def fix_language_workflows(repo: RepoLinter) -> None:
                 logger.debug(json.dumps(config_file, indent=4))
                 if not config_file:
                     # create the file
-                    newfile = get_fix_file_path(
-                        CATEGORY, f"templates/{language}/{filename}"
-                    )
+                    newfile = get_fix_file_path(CATEGORY, f"templates/{language}/{filename}")
                     if not newfile.exists():
-                        raise ValueError(
-                            f"Can't find {newfile.resolve()} to create fix for {language}/{filename}"
-                        )
+                        raise ValueError(f"Can't find {newfile.resolve()} to create fix for {language}/{filename}")
 
                     commit_url = repo.create_or_update_file(
                         filepath=filepath,
@@ -248,9 +240,7 @@ def check_dependency_review_file(repo: RepoLinter) -> None:
             f"Dependency review action is missing or needs update {filepaths['repo_file_path']}",
         )
         return
-    logger.debug(
-        f"Dependency review action is up to date {filepaths['repo_file_path']}"
-    )
+    logger.debug(f"Dependency review action is up to date {filepaths['repo_file_path']}")
 
 
 def nested_get(haystack: Dict[str, Any], needle: str) -> Optional[Any]:
@@ -271,9 +261,7 @@ def pylint_to_ruff_check_pyproject(repo: RepoLinter) -> None:
     if pyproject is None:
         return
 
-    logger.debug(
-        "tool.poetry.dependencies: {}", pyproject.get("tool.poetry.dependencies")
-    )
+    logger.debug("tool.poetry.dependencies: {}", pyproject.get("tool.poetry.dependencies"))
 
     stanzas = [
         "tool.poetry.dependencies",
@@ -404,19 +392,13 @@ def check_repo_workflow_permissions(repo: RepoLinter) -> bool:
     repo.skip_on_archived()
     result = True
     api_response = get_repo_default_workflow_permissions(repo)
-    if (
-        api_response.default_workflow_permissions
-        != repo.config[CATEGORY]["default_workflow_permissions"]
-    ):
+    if api_response.default_workflow_permissions != repo.config[CATEGORY]["default_workflow_permissions"]:
         repo.error(
             CATEGORY,
             f"default_workflow_permissions={api_response.default_workflow_permissions} expected {repo.config[CATEGORY]['default_workflow_permissions']}",
         )
         result = False
-    if (
-        api_response.can_approve_pull_request_reviews
-        != repo.config[CATEGORY]["can_approve_pull_request_reviews"]
-    ):
+    if api_response.can_approve_pull_request_reviews != repo.config[CATEGORY]["can_approve_pull_request_reviews"]:
         repo.error(
             CATEGORY,
             f"can_approve_pull_request_reviews={api_response.can_approve_pull_request_reviews} expected {repo.config[CATEGORY]['can_approve_pull_request_reviews']}",

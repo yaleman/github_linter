@@ -1,7 +1,7 @@
 """template test file"""
 
 from typing import TypedDict, Optional, Union, List, Dict
-from loguru import logger
+from loguru import logger  # type: ignore
 from ..repolinter import RepoLinter
 
 

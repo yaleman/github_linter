@@ -1,7 +1,8 @@
-""" github-actions programmatic fixes """
+"""github-actions programmatic fixes"""
+
 import json
 
-from loguru import logger
+from loguru import logger  # type: ignore
 from pydantic import BaseModel
 from requests import Response
 from github_linter.repolinter import RepoLinter
@@ -50,9 +51,7 @@ def set_repo_default_workflow_permissions(
     # https://docs.github.com/en/rest/actions/permissions?apiVersion=2022-11-28#set-default-workflow-permissions-for-a-repository
 
     if default_workflow_permissions not in VALID_DEFAULT_WORKFLOW_PERMISSIONS:
-        raise ValueError(
-            f"Invalid default_workflow_permissions: {default_workflow_permissions}. Valid values are: {VALID_DEFAULT_WORKFLOW_PERMISSIONS}"
-        )
+        raise ValueError(f"Invalid default_workflow_permissions: {default_workflow_permissions}. Valid values are: {VALID_DEFAULT_WORKFLOW_PERMISSIONS}")
 
     payload = {
         "default_workflow_permissions": default_workflow_permissions,
