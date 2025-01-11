@@ -1,4 +1,4 @@
-""" repolinter class """
+"""repolinter class"""
 
 from datetime import datetime
 from pathlib import Path
@@ -13,6 +13,7 @@ from github.Repository import Repository
 from github3.repos.repo import ShortRepository  # type: ignore
 from loguru import logger
 import tomli
+
 import wildcard_matcher
 
 from .exceptions import (
@@ -244,7 +245,9 @@ class RepoLinter:
     def get_files(self, path: str) -> Optional[List[ContentFile]]:
         """give it a path and it'll return the match(es). If it's a single file it'll get that, if it's a path it'll get up to 1000 files"""
         try:
-            fileresult = self.repository.get_contents(path)
+            fileresult: Optional[List[ContentFile] | ContentFile] = (
+                self.repository.get_contents(path)
+            )
             if not fileresult:
                 logger.debug("Couldn't find files matching '{}'", path)
                 return None
@@ -438,7 +441,10 @@ class RepoLinter:
             return None
 
         try:
-            return tomli.loads(fileresult.decoded_content.decode("utf-8"))
+            retval: Dict[str, Any] = tomli.loads(
+                fileresult.decoded_content.decode("utf-8")
+            )
+            return retval
         except tomli.TOMLDecodeError as tomli_error:
             logger.debug(
                 "Failed to parse {}/pyproject.toml: {}",

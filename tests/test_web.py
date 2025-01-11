@@ -1,4 +1,4 @@
-""" test the web interface a bit """
+"""test the web interface a bit"""
 
 import pytest
 from fastapi.testclient import TestClient

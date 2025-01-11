@@ -1,7 +1,6 @@
-""" pyproject.toml checks """
+"""pyproject.toml checks"""
 
 import json
-import re
 
 from typing import Any, Dict, List, TypedDict
 
@@ -28,9 +27,10 @@ DefaultConfig = TypedDict(
 )
 
 DEFAULT_CONFIG: DefaultConfig = {
+    # TODO: FIX THIS TO USE UV/HATCHLING
     "build-system": [
-        "flit_core.buildapi",  # flit
-        "poetry.core.masonry.api",  # poetry
+    #     "flit_core.buildapi",  # flit
+    #     "poetry.core.masonry.api",  # poetry
     ],
     "readme": "README.md",
 }
@@ -140,9 +140,7 @@ def check_pyproject_build_backend(repo: RepoLinter) -> None:
         return None
     if "build-backend" not in pyproject["build-system"]:
         logger.error("Can't find build-system.build-backend.")
-        logger.debug(
-            json.dumps(pyproject["build-system"], indent=4, ensure_ascii=False)
-        )
+        logger.debug(json.dumps(pyproject["build-system"], indent=4, ensure_ascii=False))
         return None
 
     backend = pyproject["build-system"]["build-backend"]
@@ -229,125 +227,125 @@ def check_pyproject_toml(
 #     return
 
 
-def transfer_poetry_field(
-    repo: RepoLinter,
-    fieldname: str,
-    poetry: Dict[str, Any],
-    project: Dict[str, Any],
-) -> None:
-    """copy tool.poetry fields into the project section of pyproject.toml"""
-    logger.debug(f"checking {fieldname=}")
-    if fieldname in poetry:
-        if fieldname not in project or project[fieldname] != poetry[fieldname]:
-            if project.get(fieldname) != poetry[fieldname]:
-                repo.fix(
-                    CATEGORY,
-                    f"Project {fieldname} didn't match, was {project.get(fieldname, 'unset')}, is now {poetry[fieldname]}",
-                )
-                project[fieldname] = poetry[fieldname]
+# def transfer_poetry_field(
+#     repo: RepoLinter,
+#     fieldname: str,
+#     poetry: Dict[str, Any],
+#     project: Dict[str, Any],
+# ) -> None:
+#     """copy tool.poetry fields into the project section of pyproject.toml"""
+#     logger.debug(f"checking {fieldname=}")
+#     if fieldname in poetry:
+#         if fieldname not in project or project[fieldname] != poetry[fieldname]:
+#             if project.get(fieldname) != poetry[fieldname]:
+#                 repo.fix(
+#                     CATEGORY,
+#                     f"Project {fieldname} didn't match, was {project.get(fieldname, 'unset')}, is now {poetry[fieldname]}",
+#                 )
+#                 project[fieldname] = poetry[fieldname]
 
 
-def transfer_poetry_authors(
-    repo: RepoLinter,
-    poetry: Dict[str, Any],
-    project: Dict[str, Any],
-) -> None:
-    """transfers authors"""
+# def transfer_poetry_authors(
+#     repo: RepoLinter,
+#     poetry: Dict[str, Any],
+#     project: Dict[str, Any],
+# ) -> None:
+#     """transfers authors"""
 
-    if "authors" not in project:
-        project["authors"] = []
+#     if "authors" not in project:
+#         project["authors"] = []
 
-    re_poetry_author = re.compile(r"(?P<name>[^\<]+) \<(?P<email>[^\>]+)\>$")
-    for author in poetry["authors"]:
-        results = re_poetry_author.search(author)
+#     re_poetry_author = re.compile(r"(?P<name>[^\<]+) \<(?P<email>[^\>]+)\>$")
+#     for author in poetry["authors"]:
+#         results = re_poetry_author.search(author)
 
-        if not results:
-            continue
-        details = results.groupdict()
-        logger.debug(json.dumps(details))
-        if details not in project["authors"]:
-            project["authors"].append(details)
-            repo.fix(
-                CATEGORY,
-                f"Transferred the following author from poetry to pyproject: {details}",
-            )
+#         if not results:
+#             continue
+#         details = results.groupdict()
+#         logger.debug(json.dumps(details))
+#         if details not in project["authors"]:
+#             project["authors"].append(details)
+#             repo.fix(
+#                 CATEGORY,
+#                 f"Transferred the following author from poetry to pyproject: {details}",
+#             )
 
 
-def fix_copy_poetry_to_project(repo: RepoLinter) -> None:
-    """fix tool.poetry fields into the project section of pyproject.toml
+# def fix_copy_poetry_to_project(repo: RepoLinter) -> None:
+#     """fix tool.poetry fields into the project section of pyproject.toml
 
-    PEP621 says a dict of name / email https://www.python.org/dev/peps/pep-0621/#authors-maintainers
+#     PEP621 says a dict of name / email https://www.python.org/dev/peps/pep-0621/#authors-maintainers
 
-    poetry:  Authors must be in the form name <email>.
-    """
-    # this pulls name/email from a poetry author
-    pyproject = repo.load_pyproject()
+#     poetry:  Authors must be in the form name <email>.
+#     """
+#     # this pulls name/email from a poetry author
+#     pyproject = repo.load_pyproject()
 
-    if not pyproject:
-        repo.error(
-            CATEGORY,
-            "fix_copy_poetry_to_project failed - attempted to fix pyproject but doesn't exist",
-        )
-        return
+#     if not pyproject:
+#         repo.error(
+#             CATEGORY,
+#             "fix_copy_poetry_to_project failed - attempted to fix pyproject but doesn't exist",
+#         )
+#         return
 
-    # check the name field
+#     # check the name field
 
-    if "tool" not in pyproject:
-        logger.debug("tool not in pyproject, bailing")
-        return
+#     if "tool" not in pyproject:
+#         logger.debug("tool not in pyproject, bailing")
+#         return
 
-    if "poetry" not in pyproject["tool"]:
-        logger.debug("tool.poetry not in pyproject, bailing")
-        return
+#     if "poetry" not in pyproject["tool"]:
+#         logger.debug("tool.poetry not in pyproject, bailing")
+#         return
 
-    poetry = pyproject["tool"]["poetry"]
+#     poetry = pyproject["tool"]["poetry"]
 
-    if "project" not in pyproject:
-        pyproject["project"] = {}
-    project = pyproject["project"]
+#     if "project" not in pyproject:
+#         pyproject["project"] = {}
+#     project = pyproject["project"]
 
-    for field in [
-        "name",
-        "description",
-        "license",
-        "version",
-        "readme",
-        "homepage",
-        "documentation",
-        "repository",
-        "keywords",
-        "classifiers",
-        # TODO: Check how this maps to pyproject.toml
-        # "packages",
-    ]:
-        transfer_poetry_field(repo, field, poetry, project)
+#     for field in [
+#         "name",
+#         "description",
+#         "license",
+#         "version",
+#         "readme",
+#         "homepage",
+#         "documentation",
+#         "repository",
+#         "keywords",
+#         "classifiers",
+#         # TODO: Check how this maps to pyproject.toml
+#         # "packages",
+#     ]:
+#         transfer_poetry_field(repo, field, poetry, project)
 
-    # TODO: maintainers, similar to authors
-    if "authors" in poetry:
-        transfer_poetry_authors(repo, poetry, project)
+#     # TODO: maintainers, similar to authors
+#     if "authors" in poetry:
+#         transfer_poetry_authors(repo, poetry, project)
 
-    newfilecontents = tomli_w.dumps(pyproject)
-    logger.debug("Updated pyproject.toml:")
-    logger.debug(newfilecontents)
+#     newfilecontents = tomli_w.dumps(pyproject)
+#     logger.debug("Updated pyproject.toml:")
+#     logger.debug(newfilecontents)
 
-    filecontents = repo.cached_get_file("pyproject.toml", clear_cache=True)
-    if filecontents and newfilecontents != filecontents.decoded_content.decode("utf-8"):
-        commit = repo.create_or_update_file(
-            "pyproject.toml",
-            newfile=newfilecontents,
-            oldfile=filecontents,
-            message="github-linter.fix_copy_poetry_to_project updating pyproject.toml",
-        )
-        repo.fix(CATEGORY, f"fixed pyproject.toml - commit url {commit}")
-    else:
-        logger.debug("pyproject.toml is up to date")
+#     filecontents = repo.cached_get_file("pyproject.toml", clear_cache=True)
+#     if filecontents and newfilecontents != filecontents.decoded_content.decode("utf-8"):
+#         commit = repo.create_or_update_file(
+#             "pyproject.toml",
+#             newfile=newfilecontents,
+#             oldfile=filecontents,
+#             message="github-linter.fix_copy_poetry_to_project updating pyproject.toml",
+#         )
+#         repo.fix(CATEGORY, f"fixed pyproject.toml - commit url {commit}")
+#     else:
+#         logger.debug("pyproject.toml is up to date")
 
-    # TODO: copy the scripts settings around
-    # [tool.poetry.scripts]
-    # poetry = 'poetry.console:run'
-    # TODO: include and exclude fields from poetry should match sdist from flit?
+#     # TODO: copy the scripts settings around
+#     # [tool.poetry.scripts]
+#     # poetry = 'poetry.console:run'
+#     # TODO: include and exclude fields from poetry should match sdist from flit?
 
-    # TODO: tools.poetry.urls (arbitrary URLs) https://python-poetry.org/docs/pyproject/#urls
+#     # TODO: tools.poetry.urls (arbitrary URLs) https://python-poetry.org/docs/pyproject/#urls
 
 
 def check_mypy_pydantic_plugin(repo: RepoLinter) -> None:
@@ -363,26 +361,16 @@ def check_mypy_pydantic_plugin(repo: RepoLinter) -> None:
         logger.info("No pyproject file found in repo {}", repo.repository.full_name)
         raise NoChangeNeeded
 
-    if not any(
-        line
-        for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n")
-        if line.strip().startswith("mypy")
-    ):
+    if not any(line for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n") if line.strip().startswith("mypy")):
         logger.info("mypy not found in pyproject.toml")
         raise NoChangeNeeded
 
-    if not any(
-        line
-        for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n")
-        if line.strip().startswith("pydantic")
-    ):
+    if not any(line for line in str(pyproject_file.decoded_content.decode("utf-8")).split("\n") if line.strip().startswith("pydantic")):
         logger.info("pydantic not found in pyproject.toml")
         raise NoChangeNeeded
 
     if "tool" not in pyproject:
-        repo.error(
-            CATEGORY, "section 'tool' not found while checking for mypy pydantic plugin"
-        )
+        repo.error(CATEGORY, "section 'tool' not found while checking for mypy pydantic plugin")
         return
     if "mypy" not in pyproject["tool"]:
         repo.error(
@@ -397,9 +385,7 @@ def check_mypy_pydantic_plugin(repo: RepoLinter) -> None:
         )
         return
     if "pydantic.mypy" not in pyproject["tool"]["mypy"]["plugins"]:
-        repo.error(
-            CATEGORY, "section 'tool.mypy.plugins' does not contain pydantic.mypy"
-        )
+        repo.error(CATEGORY, "section 'tool.mypy.plugins' does not contain pydantic.mypy")
         return
 
 

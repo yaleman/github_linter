@@ -1,4 +1,4 @@
-""" checks for dependabot config """
+"""checks for dependabot config"""
 
 from io import StringIO
 import json

@@ -21,6 +21,6 @@ jobs:
       - name: Running mypy
         run: |
           python --version
-          python -m pip install --quiet --no-cache-dir --upgrade poetry
-          poetry install
-          poetry run mypy $(basename $(pwd)) tests
+          python --version
+          python -m pip install --quiet --no-cache-dir --upgrade uv
+          uv run mypy --strict $(basename $(pwd)) tests

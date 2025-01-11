@@ -1,4 +1,4 @@
-""" checking for issues and PRs and things """
+"""checking for issues and PRs and things"""
 
 from typing import TypedDict
 

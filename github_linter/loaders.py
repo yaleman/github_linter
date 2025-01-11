@@ -1,4 +1,4 @@
-""" file loading utility function """
+"""file loading utility function"""
 
 from typing import Any, Dict, Optional
 

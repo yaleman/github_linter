@@ -1,4 +1,4 @@
-""" web interface for the project that outgrew its intention """
+"""web interface for the project that outgrew its intention"""
 
 from pathlib import Path
 from time import time

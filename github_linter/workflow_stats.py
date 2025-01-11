@@ -1,4 +1,4 @@
-""" pulls stats on workflow runs and returns them in a parseable way """
+"""pulls stats on workflow runs and returns them in a parseable way"""
 
 from datetime import datetime, timedelta
 from pathlib import Path

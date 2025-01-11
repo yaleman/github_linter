@@ -1,4 +1,4 @@
-""" test modules """
+"""test modules"""
 
 import sys
 from types import ModuleType

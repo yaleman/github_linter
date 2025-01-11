@@ -1,4 +1,4 @@
-""" generic tests """
+"""generic tests"""
 
 from io import StringIO
 

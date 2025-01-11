@@ -1,4 +1,4 @@
-""" helper to pull pages information """
+"""helper to pull pages information"""
 
 import json
 
@@ -41,9 +41,7 @@ def get_repo_pages_data(repo: RepoLinter) -> PagesData:
     github.do_login()
     url = f"/repos/{repo.repository.full_name}/pages"
     # pylint: disable=protected-access
-    pagesdata = github.github._Github__requester.requestJson(  # type: ignore
-        verb="GET", url=url
-    )
+    pagesdata = github.github._Github__requester.requestJson(verb="GET", url=url)  # type: ignore
 
     if len(pagesdata) != 3:
         raise ValueError(

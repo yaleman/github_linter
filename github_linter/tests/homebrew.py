@@ -1,4 +1,4 @@
-""" checks for homebrew things """
+"""checks for homebrew things"""
 
 import sys
 from typing import List, TypedDict, Callable, TypeVar, cast

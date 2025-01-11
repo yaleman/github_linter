@@ -1,4 +1,4 @@
-""" Terraform-related tests """
+"""Terraform-related tests"""
 
 from typing import Any, Dict
 import re

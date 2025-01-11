@@ -1,4 +1,5 @@
-""" github-actions programmatic fixes """
+"""github-actions programmatic fixes"""
+
 import json
 
 from loguru import logger

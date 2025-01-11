@@ -1,12 +1,10 @@
-""" utils for github_actions.dependabot """
+"""utils for github_actions.dependabot"""
 
 from typing import Optional
 
 import json5 as json
 from loguru import logger
 from ruyaml import YAML
-
-# from ruyaml.scalarstring import DoubleQuotedScalarString
 
 from ...repolinter import RepoLinter
 

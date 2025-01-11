@@ -1,4 +1,4 @@
-""" does mkdocs things """
+"""does mkdocs things"""
 
 from difflib import unified_diff
 from io import BytesIO

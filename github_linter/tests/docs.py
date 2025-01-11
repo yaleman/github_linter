@@ -1,4 +1,4 @@
-""" docs tests """
+"""docs tests"""
 
 from typing import Optional, TypedDict
 
@@ -48,7 +48,8 @@ def generate_contributing_file(repo: Repository) -> Optional[str]:
     )
     try:
         template = jinja2_env.get_template(f"fixes/{CATEGORY}/CONTRIBUTING.md")
-        return template.render(repo=repo)
+        retval: str = template.render(repo=repo)
+        return retval
 
     except jinja2.exceptions.TemplateNotFound as template_error:
         logger.error("Failed to load template: {}", template_error)

@@ -1,4 +1,4 @@
-""" GithubLinter Exceptions """
+"""GithubLinter Exceptions"""
 
 from loguru import logger
 

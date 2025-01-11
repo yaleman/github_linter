@@ -1,4 +1,4 @@
-""" test utils """
+"""test utils"""
 
 from github.Repository import Repository
 from github.Requester import Requester

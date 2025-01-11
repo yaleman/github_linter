@@ -1,4 +1,4 @@
-""" goes through your repos and checks for things """
+"""goes through your repos and checks for things"""
 
 from collections import deque
 

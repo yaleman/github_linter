@@ -1,4 +1,4 @@
-""" utility functions """
+"""utility functions"""
 
 from json import JSONDecodeError
 from typing import Any, Dict, Optional

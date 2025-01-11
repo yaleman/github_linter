@@ -5,8 +5,6 @@ FROM python:3.12-slim
 ########################################
 RUN useradd useruser
 
-RUN python -m pip install --quiet poetry
-
 RUN apt-get update
 RUN apt-get install -y git
 RUN apt-get clean
@@ -28,5 +26,4 @@ WORKDIR /build/
 USER useruser
 RUN mkdir -p ~/.config/
 
-RUN python -m pip install --no-cache-dir --disable-pip-version-check --upgrade pip poetry
 RUN pip install --no-cache-dir --disable-pip-version-check /build/

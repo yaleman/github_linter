@@ -1,4 +1,4 @@
-""" security.md test file """
+"""security.md test file"""
 
 from typing import TypedDict
 
