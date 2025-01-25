@@ -51,9 +51,7 @@ def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]) -> None:
             add_from_dict(source[key], dest[key])
 
 
-def get_filtered_commands(
-    checklist: List[str], check_filter: Optional[Tuple[str]]
-) -> List[str]:
+def get_filtered_commands(checklist: List[str], check_filter: Optional[Tuple[str]]) -> List[str]:
     """filters the checks, the input is the list of wanted modules
     from click.option()
     """
@@ -62,9 +60,7 @@ def get_filtered_commands(
     checks = []
     for check in checklist:
         for filterstr in check_filter:
-            if (
-                filterstr in check or wildcard_matcher.match(check, filterstr)
-            ) and check not in checks:
+            if (filterstr in check or wildcard_matcher.match(check, filterstr)) and check not in checks:
                 checks.append(check)
                 continue
     return checks
@@ -105,9 +101,7 @@ class RepoLinter:
             return True
         return False
 
-    def cached_get_file(
-        self, filepath: str, clear_cache: bool = False
-    ) -> Optional[ContentFile]:
+    def cached_get_file(self, filepath: str, clear_cache: bool = False) -> Optional[ContentFile]:
         """checks if we've made a call looking for a file and grabs it if not
         returns none if no file exists, caches per-repository.
         """
@@ -121,9 +115,7 @@ class RepoLinter:
         try:
             self.filecache[filepath] = self.get_file(filepath)
         except GithubException as error_message:
-            if "documentation_url" in error_message.data and isinstance(
-                error_message.data, dict
-            ):
+            if "documentation_url" in error_message.data and isinstance(error_message.data, dict):
                 docs_url = error_message.data["documentation_url"]
             else:
                 docs_url = "Unknown docs URL"
@@ -191,18 +183,10 @@ class RepoLinter:
                     if error.status != 404:
                         print(error)
                         sys.exit(1)
-                    logger.debug(
-                        f"404'd looking for branch {commit_branch}, will commit one."
-                    )
-                    source_branch = self.repository.get_branch(
-                        self.repository.default_branch
-                    )
-                    branch_create = self.repository.create_git_ref(
-                        ref="refs/heads/" + commit_branch, sha=source_branch.commit.sha
-                    )
-                    logger.debug(
-                        f"result of creating {commit_branch} from {self.repository.default_branch}: {branch_create}"
-                    )
+                    logger.debug(f"404'd looking for branch {commit_branch}, will commit one.")
+                    source_branch = self.repository.get_branch(self.repository.default_branch)
+                    branch_create = self.repository.create_git_ref(ref="refs/heads/" + commit_branch, sha=source_branch.commit.sha)
+                    logger.debug(f"result of creating {commit_branch} from {self.repository.default_branch}: {branch_create}")
                     logger.info(
                         "Created branch {} in {}",
                         commit_branch,
@@ -245,9 +229,7 @@ class RepoLinter:
     def get_files(self, path: str) -> Optional[List[ContentFile]]:
         """give it a path and it'll return the match(es). If it's a single file it'll get that, if it's a path it'll get up to 1000 files"""
         try:
-            fileresult: Optional[List[ContentFile] | ContentFile] = (
-                self.repository.get_contents(path)
-            )
+            fileresult: Optional[List[ContentFile] | ContentFile] = self.repository.get_contents(path)
             if not fileresult:
                 logger.debug("Couldn't find files matching '{}'", path)
                 return None
@@ -256,10 +238,15 @@ class RepoLinter:
                     fileresult,
                 ]
             return fileresult
+        except GithubException as exc:
+            if exc.status == 404:
+                logger.debug("Couldn't find file, returning None - exception={}", exc)
+                return None
+            else:
+                logger.error("GithubException calling get_contents({})", path)
+                raise exc
         except UnknownObjectException as exc:
-            logger.debug(
-                "UnknownObjectException calling get_contents({}): {}", path, exc
-            )
+            logger.debug("UnknownObjectException calling get_contents({}): {}", path, exc)
             return None
 
     def get_file(self, filename: str) -> Optional[ContentFile]:
@@ -342,23 +329,17 @@ class RepoLinter:
             # we're dealing with a pydantic model
             add_from_dict(module.DEFAULT_CONFIG.model_dump(), module_config)
         else:
-            raise ValueError(
-                f"The default config for {module_name} isn't a dict or pydantic BaseModel!"
-            )
+            raise ValueError(f"The default config for {module_name} isn't a dict or pydantic BaseModel!")
 
     def skip_on_archived(self) -> None:
         """Add this to a check to skip it if the repository is archived."""
         if self.repository.archived:
-            raise SkipOnArchived(
-                "This repository is archived so this test doesn't need to run."
-            )
+            raise SkipOnArchived("This repository is archived so this test doesn't need to run.")
 
     def skip_on_protected(self) -> None:
         """Add this to a check to skip it if the repository has a protected main branch."""
         if self.repository.archived:
-            raise SkipOnProtected(
-                "This repository has a protected main branch so we can't run here."
-            )
+            raise SkipOnProtected("This repository has a protected main branch so we can't run here.")
 
     def skip_on_private(self) -> None:
         """Add this to a check to skip it if the repository is private."""
@@ -423,9 +404,7 @@ class RepoLinter:
     def requires_language(self, language: str) -> None:
         """raises a skip exception if the repository doesn't have this language"""
         if self.languages is None:
-            self.languages = [
-                str(key) for key in self.repository.get_languages().keys()
-            ]
+            self.languages = [str(key) for key in self.repository.get_languages().keys()]
         logger.debug("Languages in repo: {}", ",".join(self.languages))
         if language not in self.languages:
             logger.debug("Didn't find {} in language list, raising SkipNoLanguage")
@@ -441,9 +420,7 @@ class RepoLinter:
             return None
 
         try:
-            retval: Dict[str, Any] = tomli.loads(
-                fileresult.decoded_content.decode("utf-8")
-            )
+            retval: Dict[str, Any] = tomli.loads(fileresult.decoded_content.decode("utf-8"))
             return retval
         except tomli.TOMLDecodeError as tomli_error:
             logger.debug(
@@ -455,8 +432,6 @@ class RepoLinter:
 
     def diff_file(self, old_file: str, new_file: str) -> None:
         """diffs two files using difflib"""
-        diff = difflib.unified_diff(
-            old_file.splitlines(), new_file.splitlines(), fromfile="old", tofile="new"
-        )
+        diff = difflib.unified_diff(old_file.splitlines(), new_file.splitlines(), fromfile="old", tofile="new")
         for line in diff:
             logger.warning(line)
