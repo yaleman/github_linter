@@ -9,9 +9,7 @@ from . import GithubLinter, search_repos
 from .utils import setup_logging
 from .tests import MODULES, load_modules
 
-MODULE_CHOICES = [
-    key for key in list(MODULES.keys()) if not key.startswith("github_linter")
-]
+MODULE_CHOICES = [key for key in list(MODULES.keys()) if not key.startswith("github_linter")]
 
 
 @click.command()
@@ -30,12 +28,9 @@ MODULE_CHOICES = [
     default=False,
     help="Hide progress if more than three repos to handle.",
 )
-@click.option(
-    "--fix", "-f", is_flag=True, default=False, help="Take actions to fix things."
-)
-@click.option(
-    "--check", "-k", multiple=True, help="Filter by check name, eg check_example"
-)
+@click.option("--fix", "-f", is_flag=True, default=False, help="Take actions to fix things.")
+@click.option("-I", "--ignore-protected", is_flag=True, default=False, help="Ignore protected branches checks")
+@click.option("--check", "-k", multiple=True, help="Filter by check name, eg check_example")
 @click.option("--list-repos", is_flag=True, default=False, help="List repos and exit")
 @click.option("--debug", "-d", is_flag=True, default=False, help="Enable debug logging")
 # pylint: disable=too-many-arguments,too-many-locals
@@ -43,6 +38,7 @@ def cli(
     repo: Optional[Tuple[str]] = None,
     owner: Optional[Tuple[str]] = None,
     fix: bool = False,
+    ignore_protected: bool = False,
     check: Optional[Tuple[str]] = None,
     no_progress: bool = False,
     debug: bool = False,
@@ -57,12 +53,8 @@ def cli(
     github = GithubLinter()
 
     # these just set defaults
-    repo_filter = (
-        [] if repo is None else [element for element in repo if element is not None]
-    )
-    owner_filter = (
-        [] if owner is None else [element for element in owner if element is not None]
-    )
+    repo_filter = [] if repo is None else [element for element in repo if element is not None]
+    owner_filter = [] if owner is None else [element for element in owner if element is not None]
 
     logger.debug("Getting repos")
     repos = search_repos(github, repo_filter, owner_filter)
@@ -95,11 +87,9 @@ def cli(
 
     for index, repository in enumerate(repos):
         if repository.fork and not github.config.get("check_forks"):
-            logger.warning(
-                "check_forks is false and {} is a fork, skipping.", repository.full_name
-            )
+            logger.warning("check_forks is false and {} is a fork, skipping.", repository.full_name)
             continue
-        github.handle_repo(repository, check=check, fix=fix)
+        github.handle_repo(repository, check=check, fix=fix, ignore_protected=ignore_protected)
 
         if len(repos) > 3 and not no_progress:
             pct_done = round((index / len(repos) * 100), 1)

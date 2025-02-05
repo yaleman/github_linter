@@ -73,9 +73,11 @@ class RepoLinter:
         self,
         repo: Repository,
         repo3: ShortRepository,
+        ignore_protected: bool = False,
     ) -> None:
         """startup things"""
         self.config = load_config()
+        self.ignore_protected = ignore_protected
         if not self.config:
             self.config = {}
 
@@ -147,12 +149,13 @@ class RepoLinter:
         Returns the commit URL.
         """
 
-        if self.repository3.branch(self.repository3.default_branch).protected:
-            logger.warning(
-                "Can't update file on  {} as the default branch is protected",
-                self.repository3.full_name,
-            )
-            raise SkipOnProtected("Can't make changes to a protected branch")
+        if not not self.ignore_protected:
+            if self.repository3.branch(self.repository3.default_branch).protected:
+                logger.warning(
+                    "Can't update file on  {} as the default branch is protected",
+                    self.repository3.full_name,
+                )
+                raise SkipOnProtected("Can't make changes to a protected branch")
 
         if not message:
             message = f"github-linter updating file: {filepath}"
