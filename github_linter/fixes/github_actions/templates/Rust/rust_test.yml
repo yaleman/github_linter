@@ -15,17 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.3
-        with:
-          version: "v0.5.4"
+        uses: mozilla-actions/sccache-action@v0.0.8
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.3
-        with:
-          version: "v0.4.2"
       - name: Install typical dependencies
         run: |
           sudo apt-get update && \
@@ -37,3 +31,6 @@ jobs:
         run: cargo clippy
       - name: "Build the workspace"
         run: cargo build --workspace
+      - name: Run sccache stat for check
+        shell: bash
+        run: ${SCCACHE_PATH} --show-stats
