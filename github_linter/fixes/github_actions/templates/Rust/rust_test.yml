@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@v0.0.9
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -28,7 +28,7 @@ jobs:
       - name: "Run cargo test"
         run: cargo test
       - name: "Run cargo clippy"
-        run: cargo clippy
+        run: cargo clippy --all-targets
       - name: "Build the workspace"
         run: cargo build --workspace
       - name: Run sccache stat for check
