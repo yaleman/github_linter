@@ -9,7 +9,7 @@ jobs:
     name: "Homebrew spec update checker"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run the check script
         run: bash homebrew_check_latest_release.sh
 
