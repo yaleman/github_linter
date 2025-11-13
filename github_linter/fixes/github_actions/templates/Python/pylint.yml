@@ -4,20 +4,14 @@ name: pylint
 "on":
   push:
     branches:
-      - main # Set a branch to deploy
+      - main
   pull_request:
 
 jobs:
   pylint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetch all history for .GitInfo and .Lastmod
-      - name: Set up Python 3.12 # TODO: This should be template-able based on what's in pyproject
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.12" # TODO: This should be template-able based on what's in pyproject
+      - uses: actions/checkout@v5
       - name: Running tests
         run: |
           python --version

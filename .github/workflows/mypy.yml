@@ -4,7 +4,7 @@ name: mypy
 "on":
   push:
     branches:
-      - main  # Set a branch to deploy
+      - main
   pull_request:
 
 jobs:
@@ -12,15 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
       - name: Running mypy
         run: |
-          python --version
-          python --version
           python -m pip install --quiet --no-cache-dir --upgrade uv
           uv run mypy --strict $(basename $(pwd)) tests
