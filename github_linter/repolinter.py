@@ -25,7 +25,7 @@ from .exceptions import (
     SkipOnPublic,
 )
 
-from .types import DICTLIST
+from .custom_types import DICTLIST
 from .utils import load_config
 
 
