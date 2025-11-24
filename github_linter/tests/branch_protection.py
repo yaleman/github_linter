@@ -1,11 +1,12 @@
 """Branch protection checks and fixes using both legacy rules and modern rulesets"""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from github.BranchProtection import BranchProtection
-from github.GithubException import GithubException
+from github.GithubException import GithubException, UnknownObjectException
 from loguru import logger
 from pydantic import BaseModel
+from ruyaml import YAML
 
 from ..repolinter import RepoLinter
 
@@ -76,24 +77,180 @@ def _get_required_checks_for_repo(repo: RepoLinter, config: Dict[str, Any]) -> L
     return required_checks
 
 
-def _get_rulesets(repo: RepoLinter) -> List[Dict[str, Any]]:
+def _get_available_checks_for_repo(repo: RepoLinter) -> Set[str]:
     """
-    Get repository rulesets using PyGithub's internal _requester.
+    Get the list of available status checks by parsing workflow files.
+
+    This function attempts to discover actual check names that would run on pull requests
+    by parsing GitHub Actions workflow files in .github/workflows/ directory.
 
     Args:
         repo: RepoLinter instance
 
     Returns:
-        List of rulesets (empty if none exist or API call fails)
+        Set of available check names (job names from workflows)
+    """
+    available_checks: Set[str] = set()
+
+    try:
+        # Get all workflow files from .github/workflows/
+        workflow_path = ".github/workflows"
+        contents = repo.repository.get_contents(workflow_path)
+
+        # Handle single file or list of files
+        if not isinstance(contents, list):
+            contents = [contents]
+
+        for content_file in contents:
+            # Only process YAML files
+            if not content_file.name.endswith(('.yml', '.yaml')):
+                continue
+
+            try:
+                # Parse the workflow file
+                file_content = content_file.decoded_content.decode('utf-8')
+                yaml_parser = YAML(pure=True)
+                workflow_data = yaml_parser.load(file_content)
+
+                if not isinstance(workflow_data, dict):
+                    logger.debug("Workflow file {} has invalid structure", content_file.name)
+                    continue
+
+                # Extract job names from the 'jobs' section
+                jobs = workflow_data.get('jobs', {})
+                if isinstance(jobs, dict):
+                    for job_name in jobs.keys():
+                        available_checks.add(job_name)
+                        logger.debug("Found check '{}' in workflow {}", job_name, content_file.name)
+
+            except Exception as exc:
+                logger.debug("Failed to parse workflow file {}: {}", content_file.name, exc)
+                continue
+
+        logger.debug(
+            "Available checks for {}: {}",
+            repo.repository.full_name,
+            ", ".join(sorted(available_checks)) if available_checks else "none",
+        )
+
+    except UnknownObjectException:
+        logger.debug("No .github/workflows directory found for {}", repo.repository.full_name)
+    except GithubException as exc:
+        logger.debug("Error accessing workflows for {}: {}", repo.repository.full_name, exc)
+    except Exception as exc:
+        logger.error("Unexpected error getting available checks for {}: {}", repo.repository.full_name, exc)
+
+    return available_checks
+
+
+def _validate_required_checks(
+    repo: RepoLinter,
+    required_checks: List[str],
+    available_checks: Set[str],
+) -> None:
+    """
+    Validate that required status checks actually exist in the repository.
+
+    Compares the configured required checks against the available checks discovered
+    from workflow files. If there are mismatches, generates a warning with suggestions.
+
+    Args:
+        repo: RepoLinter instance
+        required_checks: List of check names required by configuration
+        available_checks: Set of check names found in workflow files
+    """
+    if not required_checks:
+        # No required checks, nothing to validate
+        return
+
+    # Find checks that are required but not available
+    missing_checks = set(required_checks) - available_checks
+
+    if missing_checks:
+        # Generate a helpful warning message
+        warning_parts = [
+            f"Required status checks not found in workflow files: {', '.join(sorted(missing_checks))}"
+        ]
+
+        # Suggest available checks if any exist
+        if available_checks:
+            warning_parts.append(f"Available checks in workflows: {', '.join(sorted(available_checks))}")
+        else:
+            warning_parts.append("No workflow files found in .github/workflows/")
+
+        warning_parts.append(
+            "These checks will be required for branch protection but may never pass if workflows don't exist. "
+            "Update the 'language_checks' configuration or create matching workflow jobs."
+        )
+
+        repo.warning(
+            CATEGORY,
+            " | ".join(warning_parts),
+        )
+
+        logger.debug(
+            "Validation failed for {}: required={}, available={}, missing={}",
+            repo.repository.full_name,
+            sorted(required_checks),
+            sorted(available_checks),
+            sorted(missing_checks),
+        )
+
+
+def _get_rulesets(repo: RepoLinter) -> List[Dict[str, Any]]:
+    """
+    Get repository rulesets using PyGithub's internal _requester.
+
+    Fetches full ruleset details by first getting the list, then fetching
+    each ruleset individually to get complete rule and condition information.
+
+    Args:
+        repo: RepoLinter instance
+
+    Returns:
+        List of rulesets with full details (empty if none exist or API call fails)
     """
     try:
-        url = f"{repo.repository.url}/rulesets"
+        # First, get the list of rulesets (summary view)
+        list_url = f"{repo.repository.url}/rulesets"
         headers = {
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
         }
-        _, response = repo.repository._requester.requestJsonAndCheck("GET", url, headers=headers)
-        return response if isinstance(response, list) else []
+        _, response = repo.repository._requester.requestJsonAndCheck("GET", list_url, headers=headers)
+        ruleset_summaries = response if isinstance(response, list) else []
+
+        logger.debug(
+            "Fetched {} ruleset summaries for {}",
+            len(ruleset_summaries),
+            repo.repository.full_name,
+        )
+
+        # Now fetch full details for each ruleset
+        full_rulesets: List[Dict[str, Any]] = []
+        for summary in ruleset_summaries:
+            ruleset_id = summary.get("id")
+            if not ruleset_id:
+                logger.warning("Ruleset missing ID, skipping: {}", summary)
+                continue
+
+            try:
+                detail_url = f"{repo.repository.url}/rulesets/{ruleset_id}"
+                _, detail_response = repo.repository._requester.requestJsonAndCheck("GET", detail_url, headers=headers)
+                if isinstance(detail_response, dict):
+                    full_rulesets.append(detail_response)
+                    logger.debug(
+                        "Fetched full details for ruleset '{}' (id={}): has {} rules, conditions={}",
+                        detail_response.get("name"),
+                        ruleset_id,
+                        len(detail_response.get("rules", [])) if detail_response.get("rules") else 0,
+                        "present" if detail_response.get("conditions") else "None",
+                    )
+            except GithubException as exc:
+                logger.error("Error fetching ruleset {}: {}", ruleset_id, exc)
+                continue
+
+        return full_rulesets
     except GithubException as exc:
         if exc.status == 404:
             logger.debug("No rulesets found for {}", repo.repository.full_name)
@@ -434,6 +591,10 @@ def check_default_branch_protection(repo: RepoLinter) -> None:
     enforce_admins = not allow_admin_bypass
     required_checks = _get_required_checks_for_repo(repo, config)
 
+    # Validate that required checks exist in workflow files
+    available_checks = _get_available_checks_for_repo(repo)
+    _validate_required_checks(repo, required_checks, available_checks)
+
     # Check for rulesets first if enabled
     rulesets = _get_rulesets(repo) if use_rulesets else []
     protection = _get_branch_protection(repo)
@@ -448,12 +609,27 @@ def check_default_branch_protection(repo: RepoLinter) -> None:
     # If we have both, check rulesets first
     if rulesets:
         # Find ruleset targeting the default branch
+        # Note: conditions can be None in the list API response, in which case
+        # we need to assume the ruleset applies to all branches (including default)
         default_branch_rulesets = [
             rs
             for rs in rulesets
             if rs.get("target") == "branch"
-            and any(f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl for incl in rs.get("conditions", {}).get("ref_name", {}).get("include", []))
+            and (
+                rs.get("conditions") is None  # No conditions = applies to all branches
+                or any(
+                    f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl
+                    for incl in (rs.get("conditions") or {}).get("ref_name", {}).get("include", [])
+                )
+            )
         ]
+
+        logger.debug(
+            "Filtered rulesets for default branch '{}': found {} out of {} total rulesets",
+            repo.repository.default_branch,
+            len(default_branch_rulesets),
+            len(rulesets),
+        )
 
         if default_branch_rulesets:
             for ruleset in default_branch_rulesets:
@@ -535,15 +711,27 @@ def check_legacy_protection_cleanup(repo: RepoLinter) -> None:
     # If we have rulesets AND legacy protection, warn that legacy should be removed
     if rulesets and protection is not None:
         # Find rulesets targeting the default branch
+        # Note: conditions can be None in the list API response, in which case
+        # we need to assume the ruleset applies to all branches (including default)
         default_branch_rulesets = [
             rs
             for rs in rulesets
             if rs.get("target") == "branch"
-            and any(
-                f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl
-                for incl in rs.get("conditions", {}).get("ref_name", {}).get("include", [])
+            and (
+                rs.get("conditions") is None  # No conditions = applies to all branches
+                or any(
+                    f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl
+                    for incl in (rs.get("conditions") or {}).get("ref_name", {}).get("include", [])
+                )
             )
         ]
+
+        logger.debug(
+            "check_legacy_protection_cleanup: Filtered rulesets for default branch '{}': found {} out of {} total rulesets",
+            repo.repository.default_branch,
+            len(default_branch_rulesets),
+            len(rulesets),
+        )
 
         if default_branch_rulesets:
             repo.warning(
@@ -584,6 +772,10 @@ def fix_default_branch_protection(repo: RepoLinter) -> None:
     allow_admin_bypass = config.get("allow_admin_bypass", True)
     enforce_admins = not allow_admin_bypass
     required_checks = _get_required_checks_for_repo(repo, config)
+
+    # Validate that required checks exist in workflow files
+    available_checks = _get_available_checks_for_repo(repo)
+    _validate_required_checks(repo, required_checks, available_checks)
 
     rulesets = _get_rulesets(repo) if use_rulesets else []
     protection = _get_branch_protection(repo)
@@ -731,15 +923,35 @@ def fix_legacy_protection_cleanup(repo: RepoLinter) -> None:
     # If we have rulesets AND legacy protection, remove the legacy protection
     if rulesets and protection is not None:
         # Find rulesets targeting the default branch
+        # Note: conditions can be None in the list API response, in which case
+        # we need to assume the ruleset applies to all branches (including default)
         default_branch_rulesets = [
             rs
             for rs in rulesets
             if rs.get("target") == "branch"
-            and any(
-                f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl
-                for incl in rs.get("conditions", {}).get("ref_name", {}).get("include", [])
+            and (
+                rs.get("conditions") is None  # No conditions = applies to all branches
+                or any(
+                    f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl
+                    for incl in (rs.get("conditions") or {}).get("ref_name", {}).get("include", [])
+                )
             )
         ]
+
+        logger.debug(
+            "fix_legacy_protection_cleanup: Filtered rulesets for default branch '{}': found {} out of {} total rulesets",
+            repo.repository.default_branch,
+            len(default_branch_rulesets),
+            len(rulesets),
+        )
+
+        if not default_branch_rulesets:
+            logger.warning(
+                "fix_legacy_protection_cleanup: No rulesets match default branch '{}'. Skipping legacy protection cleanup. "
+                "This might indicate a bug in the filter logic.",
+                repo.repository.default_branch,
+            )
+            return
 
         if default_branch_rulesets:
             if _delete_branch_protection(repo):
