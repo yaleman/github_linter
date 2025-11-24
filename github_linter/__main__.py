@@ -5,9 +5,9 @@ from typing import List, Optional, Tuple
 import click
 from loguru import logger
 
-from . import GithubLinter, search_repos
-from .utils import setup_logging
-from .tests import MODULES, load_modules
+from github_linter import GithubLinter, search_repos
+from github_linter.utils import setup_logging
+from github_linter.tests import MODULES, load_modules
 
 MODULE_CHOICES = [key for key in list(MODULES.keys()) if not key.startswith("github_linter")]
 

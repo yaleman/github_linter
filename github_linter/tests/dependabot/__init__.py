@@ -74,9 +74,7 @@ def generate_expected_update_config(
     updates: List[DependabotUpdateConfig] = []
     for language in repo.repository.get_languages():
         if find_language_in_ecosystem(language):
-            logger.debug(
-                "Found lang/eco: {}, {}", language, find_language_in_ecosystem(language)
-            )
+            logger.debug("Found lang/eco: {}, {}", language, find_language_in_ecosystem(language))
             new_config = DependabotUpdateConfig.model_validate(
                 {
                     "package-ecosystem": find_language_in_ecosystem(language),
@@ -183,22 +181,14 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
 
     # check that the repo has full coverage
     if set(required_package_managers) != set(package_managers_covered):
-        missing_package_managers = [
-            manager
-            for manager in required_package_managers
-            if manager not in package_managers_covered
-        ]
+        missing_package_managers = [manager for manager in required_package_managers if manager not in package_managers_covered]
         for manager in missing_package_managers:
             repo.error(
                 CATEGORY,
                 f"Package manager needs to be configured for {manager}",
             )
 
-        extra_package_managers = [
-            manager
-            for manager in package_managers_covered
-            if manager not in required_package_managers
-        ]
+        extra_package_managers = [manager for manager in package_managers_covered if manager not in required_package_managers]
 
         for extra_manager in extra_package_managers:
             repo.error(
@@ -300,10 +290,7 @@ def check_dependabot_automerge_workflow(repo: RepoLinter) -> None:
     fileresult = repo.get_file(filepath)
     if fileresult is None or fileresult.decoded_content.decode("utf-8").strip() == "":
         return repo.error(CATEGORY, f"{filepath} missing")
-    if (
-        fileresult.decoded_content.decode("utf-8")
-        != get_fix_file_path(category=CATEGORY, filename=filepath).read_text()
-    ):
+    if fileresult.decoded_content.decode("utf-8") != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
         repo.warning(CATEGORY, f"Content differs for {filepath}")
         # show the diff between the two files
         # repo.diff_file(
@@ -336,19 +323,14 @@ def fix_dependabot_automerge_workflow(repo: RepoLinter) -> None:
             message=f"Created {filepath}",
         )
         return repo.fix(CATEGORY, f"Created {filepath}, commit url: {result}")
-    if (
-        fileresult.decoded_content.decode("utf-8")
-        != get_fix_file_path(category=CATEGORY, filename=filepath).read_text()
-    ):
+    if fileresult.decoded_content.decode("utf-8") != get_fix_file_path(category=CATEGORY, filename=filepath).read_text():
         result = repo.create_or_update_file(
             filepath=filepath,
             newfile=get_fix_file_path(category=CATEGORY, filename=filepath),
             oldfile=fileresult,
             message=f"Updated {filepath} to latest version",
         )
-        return repo.fix(
-            CATEGORY, f"Updated {filepath} to latest version, commit url: {result}"
-        )
+        return repo.fix(CATEGORY, f"Updated {filepath} to latest version, commit url: {result}")
     logger.debug("{} already exists and has the right contents!", filepath)
     return None
 
@@ -378,10 +360,7 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
 
     expected_config = generate_expected_update_config(repo)
 
-    updates = [
-        val.dict(by_alias=True, exclude_unset=True, exclude_none=True)
-        for val in expected_config.updates
-    ]
+    updates = [val.dict(by_alias=True, exclude_unset=True, exclude_none=True) for val in expected_config.updates]
     update_dict = {
         "version": expected_config.version,
         "updates": updates,
@@ -397,9 +376,7 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
     newfilecontents = buf.read()
     logger.debug("New contents: \n{}", newfilecontents)
     # raise NotImplementedError
-    if newfilecontents != repo.cached_get_file(
-        repo.config[CATEGORY]["config_filename"], True
-    ):
+    if newfilecontents != repo.cached_get_file(repo.config[CATEGORY]["config_filename"], True):
         logger.debug("Updating file")
         try:
             result = repo.create_or_update_file(
@@ -438,16 +415,12 @@ def check_repository_automerge(repo: RepoLinter) -> None:
     try:
         configured = res.json().get("allow_auto_merge")
     except JSONDecodeError as error:
-        repo.error(
-            CATEGORY, f"Failed to decode JSON while checking allow_auto_merge: {error}"
-        )
+        repo.error(CATEGORY, f"Failed to decode JSON while checking allow_auto_merge: {error}")
         return None
     if configured is None:
         repo.error(CATEGORY, "None result in allow_auto_merge")
     if configured == expected_result:
-        logger.debug(
-            "allow_auto_merge matches expected setting, is set to  {}", configured
-        )
+        logger.debug("allow_auto_merge matches expected setting, is set to  {}", configured)
     else:
         repo.error(
             CATEGORY,
@@ -473,13 +446,8 @@ def fix_repository_automerge(repo: RepoLinter) -> None:
     # url = f"/repos/{repo.repository.full_name}"
     res = repo.repository3._patch(url=repo.repository3.url, json=request_body)
     logger.debug(res.json())
-    if (
-        res.status_code == 200
-        and res.json().get("allow_auto_merge") == auto_merge_setting
-    ):
-        repo.fix(
-            CATEGORY, f"Updated repository auto-merge setting to {auto_merge_setting}"
-        )
+    if res.status_code == 200 and res.json().get("allow_auto_merge") == auto_merge_setting:
+        repo.fix(CATEGORY, f"Updated repository auto-merge setting to {auto_merge_setting}")
     else:
         repo.error(
             CATEGORY,
