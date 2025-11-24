@@ -8,6 +8,7 @@ from loguru import logger
 
 
 from . import (
+    branch_protection,  # noqa: F401
     codeowners,  # noqa: F401
     dependabot,  # noqa: F401
     docs,  # noqa: F401
