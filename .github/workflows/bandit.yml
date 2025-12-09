@@ -12,8 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          activate-environment: "true"
+          github-token: ${{ github.token }}
       - name: Run bandit
         run: |
-          python --version
-          python -m pip install --quiet --no-cache-dir --upgrade uv
           uv run bandit -r $(basename $(pwd) | sed -E 's/-/_/')

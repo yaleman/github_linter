@@ -9,7 +9,7 @@ jobs:
     name: "Homebrew spec update checker"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Run the check script
         run: bash homebrew_check_latest_release.sh
 
@@ -23,4 +23,4 @@ jobs:
           COMMIT_NAME: "Version bump"
           COMMIT_EMAIL: "james@terminaloutcomes.com"
           PR_BRANCH_NAME: "brew-update-${PR_HEAD_REF}"
-          PR_TITLE: "Update to version"
+          PR_TITLE: "Update version to latest release ${PR_HEAD_REF}"

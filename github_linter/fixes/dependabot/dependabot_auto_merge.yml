@@ -19,9 +19,8 @@ jobs:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           alert-lookup: true
           compat-lookup: true
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Approve a PR if not already approved
-
         run: |
           # sets the upstream metadata for `gh pr status`
           gh pr checkout "$PR_URL"
