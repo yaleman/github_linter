@@ -11,9 +11,12 @@ jobs:
   mypy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          activate-environment: "true"
+          github-token: ${{ github.token }}
       - name: Running mypy
         run: |
-          python --version
-          python -m pip install --quiet --no-cache-dir --upgrade uv
           uv run mypy --strict $(basename $(pwd) | sed -E 's/-/_/g') tests/
