@@ -10,7 +10,7 @@ import difflib
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
-from github3.repos.repo import ShortRepository  # type: ignore
+from github3.repos import ShortRepository
 from loguru import logger
 import tomli
 
@@ -229,28 +229,28 @@ class RepoLinter:
     #     self.filecache[filepath] = self.get_file(filepath)
     #     return self.filecache[filepath]
 
-    def get_files(self, path: str) -> Optional[List[ContentFile]]:
+    def get_files(self, path: str) -> List[ContentFile]:
         """give it a path and it'll return the match(es). If it's a single file it'll get that, if it's a path it'll get up to 1000 files"""
         try:
-            fileresult: Optional[List[ContentFile] | ContentFile] = self.repository.get_contents(path)
+            fileresult: List[ContentFile] | ContentFile = self.repository.get_contents(path)
             if not fileresult:
                 logger.debug("Couldn't find files matching '{}'", path)
-                return None
+                return []
             if not isinstance(fileresult, list):
-                fileresult = [
+                return [
                     fileresult,
                 ]
-            return fileresult
+            return fileresult  # type: ignore [invalid-return-type]
         except GithubException as exc:
             if exc.status == 404:
                 logger.debug("Couldn't find file, returning None - exception={}", exc)
-                return None
+                return []
             else:
                 logger.error("GithubException calling get_contents({})", path)
                 raise exc
         except UnknownObjectException as exc:
             logger.debug("UnknownObjectException calling get_contents({}): {}", path, exc)
-            return None
+            return []
 
     def get_file(self, filename: str) -> Optional[ContentFile]:
         """looks for a file or returns none"""

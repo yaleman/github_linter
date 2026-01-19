@@ -11,14 +11,14 @@ github_linter is a Python tool for auditing GitHub repositories at scale. It sca
 ### Testing and Linting
 
 - Run all precommit checks: `make precommit`
-- Run linting: `uv run ruff check github_linter tests`
-- Run type checking: `uv run mypy --strict github_linter tests`
-- Run tests: `uv run pytest github_linter tests`
+- Run linting: `make ruff`
+- Run type checking: `make types`
+- Run tests: `make test`
 - Run single test: `uv run pytest tests/test_<module>.py::<test_name>`
 
 ### Running the CLI
 
-- Run the CLI: `uv run python -m github_linter`
+- Run the CLI: `uv run github-linter`
 - Run with filters: `uv run python -m github_linter --repo <repo_name> --owner <owner_name>`
 - Run specific module: `uv run python -m github_linter --module <module_name>`
 - Run with fixes: `uv run python -m github_linter --fix`
@@ -26,7 +26,7 @@ github_linter is a Python tool for auditing GitHub repositories at scale. It sca
 
 ### Web Interface
 
-- Start web server: `uv run python -m github_linter.web`
+- Start web server: `uv run github-linter-web`
 - Or use the script: `./run_web.sh`
 
 ### Docker
@@ -74,6 +74,7 @@ github_linter is a Python tool for auditing GitHub repositories at scale. It sca
 ### Module Language Filtering
 
 Modules declare which languages they apply to via the `LANGUAGES` attribute:
+
 - Use `["all"]` for modules that apply to all repositories
 - Use specific languages (e.g., `["python"]`, `["rust"]`) to run only on repos with those languages
 - Language detection is based on GitHub's automatic language detection
@@ -81,6 +82,7 @@ Modules declare which languages they apply to via the `LANGUAGES` attribute:
 ### Configuration
 
 Configuration file locations (in priority order):
+
 1. `./github_linter.json` (local directory)
 2. `~/.config/github_linter.json` (user config)
 
@@ -115,6 +117,7 @@ The `branch_protection` module supports both legacy branch protection rules and 
 ```
 
 **Configuration Options:**
+
 - `enable_protection` - Whether to enable branch protection checks (default: true)
 - `allow_admin_bypass` - Allow repository admins to bypass protection requirements (default: true). For legacy protection, this sets `enforce_admins=false`. For rulesets, this adds repository admin role (ID 5) to `bypass_actors`.
 - `require_pull_request` - Require pull request before merging (default: true)
@@ -127,6 +130,7 @@ The `branch_protection` module supports both legacy branch protection rules and 
 - `language_checks` - Map of GitHub language names to required status check names. The module automatically determines which checks to require based on detected repository languages.
 
 **Legacy vs Rulesets:**
+
 - Legacy branch protection: Traditional branch protection API (one rule per branch)
 - Rulesets: Modern GitHub protection (multiple rulesets aggregate, more features)
 - The module detects which system is in use and can work with both
@@ -135,6 +139,7 @@ The `branch_protection` module supports both legacy branch protection rules and 
 - Both systems can coexist; the module checks both and reports on mismatches
 
 **Implementation Notes:**
+
 - Uses PyGithub's `_requester` API for rulesets since PyGithub doesn't natively support them yet
 - Rulesets API requires GitHub API version 2022-11-28
 - Rulesets provide more granular control and organization-wide enforcement
@@ -142,6 +147,7 @@ The `branch_protection` module supports both legacy branch protection rules and 
 ### Exception Handling
 
 The codebase uses custom exceptions for flow control:
+
 - `SkipOnArchived` - Skip check for archived repositories
 - `SkipOnPrivate` - Skip check for private repositories
 - `SkipOnPublic` - Skip check for public repositories

@@ -17,6 +17,6 @@ jobs:
         with:
           activate-environment: "true"
           github-token: ${{ github.token }}
-      - name: Running mypy
+      - name: Running type checking
         run: |
-          uv run mypy --strict $(basename $(pwd)) tests
+          make types
