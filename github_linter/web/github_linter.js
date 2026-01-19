@@ -5,7 +5,7 @@
 //   template: '<tr><th scope="row">{{ repo.full_name }}</th><td>{{repo.archived }}</td></tr>'
 // })
 
-const repo_app = new Vue({
+const _repo_app = new Vue({
 	delimiters: ["|", "|"], // because we're using it alongside jinja2
 	el: "#repos",
 	data: {

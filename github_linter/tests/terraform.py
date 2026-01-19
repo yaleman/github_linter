@@ -6,7 +6,7 @@ import re
 import sys
 
 from loguru import logger
-import hcl2
+import hcl2.api
 import json5 as json
 from semver.version import Version
 
@@ -50,7 +50,7 @@ def load_hclfile(
         logger.debug("Couldn't find file (or it was empty): {}", filename)
         return {}
     logger.debug("Found {}", filename)
-    return hcl2.loads(filecontent.decoded_content.decode("utf-8"))  # type: ignore
+    return hcl2.api.loads(filecontent.decoded_content.decode("utf-8"))
 
 
 def check_providers_tf_exists(

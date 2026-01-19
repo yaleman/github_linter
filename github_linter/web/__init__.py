@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from time import time
-from typing import Any, AsyncGenerator, Generator, List, Optional, Union
+from typing import Any, AsyncGenerator, Generator, List, Optional, Union, Tuple
 
 from fastapi import BackgroundTasks, FastAPI, Depends, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse, Response
@@ -125,7 +125,6 @@ async def set_update_time(update_time: float, conn: Any) -> None:
     )
     await conn.execute(do_update)
     await conn.commit()
-
     logger.debug("Successfully set update time to {}", update_time)
 
 
@@ -151,9 +150,7 @@ async def update_stored_repo(repo: Repository) -> None:
             strict=True,
         )
 
-        insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos).values(
-            **repoobject.model_dump()
-        )
+        insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos).values(**repoobject.model_dump())
 
         do_update = insert_row.on_conflict_do_update(
             index_elements=["full_name"],
@@ -191,9 +188,7 @@ async def update_stored_repos() -> None:
             logger.debug("Checking {} for removal.", dbrepo.full_name)
             if dbrepo.full_name not in github_repos:
                 logger.info("Removing unlisted repo: {}", dbrepo.full_name)
-                deleterepo_query = sqlalchemy.delete(SQLRepos).where(
-                    SQLRepos.full_name == dbrepo.full_name
-                )
+                deleterepo_query = sqlalchemy.delete(SQLRepos).where(SQLRepos.full_name == dbrepo.full_name)
                 await conn.execute(deleterepo_query)
     await set_db_update_running(False)
 
@@ -244,10 +239,8 @@ async def db_update_running() -> bool:
     """check if a db update is running"""
     async with engine.begin() as conn:
         try:
-            stmt = sqlalchemy.select(SQLMetadata).where(
-                SQLMetadata.name == "update_running"
-            )
-            result: sqlalchemy.engine.result.Result = await conn.execute(stmt)  # type: ignore
+            stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name == "update_running")
+            result: sqlalchemy.engine.result.Result[Tuple[Any]] = await conn.execute(stmt)
 
             if result is None:
                 logger.debug("No response from db")
@@ -293,9 +286,7 @@ async def set_db_update_running(value: bool) -> bool:
             await conn.run_sync(Base.metadata.create_all)
             update_running = {"name": "update_running", "value": value}
 
-            insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(
-                **update_running
-            )
+            insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(**update_running)
             do_update = insert_row.on_conflict_do_update(
                 index_elements=["name"],
                 set_=update_running,
@@ -314,10 +305,8 @@ async def db_updated() -> int:
 
     async with engine.begin() as conn:
         try:
-            stmt = sqlalchemy.select(SQLMetadata).where(
-                SQLMetadata.name == "last_updated"
-            )
-            result: sqlalchemy.engine.result.Result = await conn.execute(stmt)  # type: ignore
+            stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name == "last_updated")
+            result: sqlalchemy.engine.result.Result[Tuple[Any]] = await conn.execute(stmt)
 
             if result is None:
                 logger.debug("No response from db")
@@ -328,7 +317,7 @@ async def db_updated() -> int:
                 logger.error("no row data querying update time: {}", row)
                 return -1
             # print(row)
-            data = MetaData.from_orm(row)
+            data = MetaData.model_validate(row)
             if "." in data.value:
                 return int(data.value.split(".")[0])
         # pylint: disable=broad-except
@@ -388,7 +377,7 @@ async def get_repos(
     try:
         stmt = sqlalchemy.select(SQLRepos)
         result = await session.execute(stmt)
-        retval = [RepoData.from_orm(element.SQLRepos) for element in result.fetchall()]
+        retval = [RepoData.model_validate(element.SQLRepos) for element in result.fetchall()]
     except OperationalError as operational_error:
         logger.warning("Failed to pull repos from DB: {}", operational_error)
         return []

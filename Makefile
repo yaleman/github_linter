@@ -4,22 +4,22 @@ FULLNAME ?= kanidm/kanidm
 .DEFAULT: precommit
 
 .PHONY: precommit
-precommit: ruff mypy pytest
+precommit: ruff types test
 
 .PHONY: jslint
 jslint:
-	biome check ./github_linter --json-formatter-enabled=false
+	find github_linter -name '*.js' -or -name '*.css' -not -name 'pico.min.css' | xargs biome check --json-formatter-enabled=false
 
 .PHONY: ruff
 ruff:
 	uv run ruff check github_linter tests
 
-.PHONY: mypy
-mypy:
-	uv run mypy --strict github_linter tests
+.PHONY: types
+types:
+	uv run ty check
 
-.PHONY: pytest
-pytest:
+.PHONY: test
+test:
 	uv run pytest github_linter tests
 
 .PHONY: docker_build

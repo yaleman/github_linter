@@ -16,8 +16,8 @@ from github import Github
 from github.Auth import Token as GithubAuthToken
 from github.ContentFile import ContentFile
 from github.Repository import Repository
-import github3  # type: ignore
-from github3.repos.repo import ShortRepository  # type: ignore
+import github3
+from github3.repos import ShortRepository
 import pydantic
 import pytz
 import wildcard_matcher
@@ -63,14 +63,14 @@ class GithubLinter:
     def do_login3(self) -> github3.GitHub:
         """Does the login phase for github3.py"""
 
-        if os.getenv("GITHUB_TOKEN"):
+        if os.getenv("GITHUB_TOKEN") is not None:
             logger.debug("Using GITHUB_TOKEN environment variable for login.")
             self.github3 = github3.login(token=os.getenv("GITHUB_TOKEN"))
             logger.debug("Checking github3 login: {}", self.github3.me())
             return self.github3
         if "ignore_auth" in self.config["github"] and self.config["github"]["ignore_auth"]:
             self.github = Github()
-            return self.github
+            return self.github3
         if "token" in self.config["github"]:
             self.github3 = github3.login(token=self.config["github"]["token"])
             return self.github3
@@ -331,7 +331,7 @@ def search_repos(
     github: GithubLinter,
     repo_filter: List[str],
     owner_filter: List[str],
-) -> List[github3.repos.repo.ShortRepository]:
+) -> List[ShortRepository]:
     """search repos based on cli input"""
 
     username = github.github3.me().login

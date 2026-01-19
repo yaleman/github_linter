@@ -45,25 +45,23 @@ LANGUAGES = [
 # }
 
 
-DEFAULT_CONFIG: DefaultConfig = DefaultConfig(
-    **{
-        "config_filename": ".github/dependabot.yml",
-        "schedule": DependabotSchedule.model_validate(
-            {
-                "interval": "weekly",
-                "day": "monday",
-                "time": DoubleQuotedScalarString("00:00"),
-                "timezone": "Etc/UTC",  # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-            }
-        ).model_dump(),
-        # TODO: merge this under the packages
-        # "groups": {
-        #     "production-dependencies": {"dependency-type": "production"},
-        #     "development-dependencies": {"dependency-type": "development"},
-        # },
-        "allow_auto_merge": False,
-    }
-)
+DEFAULT_CONFIG: DefaultConfig = {
+    "config_filename": ".github/dependabot.yml",
+    "schedule": DependabotSchedule.model_validate(
+        {
+            "interval": "weekly",
+            "day": "monday",
+            "time": DoubleQuotedScalarString("00:00"),
+            "timezone": "Etc/UTC",  # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+        }
+    ).model_dump(),
+    # TODO: merge this under the packages
+    # "groups": {
+    #     "production-dependencies": {"dependency-type": "production"},
+    #     "development-dependencies": {"dependency-type": "development"},
+    # },
+    "allow_auto_merge": False,
+}
 
 
 def generate_expected_update_config(
@@ -218,7 +216,7 @@ def check_dependabot_config_valid(
         return None
 
     for update in dependabot.updates:
-        logger.debug(json.dumps(update.json(), indent=4))
+        logger.debug(update.model_dump_json(indent=4))
         # if "package-ecosystem" not in update:
         # repo.error(CATEGORY, "package-ecosystem not set in an update")
 
@@ -360,7 +358,7 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
 
     expected_config = generate_expected_update_config(repo)
 
-    updates = [val.dict(by_alias=True, exclude_unset=True, exclude_none=True) for val in expected_config.updates]
+    updates = [val.model_dump(by_alias=True, exclude_unset=True, exclude_none=True) for val in expected_config.updates]
     update_dict = {
         "version": expected_config.version,
         "updates": updates,
@@ -368,8 +366,7 @@ def fix_create_dependabot_config(repo: RepoLinter) -> None:
 
     logger.debug(json.dumps(update_dict, indent=4))
     yaml = YAML()
-    yaml.preserve_quotes = False  # type: ignore
-    # yaml.default_flow_style = None
+    yaml.preserve_quotes = False
     buf = StringIO()
     yaml.dump(data=update_dict, stream=buf)
     buf.seek(0)

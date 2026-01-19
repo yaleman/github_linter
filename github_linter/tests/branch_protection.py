@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Set
 
 from github.BranchProtection import BranchProtection
 from github.GithubException import GithubException, UnknownObjectException
+from github.ContentFile import ContentFile
 from loguru import logger
 from pydantic import BaseModel
 from ruyaml import YAML
@@ -99,32 +100,32 @@ def _get_available_checks_for_repo(repo: RepoLinter) -> Set[str]:
 
         # Handle single file or list of files
         if not isinstance(contents, list):
-            contents = [contents]
+            contents: List[ContentFile] = [contents]
 
         for content_file in contents:
             # Only process YAML files
-            if not content_file.name.endswith(('.yml', '.yaml')):
+            if not getattr(content_file, "name", "").endswith((".yml", ".yaml")):
                 continue
 
             try:
                 # Parse the workflow file
-                file_content = content_file.decoded_content.decode('utf-8')
+                file_content = getattr(content_file, "decoded_content", b"").decode("utf-8")
                 yaml_parser = YAML(pure=True)
                 workflow_data = yaml_parser.load(file_content)
 
                 if not isinstance(workflow_data, dict):
-                    logger.debug("Workflow file {} has invalid structure", content_file.name)
+                    logger.debug("Workflow file {} has invalid structure", getattr(content_file, "name", None) or "<unknown>")
                     continue
 
                 # Extract job names from the 'jobs' section
-                jobs = workflow_data.get('jobs', {})
+                jobs = workflow_data.get("jobs", {})
                 if isinstance(jobs, dict):
                     for job_name in jobs.keys():
                         available_checks.add(job_name)
-                        logger.debug("Found check '{}' in workflow {}", job_name, content_file.name)
+                        logger.debug("Found check '{}' in workflow {}", job_name, getattr(content_file, "name", None) or "<unknown>")
 
             except Exception as exc:
-                logger.debug("Failed to parse workflow file {}: {}", content_file.name, exc)
+                logger.debug("Failed to parse workflow file {}: {}", getattr(content_file, "name", None) or "<unknown>", exc)
                 continue
 
         logger.debug(
@@ -168,9 +169,7 @@ def _validate_required_checks(
 
     if missing_checks:
         # Generate a helpful warning message
-        warning_parts = [
-            f"Required status checks not found in workflow files: {', '.join(sorted(missing_checks))}"
-        ]
+        warning_parts = [f"Required status checks not found in workflow files: {', '.join(sorted(missing_checks))}"]
 
         # Suggest available checks if any exist
         if available_checks:
@@ -179,8 +178,7 @@ def _validate_required_checks(
             warning_parts.append("No workflow files found in .github/workflows/")
 
         warning_parts.append(
-            "These checks will be required for branch protection but may never pass if workflows don't exist. "
-            "Update the 'language_checks' configuration or create matching workflow jobs."
+            "These checks will be required for branch protection but may never pass if workflows don't exist. Update the 'language_checks' configuration or create matching workflow jobs."
         )
 
         repo.warning(
@@ -617,10 +615,7 @@ def check_default_branch_protection(repo: RepoLinter) -> None:
             if rs.get("target") == "branch"
             and (
                 rs.get("conditions") is None  # No conditions = applies to all branches
-                or any(
-                    f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl
-                    for incl in (rs.get("conditions") or {}).get("ref_name", {}).get("include", [])
-                )
+                or any(f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl for incl in (rs.get("conditions") or {}).get("ref_name", {}).get("include", []))
             )
         ]
 
@@ -719,10 +714,7 @@ def check_legacy_protection_cleanup(repo: RepoLinter) -> None:
             if rs.get("target") == "branch"
             and (
                 rs.get("conditions") is None  # No conditions = applies to all branches
-                or any(
-                    f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl
-                    for incl in (rs.get("conditions") or {}).get("ref_name", {}).get("include", [])
-                )
+                or any(f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl for incl in (rs.get("conditions") or {}).get("ref_name", {}).get("include", []))
             )
         ]
 
@@ -931,10 +923,7 @@ def fix_legacy_protection_cleanup(repo: RepoLinter) -> None:
             if rs.get("target") == "branch"
             and (
                 rs.get("conditions") is None  # No conditions = applies to all branches
-                or any(
-                    f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl
-                    for incl in (rs.get("conditions") or {}).get("ref_name", {}).get("include", [])
-                )
+                or any(f"refs/heads/{repo.repository.default_branch}" in incl or repo.repository.default_branch in incl for incl in (rs.get("conditions") or {}).get("ref_name", {}).get("include", []))
             )
         ]
 
@@ -947,8 +936,7 @@ def fix_legacy_protection_cleanup(repo: RepoLinter) -> None:
 
         if not default_branch_rulesets:
             logger.warning(
-                "fix_legacy_protection_cleanup: No rulesets match default branch '{}'. Skipping legacy protection cleanup. "
-                "This might indicate a bug in the filter logic.",
+                "fix_legacy_protection_cleanup: No rulesets match default branch '{}'. Skipping legacy protection cleanup. This might indicate a bug in the filter logic.",
                 repo.repository.default_branch,
             )
             return

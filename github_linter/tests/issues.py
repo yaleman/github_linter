@@ -3,6 +3,7 @@
 from typing import TypedDict
 
 from github.PullRequest import PullRequest
+from github.PaginatedList import PaginatedListBase
 from loguru import logger
 
 
@@ -42,15 +43,16 @@ def check_open_prs(
 ) -> None:
     """Adds a warning if there's open PRs"""
 
-    pulls = repo.repository.get_pulls("open")
+    pulls: PaginatedListBase[PullRequest] = repo.repository.get_pulls("open")
     repo_full_name = repo.repository.full_name
-    if pulls.totalCount:
-        logger.warning("There's {} PRs... listing at least the latest 10.", pulls.totalCount)
+    pull_count = getattr(pulls, "totalCount", 0)
+    if pull_count > 0:
+        logger.warning("There's {} PRs... listing at least the latest 10.", pull_count)
         pull: PullRequest
-        for pull in pulls.reversed[:10]:
+        for pull in pulls.reversed[:10]:  # type: ignore[attr-defined]
             message = f"{repo_full_name} has an open PR: #{pull.number} - {pull.title} in {repo_full_name} (mergeable={pull.mergeable})"
             repo.warning(CATEGORY, message)
-        repo.warning(CATEGORY, f"There's {pulls.totalCount} PRs open for this repo")
+        repo.warning(CATEGORY, f"There's {pull_count} PRs open for this repo")
 
 
 def check_stale_yml(
