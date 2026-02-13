@@ -400,6 +400,6 @@ async def root(
         ),
         autoescape=select_autoescape(),
     )
-    template = env.get_template("index.html")
+    template = env.get_template("index.vue")
 
     return HTMLResponse(template.render())

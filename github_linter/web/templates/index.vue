@@ -7,10 +7,13 @@
 <h1>Repositories (|totalRepos|)</h1>
 <label for="firstname">Search
   <input id="repofilter" placeholder="Filter Repos" type="text" v-model="repo_filter" /></label>
+
+<div class="buttonbar">
 <a href="#" id="update_repos" v-on:click="updateReposBackend" role="button"  :class="{ outline: !waiting_for_update }">Update Repositories</a>
 <a href="#" id="hide_archived" @click="hide_archived = !hide_archived" role="button"  :class="{ outline: !hide_archived }">Hide archived</a>
 <a href="#" id="show_has_issues" @click="show_has_issues = !show_has_issues" role="button"  :class="{ outline: !show_has_issues }" >Show repos with open issues</a>
 <a href="#" id="show_has_prs" @click="show_has_prs = !show_has_prs" role="button"  :class="{ outline: !show_has_prs }" >Show only repos with PRs</a>
+</div>
 <table>
 <thead>
   <tr>
