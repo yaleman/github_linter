@@ -40,19 +40,17 @@ def get_repo_pages_data(repo: RepoLinter) -> PagesData:
     github = GithubLinter()
     github.do_login()
     url = f"/repos/{repo.repository.full_name}/pages"
-    # pylint: disable=protected-access
-    pagesdata = github.github._Github__requester.requestJson(verb="GET", url=url)  # type: ignore
+    if hasattr(github.github, "_Github__requester") and github.github._Github__requester is not None:
+        pagesdata = github.github._Github__requester.requestJson(verb="GET", url=url)  # type: ignore[possibly-missing-attribute]
+    else:
+        raise ValueError("Github object doesn't have a requester, can't get pages data.")
 
     if len(pagesdata) != 3:
-        raise ValueError(
-            f"Got {len(pagesdata)} from requesting the repo pages endpoint ({url})."
-        )
+        raise ValueError(f"Got {len(pagesdata)} from requesting the repo pages endpoint ({url}).")
 
     pages: PagesData = json.loads(pagesdata[2])
     if pages is None:
-        raise ValueError(
-            f"Invalid data returned from requesting the repo pages endpoint ({url})."
-        )
+        raise ValueError(f"Invalid data returned from requesting the repo pages endpoint ({url}).")
 
     logger.debug(
         json.dumps(

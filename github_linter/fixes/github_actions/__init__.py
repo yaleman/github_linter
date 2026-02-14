@@ -30,7 +30,6 @@ def get_repo_default_workflow_permissions(
 
     # https://docs.github.com/en/rest/actions/permissions?apiVersion=2022-11-28#set-default-workflow-permissions-for-a-repository
 
-    # pylint: disable=protected-access
     resp = repo.repository3._get(
         f"https://api.github.com/repos/{repo.repository3.owner}/{repo.repository3.name}/actions/permissions/workflow",
     )
@@ -51,16 +50,13 @@ def set_repo_default_workflow_permissions(
     # https://docs.github.com/en/rest/actions/permissions?apiVersion=2022-11-28#set-default-workflow-permissions-for-a-repository
 
     if default_workflow_permissions not in VALID_DEFAULT_WORKFLOW_PERMISSIONS:
-        raise ValueError(
-            f"Invalid default_workflow_permissions: {default_workflow_permissions}. Valid values are: {VALID_DEFAULT_WORKFLOW_PERMISSIONS}"
-        )
+        raise ValueError(f"Invalid default_workflow_permissions: {default_workflow_permissions}. Valid values are: {VALID_DEFAULT_WORKFLOW_PERMISSIONS}")
 
     payload = {
         "default_workflow_permissions": default_workflow_permissions,
         "can_approve_pull_request_reviews": can_approve_pull_request_reviews,
     }
 
-    # pylint: disable=protected-access
     res: Response = repo.repository3._put(
         f"https://api.github.com/repos/{repo.repository3.owner}/{repo.repository3.name}/actions/permissions/workflow",
         data=json.dumps(payload),

@@ -1,4 +1,4 @@
-""" github_linter dependabot tests constants """
+"""github_linter dependabot tests constants"""
 
 from typing import Dict, List
 

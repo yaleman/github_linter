@@ -14,7 +14,7 @@ def create_mock_workflow_file(name: str, content: str) -> Mock:
     """Create a mock workflow file ContentFile object"""
     mock_file = Mock()
     mock_file.name = name
-    mock_file.decoded_content = content.encode('utf-8')
+    mock_file.decoded_content = content.encode("utf-8")
     return mock_file
 
 
@@ -47,9 +47,7 @@ jobs:
     mock_repo.repository = Mock()
 
     # Mock get_contents to return our test workflow
-    workflow_files = [
-        create_mock_workflow_file("test.yml", workflow_content)
-    ]
+    workflow_files = [create_mock_workflow_file("test.yml", workflow_content)]
     mock_repo.repository.get_contents.return_value = workflow_files
 
     # Call the function
@@ -119,11 +117,8 @@ def test_get_available_checks_with_no_workflows() -> None:
 
     # Mock get_contents to raise UnknownObjectException
     from github.GithubException import UnknownObjectException
-    mock_repo.repository.get_contents.side_effect = UnknownObjectException(
-        status=404,
-        data={"message": "Not Found"},
-        headers={}
-    )
+
+    mock_repo.repository.get_contents.side_effect = UnknownObjectException(status=404, data={"message": "Not Found"}, headers={})
 
     # Call the function
     available_checks = _get_available_checks_for_repo(mock_repo)

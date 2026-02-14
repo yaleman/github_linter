@@ -1,11 +1,13 @@
 """web interface for the project that outgrew its intention"""
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 from time import time
 from typing import Any, AsyncGenerator, Generator, List, Optional, Union, Tuple
 
 from fastapi import BackgroundTasks, FastAPI, Depends, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse, Response
+from fastapi.middleware.gzip import GZipMiddleware
 from github.Repository import Repository
 from jinja2 import Environment, PackageLoader, select_autoescape
 from loguru import logger
@@ -33,10 +35,33 @@ engine = create_async_engine(DB_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 Base = declarative_base()
 
-app = FastAPI()
+
+async def create_db() -> None:
+    """do the initial DB creation"""
+    logger.info("Synchronising database on startup...")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Done!")
 
 
-# pylint: disable=too-few-public-methods
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handle app startup and shutdown"""
+    # Startup
+    try:
+        await create_db()
+    except Exception as error_message:
+        logger.critical(f"Failed to create DB, shutting down: {error_message}")
+        raise
+    yield
+    # Shutdown
+    await engine.dispose()
+
+
+app = FastAPI(lifespan=lifespan)
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=9)  # type: ignore[argument-type]
+
+
 class SQLRepos(Base):
     """sqlrepos"""
 
@@ -56,7 +81,6 @@ class SQLRepos(Base):
     parent = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
 
 
-# pylint: disable=too-few-public-methods
 class SQLMetadata(Base):
     """metadata"""
 
@@ -71,13 +95,6 @@ class MetaData(BaseModel):
     name: str
     value: str
     model_config = ConfigDict(from_attributes=True)
-
-
-async def create_db() -> None:
-    """do the initial DB creation"""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        # logger.info("Result of creating DB: {}", result)
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
@@ -103,6 +120,19 @@ class RepoData(BaseModel):
     organization: Optional[str] = None
     parent: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+class RepoDataSimple(BaseModel):
+    """because the full data is chonky, cuts it by 50%"""
+
+    full_name: str
+    archived: bool
+    fork: bool
+    open_issues: int
+    open_prs: int
+    last_updated: float
+
+    model_config = ConfigDict(from_attributes=True, extra="ignore")
 
 
 def githublinter_factory() -> Generator[GithubLinter, None, None]:
@@ -216,6 +246,15 @@ async def favicon() -> Union[Response, FileResponse]:
     return Response(status_code=404)
 
 
+@app.get("/images/{filename}", response_model=None)
+async def images(filename: str) -> Union[Response, FileResponse]:
+    """return an image"""
+    icon_file = Path(Path(__file__).resolve().parent.as_posix() + f"/images/{filename}")
+    if icon_file.exists():
+        return FileResponse(icon_file)
+    return Response(status_code=404)
+
+
 @app.get("/css/{filename:str}", response_model=None)
 async def css_file(filename: str) -> Union[Response, FileResponse]:
     """css returner"""
@@ -263,13 +302,11 @@ async def db_update_running() -> bool:
                 )
                 await set_db_update_running(False)
                 return False
-        # pylint: disable=broad-except
         except Exception as error_message:
             logger.warning(f"Failed to pull update_running: {error_message}")
             try:
                 await set_db_update_running(False)
                 logger.success("Set it to False instead")
-            # pylint: disable=broad-except
             except Exception as error:
                 logger.error(
                     "Tried to set update_running to False but THAT went wrong too! {}",
@@ -320,14 +357,12 @@ async def db_updated() -> int:
             data = MetaData.model_validate(row)
             if "." in data.value:
                 return int(data.value.split(".")[0])
-        # pylint: disable=broad-except
         except Exception as error_message:
             logger.warning(f"Failed to pull last_updated: {error_message}")
             try:
                 await set_update_time(-1, conn)
                 await conn.commit()
                 logger.success("Set it to -1 instead")
-            # pylint: disable=broad-except
             except Exception as error:
                 logger.error("Tried to set it to -1 but THAT went wrong too! {}", error)
         return -1
@@ -371,13 +406,13 @@ async def get_health(
 @app.get("/repos")
 async def get_repos(
     session: AsyncSession = Depends(get_async_session),
-) -> List[RepoData]:
+) -> List[RepoDataSimple]:
     """endpoint to provide the cached repo list"""
 
     try:
         stmt = sqlalchemy.select(SQLRepos)
         result = await session.execute(stmt)
-        retval = [RepoData.model_validate(element.SQLRepos) for element in result.fetchall()]
+        retval = [RepoDataSimple.model_validate(element.SQLRepos) for element in result.fetchall()]
     except OperationalError as operational_error:
         logger.warning("Failed to pull repos from DB: {}", operational_error)
         return []
@@ -389,10 +424,6 @@ async def root(
     background_tasks: BackgroundTasks,
 ) -> Union[Response, HTMLResponse]:
     """homepage"""
-    logger.info("Creating background task to create DB.")
-    background_tasks.add_task(
-        create_db,
-    )
     env = Environment(
         loader=PackageLoader(
             package_name="github_linter.web.templates",
@@ -400,6 +431,6 @@ async def root(
         ),
         autoescape=select_autoescape(),
     )
-    template = env.get_template("index.html")
+    template = env.get_template("index.vue")
 
     return HTMLResponse(template.render())

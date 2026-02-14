@@ -18,11 +18,9 @@ def load_yaml_file(
     if not fileresult:
         return {}
     try:
-        filecontents: Dict[Any, Any] = YAML(pure=True).load(
-            fileresult.decoded_content.decode("utf-8")
-        )
+        filecontents: Dict[Any, Any] = YAML(pure=True).load(fileresult.decoded_content.decode("utf-8"))
         return filecontents
-    except Exception as error_message:  # pylint: disable=broad-except
+    except Exception as error_message:
         logger.error("Failed to parse yaml file {}: {}", filename, error_message)
         # TODO: Catch a better exception in loaders.load_yaml_file
     return None

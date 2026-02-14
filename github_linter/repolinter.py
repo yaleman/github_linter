@@ -136,7 +136,6 @@ class RepoLinter:
             return None
         return self.filecache[filepath]
 
-    # pylint: disable=too-many-branches
     def create_or_update_file(
         self,
         filepath: str,

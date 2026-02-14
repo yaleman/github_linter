@@ -92,7 +92,6 @@ def generate_funding_file(input_data: FundingDict) -> str:
     yaml.dump(output_data, outputio)
     outputio.seek(0)
 
-    # pylint: disable=line-too-long
     # doc_line = "# Documentation for this file format is here: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository"
     result = outputio.read()
     return result

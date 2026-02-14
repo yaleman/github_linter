@@ -67,10 +67,7 @@ def fix_contributing_exists(repo: RepoLinter) -> None:
 
     oldfile = repo.cached_get_file(filepath)
 
-    if (
-        oldfile is not None
-        and oldfile.decoded_content.decode("utf-8") == new_filecontents
-    ):
+    if oldfile is not None and oldfile.decoded_content.decode("utf-8") == new_filecontents:
         logger.debug("Don't need to update {}", filepath)
         return
 

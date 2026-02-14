@@ -1,4 +1,4 @@
-""" types for gihtub_linter dependabot tests """
+"""types for gihtub_linter dependabot tests"""
 
 from typing import Any, Dict, List, Optional, TypedDict, Union
 
@@ -32,9 +32,7 @@ class DependabotSchedule(pydantic.BaseModel):
 
     # TODO: write tests for this
     @pydantic.field_validator("timezone")
-    def validate_timezone(
-        cls, value: Optional[DoubleQuotedScalarString]
-    ) -> Optional[DoubleQuotedScalarString]:
+    def validate_timezone(cls, value: Optional[DoubleQuotedScalarString]) -> Optional[DoubleQuotedScalarString]:
         """validator"""
         if value not in pytz.all_timezones:
             raise ValueError(f"Invalid timezone: {value}")
@@ -42,9 +40,7 @@ class DependabotSchedule(pydantic.BaseModel):
 
     # TODO: write tests for this
     @pydantic.field_validator("time")
-    def validate_time(
-        cls, value: Optional[DoubleQuotedScalarString]
-    ) -> Optional[DoubleQuotedScalarString]:
+    def validate_time(cls, value: Optional[DoubleQuotedScalarString]) -> Optional[DoubleQuotedScalarString]:
         """validator"""
         if value is not None:
             return DoubleQuotedScalarString(value)
@@ -122,9 +118,7 @@ class DependabotUpdateConfig(pydantic.BaseModel):
         None  # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#allow
     )
     assignees: Optional[List[str]] = None
-    commit_message: Optional[DependabotCommitMessage] = pydantic.Field(
-        None, alias="commit-message"
-    )
+    commit_message: Optional[DependabotCommitMessage] = pydantic.Field(None, alias="commit-message")
     ignore: Optional[List[str]] = None
     insecure_external_code_execution: Optional[str] = pydantic.Field(
         alias="insecure-external-code-execution",
@@ -136,20 +130,15 @@ class DependabotUpdateConfig(pydantic.BaseModel):
         alias="open-pull-requests-limit",
         default=None,
     )
-    # noqa: E501 pylint: disable=line-too-long
     # TODO: this needs to be a thing - https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates#pull-request-branch-nameseparator
     # pull-request-branch-name.separator
-    rebase_strategy: Optional[str] = pydantic.Field(
-        alias="rebase-strategy", default=None
-    )
+    rebase_strategy: Optional[str] = pydantic.Field(alias="rebase-strategy", default=None)
     # TODO: registries typing for DependabotUpdateConfig
     registries: Optional[Any] = None
     reviewers: Optional[List[str]] = None
     target_branch: Optional[str] = pydantic.Field(alias="target-branch", default=None)
     vendor: Optional[bool] = None
-    versioning_strategy: Optional[str] = pydantic.Field(
-        alias="versioning-strategy", default=None
-    )
+    versioning_strategy: Optional[str] = pydantic.Field(alias="versioning-strategy", default=None)
 
     # TODO: write tests for this
     @pydantic.field_validator("package_ecosystem")
@@ -172,9 +161,7 @@ class DependabotUpdateConfig(pydantic.BaseModel):
     def validate_execution_permissions(cls, value: str) -> str:
         """validates you're getting the right value"""
         if value not in ["deny", "allow"]:
-            raise ValueError(
-                "insecure-external-code-execution needs to be either 'allow' or 'deny'."
-            )
+            raise ValueError("insecure-external-code-execution needs to be either 'allow' or 'deny'.")
         return value
 
 

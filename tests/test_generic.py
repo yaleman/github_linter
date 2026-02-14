@@ -1,4 +1,4 @@
-""" testing pyproject """
+"""testing pyproject"""
 
 from utils import generate_test_repo
 
@@ -49,9 +49,7 @@ def test_generate_funding_file() -> None:
 
 def test_generate_funding_file_simple_with_quote() -> None:
     """tests generator"""
-    result = parse_funding_file(
-        "# test funding file\ngithub: yaleman"
-    )  # need to put the leading newline to make it not be a list... because YAML?
+    result = parse_funding_file("# test funding file\ngithub: yaleman")  # need to put the leading newline to make it not be a list... because YAML?
     test_parse_funding_file()
     output = generate_funding_file(result)
     assert output == "github: yaleman\n"
@@ -59,9 +57,7 @@ def test_generate_funding_file_simple_with_quote() -> None:
 
 def test_generate_funding_file_simple() -> None:
     """tests generator"""
-    result: FundingDict = parse_funding_file(
-        " github: yaleman"
-    )  # need to put the leading newline to make it not be a list... because YAML?
+    result: FundingDict = parse_funding_file(" github: yaleman")  # need to put the leading newline to make it not be a list... because YAML?
     test_parse_funding_file()
     output = generate_funding_file(result)
     assert output == "github: yaleman\n"

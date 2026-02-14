@@ -12,11 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - uses: extractions/setup-just@v3
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
           activate-environment: "true"
           github-token: ${{ github.token }}
-      - name: Running ruff
+      - name: Running ruff checks
         run: |
-          uv run ruff check $(basename $(pwd)) tests
+          just format

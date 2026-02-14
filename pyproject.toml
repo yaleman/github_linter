@@ -37,25 +37,16 @@ dependencies = [
 Home = "https://github.com/yaleman/github_linter"
 
 [project.optional-dependencies]
-dev = ["flit", "pytest", "pylint", "mypy", "types-PyYAML", "types-pytz"]
+dev = ["flit", "pytest", "mypy", "types-PyYAML", "types-pytz"]
 
 [project.scripts]
 "github-linter" = 'github_linter.__main__:cli'
 "github-linter-web" = 'github_linter.web.__main__:cli'
 
-[tool.pylint.MASTER]
-max-line-length = 200
-disable = "W0511,consider-using-dict-items,duplicate-code"
-# https://github.com/samuelcolvin/pydantic/issues/1961#issuecomment-759522422
-extension-pkg-whitelist = "pydantic"
-load-plugins = "pylint_pydantic"
 
 [tool.ruff]
 line-length = 200
 exclude = ["W0511", "consider-using-dict-items", "duplicate-code"]
-# https://github.com/samuelcolvin/pydantic/issues/1961#issuecomment-759522422
-# extension-pkg-whitelist="pydantic"
-# load-plugins="pylint_pydantic"
 
 [tool.pytest.ini_options]
 markers = ["network: things which need authentication, '-m \"not network\"'"]

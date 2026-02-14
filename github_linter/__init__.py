@@ -282,7 +282,7 @@ def filter_by_repo(repo_list: List[Repository], repo_filters: List[str]) -> List
     return retval
 
 
-class RepoSearchString(pydantic.BaseModel):  # pylint: disable=no-member
+class RepoSearchString(pydantic.BaseModel):
     """Result of running generate_repo_search_string"""
 
     needs_post_filtering: bool

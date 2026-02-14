@@ -104,7 +104,6 @@ def generate_expected_update_config(
     return config_file
 
 
-# pylint: disable=too-many-branches
 def check_updates_for_languages(repo: RepoLinter) -> None:
     """ensures that for every known language/package ecosystem, there's a configured update task"""
 

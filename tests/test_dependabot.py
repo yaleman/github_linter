@@ -1,4 +1,4 @@
-""" testing dependabot """
+"""testing dependabot"""
 
 # from github_linter.tests.dependabot import load_file
 

@@ -104,7 +104,7 @@ def check_providers_for_modules(
 
         found_files.append(filename)
 
-        # # make a list of the providers
+        # make a list of the providers
         for provider in required_providers:
             for provider_name in provider:
                 provider_list.append(provider_name)

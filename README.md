@@ -127,3 +127,9 @@ docker run --rm -it \
     ghcr.io/yaleman/github_linter:latest \
     python -m github_linter.web
 ```
+
+## Thanks
+
+* [Vue.js](http://vuejs.org) used in the UI
+* [Pico](https://picocss.com) CSS framework.
+  

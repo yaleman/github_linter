@@ -1,4 +1,4 @@
-""" testing the search filter generator """
+"""testing the search filter generator"""
 
 from utils import generate_test_repo
 from github_linter import filter_by_repo, generate_repo_search_string
@@ -44,10 +44,5 @@ def test_generate_repo_search_string() -> None:
 
     owner_filter = ["yaleman", "terminaloutcomes "]
     repo_filter = ["github_linter", "cheese"]
-    result = generate_repo_search_string(
-        repo_filter=repo_filter, owner_filter=owner_filter
-    )
-    assert (
-        result.search_string
-        == "repo:yaleman/github_linter repo:yaleman/cheese repo:terminaloutcomes/github_linter repo:terminaloutcomes/cheese"
-    )
+    result = generate_repo_search_string(repo_filter=repo_filter, owner_filter=owner_filter)
+    assert result.search_string == "repo:yaleman/github_linter repo:yaleman/cheese repo:terminaloutcomes/github_linter repo:terminaloutcomes/cheese"
