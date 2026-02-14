@@ -1,5 +1,13 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.3.11/schema.json",
+  "files": {
+    "includes": [
+      "github_linter/**/*.js",
+      "github_linter/**/*.css",
+      "!!.venv/",
+      "!!**/pico.min.css"
+    ]
+  },
   "linter": {
     "enabled": true,
     "rules": {

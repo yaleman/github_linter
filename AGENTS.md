@@ -6,14 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 github_linter is a Python tool for auditing GitHub repositories at scale. It scans repositories for common configuration issues, missing files, and standardization opportunities across multiple repos.
 
+**MANDATORY** You are not finished with a task until running `just check` passes without warnings or errors.
+
 ## Development Commands
 
 ### Testing and Linting
 
-- Run all precommit checks: `make precommit`
-- Run linting: `make ruff`
-- Run type checking: `make types`
-- Run tests: `make test`
+- Run all precommit checks: `just check`
+- Run linting: `just ruff`
+- Run type checking: `just lint`
+- Run tests: `just test`
 - Run single test: `uv run pytest tests/test_<module>.py::<test_name>`
 
 ### Running the CLI
@@ -26,13 +28,12 @@ github_linter is a Python tool for auditing GitHub repositories at scale. It sca
 
 ### Web Interface
 
-- Start web server: `uv run github-linter-web`
-- Or use the script: `./run_web.sh`
+- Start web server: `./run_web.sh`
 
 ### Docker
 
-- Build container: `make docker_build`
-- Run web server in container: `make docker_run`
+- Build container: `just docker_build`
+- Run web server in container: `just docker_run`
 
 ## Architecture
 

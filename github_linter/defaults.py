@@ -1,4 +1,4 @@
-""" default linter configuration goes here """
+"""default linter configuration goes here"""
 
 from typing import Dict, List, Optional, TypedDict
 

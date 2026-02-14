@@ -7,6 +7,7 @@ from typing import Any, AsyncGenerator, Generator, List, Optional, Union, Tuple
 
 from fastapi import BackgroundTasks, FastAPI, Depends, HTTPException
 from fastapi.responses import HTMLResponse, FileResponse, Response
+from fastapi.middleware.gzip import GZipMiddleware
 from github.Repository import Repository
 from jinja2 import Environment, PackageLoader, select_autoescape
 from loguru import logger
@@ -58,6 +59,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=9)  # type: ignore[argument-type]
 
 
 class SQLRepos(Base):

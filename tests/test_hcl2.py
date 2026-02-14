@@ -1,5 +1,4 @@
-""" tests things interacting with HCL-format files (terraform, hopefully)"""
-
+"""tests things interacting with HCL-format files (terraform, hopefully)"""
 
 import hcl2.api
 
