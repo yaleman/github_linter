@@ -33,7 +33,6 @@ MODULE_CHOICES = [key for key in list(MODULES.keys()) if not key.startswith("git
 @click.option("--check", "-k", multiple=True, help="Filter by check name, eg check_example")
 @click.option("--list-repos", is_flag=True, default=False, help="List repos and exit")
 @click.option("--debug", "-d", is_flag=True, default=False, help="Enable debug logging")
-# pylint: disable=too-many-arguments,too-many-locals
 def cli(
     repo: Optional[Tuple[str]] = None,
     owner: Optional[Tuple[str]] = None,

@@ -53,7 +53,7 @@ def load_dependabot_config_file(
         for update in retval.updates:
             logger.debug("Package: {}", update.package_ecosystem)
         return retval
-    except Exception as exc:  # pylint: disable=broad-except
+    except Exception as exc:
         logger.error("Failed to parse dependabot config: {}", exc)
         repo.error(category, f"Failed to parse dependabot config: {exc}")
     return None

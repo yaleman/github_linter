@@ -25,7 +25,6 @@ DEFAULT_CONFIG: DefaultConfig = {
 }
 
 
-# pylint: disable=unused-argument
 def check_open_issues(
     repo: RepoLinter,
 ) -> None:
@@ -37,7 +36,6 @@ def check_open_issues(
         )
 
 
-# pylint: disable=unused-argument
 def check_open_prs(
     repo: RepoLinter,
 ) -> None:

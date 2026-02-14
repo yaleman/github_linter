@@ -29,8 +29,8 @@ DefaultConfig = TypedDict(
 DEFAULT_CONFIG: DefaultConfig = {
     # TODO: FIX THIS TO USE UV/HATCHLING
     "build-system": [
-    #     "flit_core.buildapi",  # flit
-    #     "poetry.core.masonry.api",  # poetry
+        #     "flit_core.buildapi",  # flit
+        #     "poetry.core.masonry.api",  # poetry
     ],
     "readme": "README.md",
 }
@@ -55,7 +55,6 @@ def validate_pyproject_authors(
             repo.warning(CATEGORY, f"Check author is expected: {author}")
 
 
-# pylint: disable=unused-argument
 def validate_project_name(
     repo: RepoLinter,
     project_object: Dict[str, Any],

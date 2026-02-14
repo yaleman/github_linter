@@ -1,4 +1,4 @@
-""" testing pyproject """
+"""testing pyproject"""
 
 # from io import BytesIO
 
@@ -6,7 +6,6 @@
 # from github_linter.tests.pyproject import validate_project_name, validate_readme_configured
 
 
-# pylint: disable=too-few-public-methods
 # class TestRepoFoo:
 #     """ just for testing """
 #     name = "foobar"
@@ -19,7 +18,6 @@
 #         return readme
 #     return BytesIO()
 
-# pylint: disable=too-few-public-methods
 # class TestGithub:
 #     """ test instance """
 #     config = {

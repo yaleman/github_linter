@@ -36,7 +36,6 @@ Base = declarative_base()
 app = FastAPI()
 
 
-# pylint: disable=too-few-public-methods
 class SQLRepos(Base):
     """sqlrepos"""
 
@@ -56,7 +55,6 @@ class SQLRepos(Base):
     parent = sqlalchemy.Column(sqlalchemy.String(255), nullable=True)
 
 
-# pylint: disable=too-few-public-methods
 class SQLMetadata(Base):
     """metadata"""
 
@@ -77,7 +75,6 @@ async def create_db() -> None:
     """do the initial DB creation"""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        # logger.info("Result of creating DB: {}", result)
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
@@ -103,6 +100,19 @@ class RepoData(BaseModel):
     organization: Optional[str] = None
     parent: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+class RepoDataSimple(BaseModel):
+    """because the full data is chonky, cuts it by 50%"""
+
+    full_name: str
+    archived: bool
+    fork: bool
+    open_issues: int
+    open_prs: int
+    last_updated: float
+
+    model_config = ConfigDict(from_attributes=True, extra="ignore")
 
 
 def githublinter_factory() -> Generator[GithubLinter, None, None]:
@@ -216,6 +226,15 @@ async def favicon() -> Union[Response, FileResponse]:
     return Response(status_code=404)
 
 
+@app.get("/images/{filename}", response_model=None)
+async def images(filename: str) -> Union[Response, FileResponse]:
+    """return an image"""
+    icon_file = Path(Path(__file__).resolve().parent.as_posix() + f"/images/{filename}")
+    if icon_file.exists():
+        return FileResponse(icon_file)
+    return Response(status_code=404)
+
+
 @app.get("/css/{filename:str}", response_model=None)
 async def css_file(filename: str) -> Union[Response, FileResponse]:
     """css returner"""
@@ -263,13 +282,11 @@ async def db_update_running() -> bool:
                 )
                 await set_db_update_running(False)
                 return False
-        # pylint: disable=broad-except
         except Exception as error_message:
             logger.warning(f"Failed to pull update_running: {error_message}")
             try:
                 await set_db_update_running(False)
                 logger.success("Set it to False instead")
-            # pylint: disable=broad-except
             except Exception as error:
                 logger.error(
                     "Tried to set update_running to False but THAT went wrong too! {}",
@@ -320,14 +337,12 @@ async def db_updated() -> int:
             data = MetaData.model_validate(row)
             if "." in data.value:
                 return int(data.value.split(".")[0])
-        # pylint: disable=broad-except
         except Exception as error_message:
             logger.warning(f"Failed to pull last_updated: {error_message}")
             try:
                 await set_update_time(-1, conn)
                 await conn.commit()
                 logger.success("Set it to -1 instead")
-            # pylint: disable=broad-except
             except Exception as error:
                 logger.error("Tried to set it to -1 but THAT went wrong too! {}", error)
         return -1
@@ -371,13 +386,13 @@ async def get_health(
 @app.get("/repos")
 async def get_repos(
     session: AsyncSession = Depends(get_async_session),
-) -> List[RepoData]:
+) -> List[RepoDataSimple]:
     """endpoint to provide the cached repo list"""
 
     try:
         stmt = sqlalchemy.select(SQLRepos)
         result = await session.execute(stmt)
-        retval = [RepoData.model_validate(element.SQLRepos) for element in result.fetchall()]
+        retval = [RepoDataSimple.model_validate(element.SQLRepos) for element in result.fetchall()]
     except OperationalError as operational_error:
         logger.warning("Failed to pull repos from DB: {}", operational_error)
         return []
@@ -389,7 +404,7 @@ async def root(
     background_tasks: BackgroundTasks,
 ) -> Union[Response, HTMLResponse]:
     """homepage"""
-    logger.info("Creating background task to create DB.")
+    logger.debug("Creating background task to create DB.")
     background_tasks.add_task(
         create_db,
     )
