@@ -6,4 +6,4 @@ Typically, only the latest released version is supported for patches - if a majo
 
 ## Reporting a Vulnerability
 
-Please contact me via email at james+{{repo_name}}@terminaloutcomes.com
+Please contact me via email at <james+{{repo_name}}@terminaloutcomes.com>
