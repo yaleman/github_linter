@@ -1,5 +1,6 @@
 """web interface for the project that outgrew its intention"""
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 from time import time
 from typing import Any, AsyncGenerator, Generator, List, Optional, Union, Tuple
@@ -33,7 +34,30 @@ engine = create_async_engine(DB_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 Base = declarative_base()
 
-app = FastAPI()
+
+async def create_db() -> None:
+    """do the initial DB creation"""
+    logger.info("Synchronising database on startup...")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Done!")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Handle app startup and shutdown"""
+    # Startup
+    try:
+        await create_db()
+    except Exception as error_message:
+        logger.critical(f"Failed to create DB, shutting down: {error_message}")
+        raise
+    yield
+    # Shutdown
+    await engine.dispose()
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 class SQLRepos(Base):
@@ -69,12 +93,6 @@ class MetaData(BaseModel):
     name: str
     value: str
     model_config = ConfigDict(from_attributes=True)
-
-
-async def create_db() -> None:
-    """do the initial DB creation"""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
@@ -404,10 +422,6 @@ async def root(
     background_tasks: BackgroundTasks,
 ) -> Union[Response, HTMLResponse]:
     """homepage"""
-    logger.debug("Creating background task to create DB.")
-    background_tasks.add_task(
-        create_db,
-    )
     env = Environment(
         loader=PackageLoader(
             package_name="github_linter.web.templates",
