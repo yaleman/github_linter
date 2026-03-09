@@ -1,10 +1,19 @@
-# CLAUDE.md
+# AGENTS.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-github_linter is a Python tool for auditing GitHub repositories at scale. It scans repositories for common configuration issues, missing files, and standardization opportunities across multiple repos.
+github_linter is a Python tool for managing GitHub repositories in bulk. Its main job is to inspect repositories for policy or configuration drift, report what is wrong, and optionally apply repository-side fixes such as creating or updating files, workflows, and branch protection.
+
+The project is built around a modular "test then fix" model:
+
+- A module can define one or more `check_*` functions that inspect a repository and report problems.
+- The same module can define one or more `fix_*` functions that make corrective changes when `--fix` is enabled.
+- Modules can be run all at once, filtered by module name, or filtered down to specific checks/fixes.
+- Modules can also declare language requirements so Python-only or Terraform-only checks do not run on unrelated repositories.
+
+In practice, the tool is closer to a repository configuration manager than a passive linter. It can validate state, propose drift through warnings/errors, and push changes back to GitHub when fixes are enabled.
 
 **MANDATORY** You are not finished with a task until running `just check` passes without warnings or errors.
 
@@ -37,28 +46,53 @@ github_linter is a Python tool for auditing GitHub repositories at scale. It sca
 
 ## Architecture
 
-### Core Components
+### Core flow
 
-1. **GithubLinter** (`github_linter/__init__.py`) - Main orchestrator that:
-   - Handles GitHub authentication (via environment variable `GITHUB_TOKEN` or config file)
-   - Manages rate limiting
-   - Coordinates module execution across repositories
-   - Generates reports
+1. `github_linter/__main__.py` is the CLI entrypoint.
+   - Parses repo, owner, module, check, and `--fix` flags.
+   - Loads the available modules from `github_linter.tests`.
+   - Selects repositories via the GitHub API.
 
-2. **RepoLinter** (`github_linter/repolinter.py`) - Per-repository handler that:
-   - Manages file caching for the repository
-   - Runs test modules against the repository
-   - Tracks errors, warnings, and fixes
-   - Provides utility methods for checking files and languages
-   - Handles file creation/updates with protected branch awareness
+2. `GithubLinter` in `github_linter/__init__.py` is the top-level orchestrator.
+   - Loads config from `github_linter.json` or `~/.config/github_linter.json`.
+   - Authenticates with both PyGithub and `github3.py`.
+   - Builds the repo list, applies module selection, handles rate limiting, and stores the final report.
 
-3. **Test Modules** (`github_linter/tests/`) - Pluggable modules that check specific aspects:
-   - Each module must define `CATEGORY`, `LANGUAGES`, and `DEFAULT_CONFIG`
-   - Functions starting with `check_` are automatically discovered and run
-   - Functions starting with `fix_` are run when `--fix` flag is used
-   - Modules are loaded dynamically in `tests/__init__.py`
+3. `RepoLinter` in `github_linter/repolinter.py` is the per-repository execution context.
+   - Wraps one GitHub repository.
+   - Caches file lookups.
+   - Merges module default config into runtime config.
+   - Records `errors`, `warnings`, and `fixes`.
+   - Exposes helper methods for reading repo files, checking languages, and writing fixes back to GitHub.
 
-### Available Test Modules
+4. Modules under `github_linter/tests/` provide the actual repository rules.
+   - They are imported in `github_linter/tests/__init__.py`.
+   - Each module declares `CATEGORY`, `LANGUAGES`, and `DEFAULT_CONFIG`.
+   - Each module contributes `check_*` and optional `fix_*` functions.
+
+5. File and workflow templates used by fixes live under `github_linter/fixes/`.
+   - Fix functions typically read these templates and commit them into the target repository with `RepoLinter.create_or_update_file()`.
+
+### Execution model
+
+For each selected repository, the CLI creates a `RepoLinter` and runs each enabled module through `RepoLinter.run_module()`.
+
+- Module config defaults are merged in before execution.
+- Language filtering happens before a module runs.
+- Every `check_*` function in the module is executed first.
+- If `--fix` is enabled, every `fix_*` function is then executed as part of the same module pass.
+- Check/fix execution can be narrowed with `--module` and `--check`.
+- Skip exceptions such as archived/private/protected repositories are used as normal control flow and are swallowed by the runner.
+
+This means a typical workflow is:
+
+1. Run checks across all or some repositories.
+2. Review the report.
+3. Re-run with `--fix` to apply the module fixes that correspond to the same problem space.
+
+The code does not enforce one exact `check_*` to `fix_*` pairing by name. Instead, checks and fixes are grouped by module and category, so a module usually contains the validation and remediation logic for the same repository concern.
+
+### Available Modules
 
 - `branch_protection` - Validates and configures branch protection on default branches
 - `codeowners` - Validates CODEOWNERS files
@@ -72,13 +106,21 @@ github_linter is a Python tool for auditing GitHub repositories at scale. It sca
 - `security_md` - Checks for SECURITY.md
 - `terraform` - Checks Terraform provider configurations
 
-### Module Language Filtering
+### Repository selection and filtering
+
+- Repositories are selected from CLI flags and/or `linter.owner_list` in config.
+- If no owner is supplied, the current authenticated user is used.
+- `--module` limits which modules are enabled.
+- `--check` filters the `check_*` and `fix_*` function names within enabled modules.
+- `--list-repos` prints the resolved repo set without running modules.
+
+### Module language filtering
 
 Modules declare which languages they apply to via the `LANGUAGES` attribute:
 
-- Use `["all"]` for modules that apply to all repositories
-- Use specific languages (e.g., `["python"]`, `["rust"]`) to run only on repos with those languages
-- Language detection is based on GitHub's automatic language detection
+- Use `["all"]` for modules that apply to every repository.
+- Use specific languages such as `["python"]` or `["terraform"]` to restrict execution.
+- Language detection comes from GitHub's repository language API, not local file inspection.
 
 ### Configuration
 
@@ -87,7 +129,7 @@ Configuration file locations (in priority order):
 1. `./github_linter.json` (local directory)
 2. `~/.config/github_linter.json` (user config)
 
-Each module can define `DEFAULT_CONFIG` which gets merged with user configuration.
+Each module can define `DEFAULT_CONFIG`, which is merged into the active config before the module runs. That lets modules ship sane defaults while still allowing overrides in the JSON config file.
 
 #### Branch Protection Configuration
 
