@@ -17,6 +17,7 @@ from . import (
     homebrew,  # noqa: F401
     issues,  # noqa: F401
     mkdocs,  # noqa: F401
+    python,  # noqa: F401
     pyproject,  # noqa: F401
     security_md,  # noqa: F401
     terraform,  # noqa: F401
