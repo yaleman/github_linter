@@ -84,15 +84,21 @@ def validate_readme_configured(
         repo.error(CATEGORY, "No 'readme' field in [project] section of config")
         return False
 
-    expected_readme = repo.config[CATEGORY]["readme"]
-
     project_readme = project_object["readme"]
-    if project_readme != expected_readme:
+    if not isinstance(project_readme, str):
         repo.error(
             CATEGORY,
-            f"Readme invalid - should be {expected_readme}, is {project_readme}",
+            f"Readme invalid - expected a string path, found {type(project_readme).__name__}",
         )
         return False
+
+    if repo.cached_get_file(project_readme) is None:
+        repo.error(
+            CATEGORY,
+            f"Readme invalid - file not found: {project_readme}",
+        )
+        return False
+
     return True
 
 
@@ -167,11 +173,43 @@ def check_pyproject_toml(
     validate_pyproject_authors(repo, project)
     # TODO: make this its own check
     validate_project_name(repo, project)
+    validate_readme_configured(repo, project)
 
     if "urls" in project:
         for url in project["urls"]:
             logger.debug("URL: {} - {}", url, project["urls"][url])
     return None
+
+
+def fix_pyproject_readme(repo: RepoLinter) -> None:
+    """ensures the project readme points to a file that exists"""
+    pyproject = repo.load_pyproject()
+    pyproject_file = repo.cached_get_file("pyproject.toml")
+
+    if pyproject is None or pyproject_file is None:
+        logger.info("No pyproject file found in repo {}", repo.repository.full_name)
+        return
+
+    project = pyproject.get("project")
+    if not isinstance(project, dict):
+        logger.info("No project section found in pyproject.toml for {}", repo.repository.full_name)
+        return
+
+    project_readme = project.get("readme")
+    if isinstance(project_readme, str) and repo.cached_get_file(project_readme) is not None:
+        logger.debug("Readme path already valid in pyproject.toml: {}", project_readme)
+        return
+
+    expected_readme = repo.config[CATEGORY]["readme"]
+    project["readme"] = expected_readme
+    result = repo.create_or_update_file(
+        "pyproject.toml",
+        tomli_w.dumps(pyproject),
+        pyproject_file,
+        "Updated project.readme in pyproject.toml",
+    )
+    if result:
+        repo.fix(CATEGORY, f"Updated pyproject.toml readme setting - commit url {result}")
 
 
 # TODO: moving away from flit, don't need this
