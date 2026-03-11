@@ -198,13 +198,27 @@ class RepoLinter:
         else:
             target_branch = self.repository.get_branch(self.repository.default_branch)
 
-        commit_result = self.repository.update_file(
-            path=filepath,
-            message=message,
-            content=newfile_contents,
-            sha=blobsha,
-            branch=target_branch.name,
-        )
+        try:
+            commit_result = self.repository.update_file(
+                path=filepath,
+                message=message,
+                content=newfile_contents,
+                sha=blobsha,
+                branch=target_branch.name,
+            )
+        except GithubException as error_message:
+            if error_message.status == 409:
+                if "must be made through a pull request" in (error_message.message or "").lower():
+                    logger.warning("This is likely because the default branch is protected")
+                    raise SkipOnProtected("Error when trying to update file due to branch protection.")
+                else:
+                    logger.error(
+                        "Failed when trying to update file '{}' in {}: {}",
+                        filepath,
+                        self.repository.full_name,
+                        error_message.message,
+                    )
+                    raise error_message
         if "commit" not in commit_result:
             return "Unknown Commit URL"
 

@@ -14,6 +14,11 @@ from ..repolinter import RepoLinter
 CATEGORY = "branch_protection"
 LANGUAGES = ["all"]
 
+GITHUB_REQUEST_HEADERS = headers = {
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+}
+
 
 class DefaultConfig(BaseModel):
     """Configuration for branch protection module"""
@@ -211,11 +216,8 @@ def _get_rulesets(repo: RepoLinter) -> List[Dict[str, Any]]:
     try:
         # First, get the list of rulesets (summary view)
         list_url = f"{repo.repository.url}/rulesets"
-        headers = {
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        }
-        _, response = repo.repository._requester.requestJsonAndCheck("GET", list_url, headers=headers)
+
+        _, response = repo.repository._requester.requestJsonAndCheck("GET", list_url, headers=GITHUB_REQUEST_HEADERS)
         ruleset_summaries = response if isinstance(response, list) else []
 
         logger.debug(
@@ -342,14 +344,11 @@ def _create_ruleset(
 
     try:
         url = f"{repo.repository.url}/rulesets"
-        headers = {
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        }
+
         _, response = repo.repository._requester.requestJsonAndCheck(
             "POST",
             url,
-            headers=headers,
+            headers=GITHUB_REQUEST_HEADERS,
             input=ruleset_data,
         )
         return response if isinstance(response, dict) else None
