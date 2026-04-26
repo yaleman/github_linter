@@ -3,8 +3,9 @@
 from io import StringIO
 import json
 import sys
-from typing import List
+from typing import List, cast
 
+from github.ContentFile import ContentFile
 from github.GithubException import GithubException, UnknownObjectException
 from loguru import logger
 import pydantic
@@ -133,8 +134,11 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
             required_package_managers.append(package_manager)
 
     try:
-        get_workflows = repo.repository.get_dir_contents(".github/workflows")
+        get_workflows = repo.repository.get_contents(".github/workflows")
         if get_workflows:
+            if not isinstance(get_workflows, list):
+                get_workflows = [get_workflows]
+            get_workflows = cast(List[ContentFile], get_workflows)
             logger.debug("List of files in .github/workflows: {}", get_workflows)
             for file_details in get_workflows:
                 if file_details.path.endswith(".yml"):

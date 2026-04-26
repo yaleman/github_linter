@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 import sys
 from types import ModuleType
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import difflib
 from github.ContentFile import ContentFile
@@ -239,7 +239,7 @@ class RepoLinter:
                 return [
                     fileresult,
                 ]
-            return fileresult  # type: ignore [invalid-return-type]
+            return cast(List[ContentFile], fileresult)
         except GithubException as exc:
             if exc.status == 404:
                 logger.debug("Couldn't find file, returning None - exception={}", exc)

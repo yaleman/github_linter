@@ -40,10 +40,10 @@ def get_repo_pages_data(repo: RepoLinter) -> PagesData:
     github = GithubLinter()
     github.do_login()
     url = f"/repos/{repo.repository.full_name}/pages"
-    if hasattr(github.github, "_Github__requester") and github.github._Github__requester is not None:
-        pagesdata = github.github._Github__requester.requestJson(verb="GET", url=url)  # type: ignore[possibly-missing-attribute]
-    else:
+    requester = getattr(github.github, "_Github__requester", None)
+    if requester is None:
         raise ValueError("Github object doesn't have a requester, can't get pages data.")
+    pagesdata = requester.requestJson(verb="GET", url=url)
 
     if len(pagesdata) != 3:
         raise ValueError(f"Got {len(pagesdata)} from requesting the repo pages endpoint ({url}).")
