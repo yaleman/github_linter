@@ -8,7 +8,7 @@ name: mypy
   pull_request:
 
 jobs:
-  mypy:
+  mypy: # named like this for historical reasons, due to github rulesets
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -17,6 +17,6 @@ jobs:
         with:
           activate-environment: "true"
           github-token: ${{ github.token }}
-      - name: Running mypy
+      - name: Running type checking
         run: |
-          uv run mypy --strict $(basename $(pwd) | sed -E 's/-/_/g') tests/
+          uv run ty check

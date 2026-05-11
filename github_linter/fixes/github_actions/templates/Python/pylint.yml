@@ -19,4 +19,4 @@ jobs:
           github-token: ${{ github.token }}
       - name: Running tests
         run: |
-          uv run ruff check $(basename $(pwd) | sed -E 's/-/_/g') tests
+          uv run ruff check
