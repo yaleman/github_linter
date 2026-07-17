@@ -65,5 +65,5 @@ dev = [
     "ty>=0.0.58",
     "types-pytz>=2026.2.0.20260518",
     "types-pyyaml>=6.0.12.20260518",
-    "types-requests>=2.33.0.20260518",
+    "types-requests>=2.33.0.20260712",
 ]
