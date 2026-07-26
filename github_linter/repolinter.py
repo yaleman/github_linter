@@ -2,7 +2,7 @@
 
 import difflib
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
@@ -32,21 +32,21 @@ def add_from_dict(source: dict[str, Any], dest: dict[str, Any]) -> None:
     if not source:
         return
     logger.debug("Processing {}, {}", source, type(source))
-    for key in source:
-        logger.debug("Adding key={} {}", key, type(key))
+    for key, value in source.items():
+        logger.debug("Adding key={} value={} ", key, value)
         logger.debug("{}, {}", dest, type(dest))
 
         if hasattr(dest, str(key)):
-            dest[key] = source[key]
+            dest[key] = value
         elif isinstance(dest, dict):
             logger.debug("Checking for {} in {}", key, dest)
             if key not in dest:
-                dest[key] = source[key]
+                dest[key] = value
                 continue
 
         # TODO: work out how to do this with a pydantic BaseModel
         if isinstance(dest[key], dict):
-            add_from_dict(source[key], dest[key])
+            add_from_dict(value, dest[key])
 
 
 def get_filtered_commands(checklist: list[str], check_filter: tuple[str] | None) -> list[str]:
@@ -83,7 +83,7 @@ class RepoLinter:
         self.repository3 = repo3
 
         self.timings = {
-            "start_time": datetime.now(),
+            "start_time": datetime.now(UTC),
             "end_time": None,
         }
 
@@ -146,13 +146,12 @@ class RepoLinter:
         Returns the commit URL.
         """
 
-        if self.ignore_protected:
-            if self.repository3.branch(self.repository3.default_branch).protected:
-                logger.warning(
-                    "Can't update file on  {} as the default branch is protected",
-                    self.repository3.full_name,
-                )
-                raise SkipOnProtected("Can't make changes to a protected branch")
+        if self.ignore_protected and self.repository3.branch(self.repository3.default_branch).protected:
+            logger.warning(
+                "Can't update file on  {} as the default branch is protected",
+                self.repository3.full_name,
+            )
+            raise SkipOnProtected("Can't make changes to a protected branch")
 
         if not message:
             message = f"github-linter updating file: {filepath}"
@@ -244,7 +243,7 @@ class RepoLinter:
                 return []
             else:
                 logger.error("GithubException calling get_contents({})", path)
-                raise exc
+                raise
         except UnknownObjectException as exc:
             logger.debug("UnknownObjectException calling get_contents({}): {}", path, exc)
             return []
@@ -360,15 +359,14 @@ class RepoLinter:
         """runs a given module"""
         self.load_module_config(module)
 
-        if hasattr(module, "LANGUAGES") and "ALL" not in module.LANGUAGES:
-            if not self.module_language_check(module):
-                logger.debug(
-                    "Module {} not required after language check, module langs: {}, repo langs: {}",
-                    module.__name__.split(".")[-1],
-                    module.LANGUAGES,
-                    self.repository.get_languages(),
-                )
-                return False
+        if hasattr(module, "LANGUAGES") and "ALL" not in module.LANGUAGES and not self.module_language_check(module):
+            logger.debug(
+                "Module {} not required after language check, module langs: {}, repo langs: {}",
+                module.__name__.split(".")[-1],
+                module.LANGUAGES,
+                self.repository.get_languages(),
+            )
+            return False
 
         for check in sorted(get_filtered_commands(dir(module), check_filter)):
             if check.startswith("check_"):
@@ -385,19 +383,18 @@ class RepoLinter:
                     NoChangeNeeded,
                 ):
                     pass
-            if do_fixes:
-                if check.startswith("fix_"):
-                    logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
-                    try:
-                        getattr(module, check)(repo=self)
-                    except (NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic, SkipOnProtected):
-                        pass
+            if do_fixes and check.startswith("fix_"):
+                logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
+                try:
+                    getattr(module, check)(repo=self)
+                except (NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic, SkipOnProtected):
+                    pass
         return True
 
     def requires_language(self, language: str) -> None:
         """raises a skip exception if the repository doesn't have this language"""
         if self.languages is None:
-            self.languages = [str(key) for key in self.repository.get_languages().keys()]
+            self.languages = [str(key) for key in self.repository.get_languages()]
         logger.debug("Languages in repo: {}", ",".join(self.languages))
         if language not in self.languages:
             logger.debug("Didn't find {} in language list, raising SkipNoLanguage")

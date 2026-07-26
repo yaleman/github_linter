@@ -20,7 +20,7 @@ def load_yaml_file(
     try:
         filecontents: dict[Any, Any] = YAML(pure=True).load(fileresult.decoded_content.decode("utf-8"))
         return filecontents
-    except Exception as error_message:
+    except Exception as error_message:  # noqa: BLE001
         logger.error("Failed to parse yaml file {}: {}", filename, error_message)
         # TODO: Catch a better exception in loaders.load_yaml_file
     return None

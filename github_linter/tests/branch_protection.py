@@ -120,11 +120,11 @@ def _get_available_checks_for_repo(repo: RepoLinter) -> set[str]:
                 # Extract job names from the 'jobs' section
                 jobs = workflow_data.get("jobs", {})
                 if isinstance(jobs, dict):
-                    for job_name in jobs.keys():
+                    for job_name in jobs:
                         available_checks.add(job_name)
                         logger.debug("Found check '{}' in workflow {}", job_name, getattr(content_file, "name", None) or "<unknown>")
 
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 logger.debug("Failed to parse workflow file {}: {}", getattr(content_file, "name", None) or "<unknown>", exc)
                 continue
 
@@ -138,7 +138,7 @@ def _get_available_checks_for_repo(repo: RepoLinter) -> set[str]:
         logger.debug("No .github/workflows directory found for {}", repo.repository.full_name)
     except GithubException as exc:
         logger.debug("Error accessing workflows for {}: {}", repo.repository.full_name, exc)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.error("Unexpected error getting available checks for {}: {}", repo.repository.full_name, exc)
 
     return available_checks
@@ -256,7 +256,7 @@ def _get_rulesets(repo: RepoLinter) -> list[dict[str, Any]]:
         else:
             logger.error("Error fetching rulesets for {}: {}", repo.repository.full_name, exc)
             return []
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.error("Unexpected error fetching rulesets: {}", exc)
         return []
 
@@ -360,7 +360,7 @@ def _create_ruleset(
             exc.data.get("message", str(exc)) if hasattr(exc, "data") and isinstance(exc.data, dict) else str(exc),
         )
         return None
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.error("Unexpected error creating ruleset: {}", exc)
         return None
 

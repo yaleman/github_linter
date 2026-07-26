@@ -31,7 +31,7 @@ DEFAULT_CONFIG: DefaultConfig = {
 WrappedFunction = TypeVar("WrappedFunction", bound=Callable[[RepoLinter], None])
 
 
-def should_this_run(func: WrappedFunction) -> WrappedFunction:
+def should_this_run(func: WrappedFunction) -> WrappedFunction:  # noqa: UP047
     """if the repo name doesn't match then don't run"""
 
     def inner(repo: RepoLinter) -> None:

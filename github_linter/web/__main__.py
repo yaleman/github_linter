@@ -1,6 +1,5 @@
 """cli for the web interface for the project that outgrew its intention"""
 
-
 import click
 import uvicorn
 

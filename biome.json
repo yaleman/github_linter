@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.11/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
   "files": {
     "includes": [
       "github_linter/**/*.js",
@@ -26,7 +26,9 @@
   },
   "overrides": [
     {
-      "includes": ["*.vue"],
+      "includes": [
+        "*.vue"
+      ],
       "linter": {
         "enabled": true
       },

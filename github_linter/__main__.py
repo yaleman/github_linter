@@ -1,6 +1,5 @@
 """cli bits"""
 
-
 import click
 from loguru import logger
 

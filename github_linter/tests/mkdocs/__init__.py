@@ -3,7 +3,6 @@
 import json
 from difflib import unified_diff
 from io import BytesIO
-from typing import Tuple
 
 from loguru import logger
 from ruyaml import YAML
@@ -39,10 +38,9 @@ def needs_mkdocs_workflow(repo: RepoLinter) -> bool:
 
 def check_mkdocs_workflow_exists(repo: RepoLinter) -> None:
     """checks that the mkdocs github actions workflow exists"""
-    if needs_mkdocs_workflow(repo):
-        if not repo.cached_get_file(repo.config[CATEGORY]["workflow_filepath"], clear_cache=True):
-            repo.error(CATEGORY, "MKDocs github actions configuration missing.")
-        # TODO: check if the file differs from expected.
+    if needs_mkdocs_workflow(repo) and not repo.cached_get_file(repo.config[CATEGORY]["workflow_filepath"], clear_cache=True):
+        repo.error(CATEGORY, "MKDocs github actions configuration missing.")
+    # TODO: check if the file differs from expected.
 
 
 def fix_missing_mkdocs_workflow(repo: RepoLinter) -> None:
@@ -100,8 +98,8 @@ def generate_expected_config(repo: RepoLinter) -> tuple[str, bytes]:
         if pagedata["html_url"] is not None:
             required_fields["site_url"] = pagedata["html_url"]
 
-    for field in required_fields:
-        mkdocs_file[field] = required_fields[field]
+    for key, value in required_fields.items():
+        mkdocs_file[key] = value
 
     writer = BytesIO()
     YAML().dump(mkdocs_file, writer)

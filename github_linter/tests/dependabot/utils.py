@@ -1,6 +1,5 @@
 """utils for github_actions.dependabot"""
 
-
 import json5 as json
 from loguru import logger
 from ruyaml import YAML
@@ -50,7 +49,7 @@ def load_dependabot_config_file(
         for update in retval.updates:
             logger.debug("Package: {}", update.package_ecosystem)
         return retval
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.error("Failed to parse dependabot config: {}", exc)
         repo.error(category, f"Failed to parse dependabot config: {exc}")
     return None

@@ -6,7 +6,7 @@ import time
 from collections import deque
 from datetime import datetime
 from types import ModuleType
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import github3
 import json5 as json
@@ -268,12 +268,11 @@ def filter_by_repo(repo_list: list[Repository], repo_filters: list[str]) -> list
                 logger.debug("Adding {} based on name match", repository)
             continue
         for repo_filter in repo_filters:
-            if "*" in repo_filter:
-                if wildcard_matcher.match(repository.name, repo_filter):
-                    if repository not in retval:
-                        retval.append(repository)
-                    logger.debug("Adding {} based on wildcard match", repository)
-                    continue
+            if "*" in repo_filter and wildcard_matcher.match(repository.name, repo_filter):
+                if repository not in retval:
+                    retval.append(repository)
+                logger.debug("Adding {} based on wildcard match", repository)
+                continue
 
     return retval
 

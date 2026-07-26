@@ -1,7 +1,7 @@
 """generic tests"""
 
 from io import StringIO
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException
@@ -18,7 +18,7 @@ LANGUAGES = [
 ]
 CATEGORY = "generic"
 
-OptionalListOrStr = Optional[list[str] | str]
+OptionalListOrStr = list[str] | str | None
 
 
 class FundingDict(TypedDict):
@@ -79,7 +79,7 @@ def generate_funding_file(input_data: FundingDict) -> str:
     """generates an object of a funding file based on a FundingDict"""
     output_data = {}
 
-    for key in input_data.keys():
+    for key in input_data:
         if input_data.get(key) is not None:
             output_data[key] = input_data.get(key)
 

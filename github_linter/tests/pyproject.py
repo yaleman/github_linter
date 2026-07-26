@@ -119,13 +119,12 @@ def validate_scripts(
                 f"Script has invalid module: expected {repo.repository.name}, found {script_def_module}",
             )
         # check it's pulling from __main__
-        if len(script_def_module.split(".") > 1):
-            if script_def_module.split(".")[1].split(":") != "__main__":
-                repo.error(
-                    CATEGORY,
-                    f"Script has invalid module: expected __main__, found {script_def_module}",
-                )
-                retval = False
+        if len(script_def_module.split(".") > 1) and script_def_module.split(".")[1].split(":") != "__main__":
+            repo.error(
+                CATEGORY,
+                f"Script has invalid module: expected __main__, found {script_def_module}",
+            )
+            retval = False
     return retval
 
 

@@ -1,6 +1,5 @@
 """github_linter dependabot tests constants"""
 
-
 DEPENDABOT_SCHEDULE_INTERVALS = [
     "daily",
     "weekly",  # monday by default, or schedule.day if you want to change it

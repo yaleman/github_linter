@@ -4,7 +4,7 @@ import os.path
 import sys
 from json import JSONDecodeError
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import jinja2.exceptions
 import json5 as json

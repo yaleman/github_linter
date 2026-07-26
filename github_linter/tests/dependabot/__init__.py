@@ -3,7 +3,7 @@
 import json
 import sys
 from io import StringIO
-from typing import List, cast
+from typing import cast
 
 import pydantic
 from github.ContentFile import ContentFile

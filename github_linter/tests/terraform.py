@@ -103,8 +103,7 @@ def check_providers_for_modules(
 
         # make a list of the providers
         for provider in required_providers:
-            for provider_name in provider:
-                provider_list.append(provider_name)
+            provider_list.extend(provider)
             logger.debug(json.dumps(provider))
     logger.debug("Provider list: {}", provider_list)
     if not provider_list:
