@@ -21,7 +21,7 @@ format:
     uv run ruff check tests github_linter
 
 jslint:
-    biome check --verbose
+    mise exec -- biome check --verbose
 
 docker_build:
     docker build -t 'ghcr.io/yaleman/github_linter:latest' \

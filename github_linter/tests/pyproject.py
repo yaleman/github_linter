@@ -1,16 +1,14 @@
 """pyproject.toml checks"""
 
 import json
+from typing import Any, TypedDict
 
-from typing import Any, Dict, List, TypedDict
-
-# from github.Repository import Repository
-
-from loguru import logger
 import tomli_w
 
-from github_linter.exceptions import NoChangeNeeded
+# from github.Repository import Repository
+from loguru import logger
 
+from github_linter.exceptions import NoChangeNeeded
 
 from ..repolinter import RepoLinter
 
@@ -21,7 +19,7 @@ LANGUAGES = ["python"]
 DefaultConfig = TypedDict(
     "DefaultConfig",
     {
-        "build-system": List[str],
+        "build-system": list[str],
         "readme": str,
     },
 )
@@ -38,7 +36,7 @@ DEFAULT_CONFIG: DefaultConfig = {
 
 def validate_pyproject_authors(
     repo: RepoLinter,
-    project_object: Dict[str, Any],
+    project_object: dict[str, Any],
 ) -> None:
     """checks the authors exist and are valid"""
 
@@ -57,7 +55,7 @@ def validate_pyproject_authors(
 
 def validate_project_name(
     repo: RepoLinter,
-    project_object: Dict[str, Any],
+    project_object: dict[str, Any],
 ) -> bool:
     """validates that the project name matches the repo name"""
 
@@ -77,7 +75,7 @@ def validate_project_name(
 
 def validate_readme_configured(
     repo: RepoLinter,
-    project_object: Dict[str, Any],
+    project_object: dict[str, Any],
 ) -> bool:
     """validates that the project has a readme configured"""
     if "readme" not in project_object:
@@ -104,7 +102,7 @@ def validate_readme_configured(
 
 def validate_scripts(
     repo: RepoLinter,
-    project_object: Dict[str, Any],
+    project_object: dict[str, Any],
 ) -> bool:
     """validates that the project has a readme configured"""
 
@@ -121,13 +119,12 @@ def validate_scripts(
                 f"Script has invalid module: expected {repo.repository.name}, found {script_def_module}",
             )
         # check it's pulling from __main__
-        if len(script_def_module.split(".") > 1):
-            if script_def_module.split(".")[1].split(":") != "__main__":
-                repo.error(
-                    CATEGORY,
-                    f"Script has invalid module: expected __main__, found {script_def_module}",
-                )
-                retval = False
+        if len(script_def_module.split(".") > 1) and script_def_module.split(".")[1].split(":") != "__main__":
+            repo.error(
+                CATEGORY,
+                f"Script has invalid module: expected __main__, found {script_def_module}",
+            )
+            retval = False
     return retval
 
 
@@ -137,21 +134,21 @@ def check_pyproject_build_backend(repo: RepoLinter) -> None:
 
     if not pyproject:
         logger.error("pyproject.toml not found")
-        return None
+        return
 
     if "build-system" not in pyproject:
         logger.error("Can't find build_backend")
         logger.debug(json.dumps(pyproject, indent=4, ensure_ascii=False))
-        return None
+        return
     if "build-backend" not in pyproject["build-system"]:
         logger.error("Can't find build-system.build-backend.")
         logger.debug(json.dumps(pyproject["build-system"], indent=4, ensure_ascii=False))
-        return None
+        return
 
     backend = pyproject["build-system"]["build-backend"]
 
     logger.warning("Found build-backend.build-system in pyproject.toml: {}", backend)
-    return None
+    return
 
 
 def check_pyproject_toml(
@@ -433,7 +430,7 @@ def fix_mypy_pydantic_plugin(repo: RepoLinter) -> None:
         check_mypy_pydantic_plugin(repo)
     except NoChangeNeeded:
         logger.debug("No change needed for fix_mypy_pydantic_plugin")
-        return None
+        return
     pyproject = repo.load_pyproject()
     pyproject_file = repo.cached_get_file("pyproject.toml")
     if pyproject is None or pyproject_file is None:

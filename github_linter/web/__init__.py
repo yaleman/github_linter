@@ -1,26 +1,25 @@
 """web interface for the project that outgrew its intention"""
 
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager
 from pathlib import Path
 from time import time
-from typing import Any, AsyncGenerator, Generator, List, Optional, Union, Tuple
+from typing import Annotated, Any
 
-from fastapi import BackgroundTasks, FastAPI, Depends, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse, Response
+import sqlalchemy
+import sqlalchemy.dialects.sqlite
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from github.Repository import Repository
 from jinja2 import Environment, PackageLoader, select_autoescape
 from loguru import logger
-from pydantic import ConfigDict, BaseModel
-import sqlalchemy
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import declarative_base
 
 # , sessionmaker
-from sqlalchemy.ext.asyncio import async_sessionmaker
-
-import sqlalchemy.dialects.sqlite
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
 
 __all__ = [
     "get_all_user_repos",
@@ -108,17 +107,17 @@ class RepoData(BaseModel):
 
     full_name: str
     name: str
-    owner: Optional[str] = None
+    owner: str | None = None
     default_branch: str
     archived: bool
-    description: Optional[str] = None
+    description: str | None = None
     fork: bool
     open_issues: int
     open_prs: int
     last_updated: float
     private: bool
-    organization: Optional[str] = None
-    parent: Optional[str] = None
+    organization: str | None = None
+    parent: str | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -212,7 +211,7 @@ async def update_stored_repos() -> None:
         all_repos_query = sqlalchemy.select(SQLRepos)
         all_repos_execute = await conn.execute(all_repos_query)
         if all_repos_execute is None:
-            return None
+            return
         allrepos_rows = all_repos_execute.fetchall()
         for dbrepo in allrepos_rows:
             logger.debug("Checking {} for removal.", dbrepo.full_name)
@@ -238,7 +237,7 @@ async def cron_update() -> None:
 
 
 @app.get("/favicon.svg", response_model=None)
-async def favicon() -> Union[Response, FileResponse]:
+async def favicon() -> Response | FileResponse:
     """return a"""
     icon_file = Path(Path(__file__).resolve().parent.as_posix() + "/images/github.svg")
     if icon_file.exists():
@@ -247,7 +246,7 @@ async def favicon() -> Union[Response, FileResponse]:
 
 
 @app.get("/images/{filename}", response_model=None)
-async def images(filename: str) -> Union[Response, FileResponse]:
+async def images(filename: str) -> Response | FileResponse:
     """return an image"""
     icon_file = Path(Path(__file__).resolve().parent.as_posix() + f"/images/{filename}")
     if icon_file.exists():
@@ -256,7 +255,7 @@ async def images(filename: str) -> Union[Response, FileResponse]:
 
 
 @app.get("/css/{filename:str}", response_model=None)
-async def css_file(filename: str) -> Union[Response, FileResponse]:
+async def css_file(filename: str) -> Response | FileResponse:
     """css returner"""
     cssfile = Path(Path(__file__).resolve().parent.as_posix() + f"/css/{filename}")
     if cssfile.exists():
@@ -265,7 +264,7 @@ async def css_file(filename: str) -> Union[Response, FileResponse]:
 
 
 @app.get("/github_linter.js", response_model=None)
-async def github_linter_js() -> Union[Response, FileResponse]:
+async def github_linter_js() -> Response | FileResponse:
     """load the js"""
     jspath = Path(Path(__file__).resolve().parent.as_posix() + "/github_linter.js")
     if jspath.exists():
@@ -279,7 +278,7 @@ async def db_update_running() -> bool:
     async with engine.begin() as conn:
         try:
             stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name == "update_running")
-            result: sqlalchemy.engine.result.Result[Tuple[Any]] = await conn.execute(stmt)
+            result: sqlalchemy.engine.result.Result[tuple[Any]] = await conn.execute(stmt)
 
             if result is None:
                 logger.debug("No response from db")
@@ -302,12 +301,12 @@ async def db_update_running() -> bool:
                 )
                 await set_db_update_running(False)
                 return False
-        except Exception as error_message:
+        except Exception as error_message:  # noqa: BLE001
             logger.warning(f"Failed to pull update_running: {error_message}")
             try:
                 await set_db_update_running(False)
                 logger.success("Set it to False instead")
-            except Exception as error:
+            except Exception as error:  # noqa: BLE001
                 logger.error(
                     "Tried to set update_running to False but THAT went wrong too! {}",
                     error,
@@ -331,7 +330,7 @@ async def set_db_update_running(value: bool) -> bool:
             await conn.execute(do_update)
             await conn.commit()
             return True
-        except Exception as error_message:
+        except Exception as error_message:  # noqa: BLE001
             logger.warning(f"Failed to set update_running to {value}: {error_message}")
             return False
 
@@ -343,7 +342,7 @@ async def db_updated() -> int:
     async with engine.begin() as conn:
         try:
             stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name == "last_updated")
-            result: sqlalchemy.engine.result.Result[Tuple[Any]] = await conn.execute(stmt)
+            result: sqlalchemy.engine.result.Result[tuple[Any]] = await conn.execute(stmt)
 
             if result is None:
                 logger.debug("No response from db")
@@ -357,13 +356,13 @@ async def db_updated() -> int:
             data = MetaData.model_validate(row)
             if "." in data.value:
                 return int(data.value.split(".")[0])
-        except Exception as error_message:
+        except Exception as error_message:  # noqa: BLE001
             logger.warning(f"Failed to pull last_updated: {error_message}")
             try:
                 await set_update_time(-1, conn)
                 await conn.commit()
                 logger.success("Set it to -1 instead")
-            except Exception as error:
+            except Exception as error:  # noqa: BLE001
                 logger.error("Tried to set it to -1 but THAT went wrong too! {}", error)
         return -1
 
@@ -404,9 +403,7 @@ async def get_health(
 
 
 @app.get("/repos")
-async def get_repos(
-    session: AsyncSession = Depends(get_async_session),
-) -> List[RepoDataSimple]:
+async def get_repos(session: Annotated[AsyncSession, Depends(get_async_session)]) -> list[RepoDataSimple]:
     """endpoint to provide the cached repo list"""
 
     try:
@@ -422,7 +419,7 @@ async def get_repos(
 @app.get("/", response_model=None)
 async def root(
     background_tasks: BackgroundTasks,
-) -> Union[Response, HTMLResponse]:
+) -> Response | HTMLResponse:
     """homepage"""
     env = Environment(
         loader=PackageLoader(

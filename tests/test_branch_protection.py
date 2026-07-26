@@ -1,6 +1,5 @@
 """Tests for branch protection module"""
 
-from typing import List
 from unittest.mock import Mock
 
 from github_linter.repolinter import RepoLinter
@@ -272,7 +271,7 @@ def test_validate_required_checks_empty_required() -> None:
     # Create mock repository
     mock_repo = Mock(spec=RepoLinter)
 
-    required_checks: List[str] = []
+    required_checks: list[str] = []
     available_checks: set[str] = {"pytest", "mypy"}
 
     # Call validation - should do nothing

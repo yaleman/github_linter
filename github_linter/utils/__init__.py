@@ -1,17 +1,15 @@
 """utility functions"""
 
-from json import JSONDecodeError
-from typing import Any, Dict, Optional
-
 import os.path
-from pathlib import Path
 import sys
+from json import JSONDecodeError
+from pathlib import Path
+from typing import Any
 
-from jinja2 import Environment, PackageLoader, select_autoescape
 import jinja2.exceptions
 import json5 as json
+from jinja2 import Environment, PackageLoader, select_autoescape
 from loguru import logger
-
 
 from ..defaults import DEFAULT_LINTER_CONFIG
 
@@ -38,7 +36,7 @@ def get_fix_file_path(category: str, filename: str) -> Path:
     return fixes_path
 
 
-def load_config() -> Dict[str, Any]:
+def load_config() -> dict[str, Any]:
     """loads config"""
     for configfile in [
         Path("./github_linter.json"),
@@ -54,7 +52,7 @@ def load_config() -> Dict[str, Any]:
             continue
         try:
             with configfile.open(encoding="utf8") as file_handle:
-                config: Dict[str, Any] = json.load(file_handle)
+                config: dict[str, Any] = json.load(file_handle)
             logger.debug("Using config file {}", configfile.as_posix())
             if "linter" not in config:
                 config["linter"] = {}
@@ -73,9 +71,9 @@ def load_config() -> Dict[str, Any]:
 def generate_jinja2_template_file(
     module: str,
     filename: str,
-    context: Optional[Dict[str, Any]],
+    context: dict[str, Any] | None,
     module_path: str = ".",
-) -> Optional[str]:
+) -> str | None:
     """generates a file"""
 
     if context is None:

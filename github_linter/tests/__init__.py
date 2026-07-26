@@ -2,10 +2,9 @@
 
 import sys
 from types import ModuleType
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from loguru import logger
-
 
 from . import (
     branch_protection,  # noqa: F401
@@ -17,20 +16,20 @@ from . import (
     homebrew,  # noqa: F401
     issues,  # noqa: F401
     mkdocs,  # noqa: F401
-    python,  # noqa: F401
     pyproject,  # noqa: F401
+    python,  # noqa: F401
     security_md,  # noqa: F401
     terraform,  # noqa: F401
 )
 
 CATEGORY = "tests"
 LANGUAGES = ["all"]
-DEFAULT_CONFIG: Dict[str, Any] = {}
+DEFAULT_CONFIG: dict[str, Any] = {}
 
 
-def load_modules(module_allowlist: Optional[List[str]] = None) -> Dict[str, ModuleType]:
+def load_modules(module_allowlist: list[str] | None = None) -> dict[str, ModuleType]:
     """loads the modules"""
-    module_list: Dict[str, Any] = {}
+    module_list: dict[str, Any] = {}
 
     for module in sys.modules:
         if module.startswith(__name__) and len(module.split(".")) == 3:

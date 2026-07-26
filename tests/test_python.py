@@ -5,8 +5,8 @@ from unittest.mock import Mock
 from github_linter.repolinter import RepoLinter
 from github_linter.tests.python import (
     CATEGORY,
-    PLACEHOLDER_TEST_PATH,
     PLACEHOLDER_TEMPLATE_PATH,
+    PLACEHOLDER_TEST_PATH,
     _has_pytest_test,
     check_has_a_pytest_test,
     fix_has_a_pytest_test,

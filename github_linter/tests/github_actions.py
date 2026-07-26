@@ -17,16 +17,16 @@ templates/Dockerfile/build_container.yml would be used when running the fix
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, TypedDict
 
 import json5 as json
 from loguru import logger
 from pydantic import BaseModel, field_validator
 
 from github_linter.fixes.github_actions import (
+    VALID_DEFAULT_WORKFLOW_PERMISSIONS,
     get_repo_default_workflow_permissions,
     set_repo_default_workflow_permissions,
-    VALID_DEFAULT_WORKFLOW_PERMISSIONS,
 )
 
 from ..loaders import load_yaml_file
@@ -41,7 +41,7 @@ LANGUAGES = ["all"]
 class DefaultConfig(BaseModel):
     """config typing for module config"""
 
-    tests_per_language: Dict[str, List[str]]
+    tests_per_language: dict[str, list[str]]
     # dev_packages: Dict[str, List[str]] # TODO: move this to pyproject.toml
     dependency_review: str
     default_workflow_permissions: str
@@ -243,7 +243,7 @@ def check_dependency_review_file(repo: RepoLinter) -> None:
     logger.debug(f"Dependency review action is up to date {filepaths['repo_file_path']}")
 
 
-def nested_get(haystack: Dict[str, Any], needle: str) -> Optional[Any]:
+def nested_get(haystack: dict[str, Any], needle: str) -> Any | None:
     """digs into the haystack looking for the needle, layers are like "one.two.three.four" """
     if "." not in needle:
         return haystack.get(needle)
@@ -290,7 +290,7 @@ def pylint_to_ruff_check_github_workflows(repo: RepoLinter) -> None:
 
     filename = ".github/workflows/pylint.yml"
 
-    workflow: Optional[Dict[str, Any]] = load_yaml_file(repo, filename)
+    workflow: dict[str, Any] | None = load_yaml_file(repo, filename)
     if workflow == {}:
         logger.debug("Couldn't find or load .github/workflows/pylint.yml")
         return
@@ -302,7 +302,7 @@ def pylint_to_ruff_check_github_workflows(repo: RepoLinter) -> None:
         logger.debug("No jobs in .github/workflows/pylint.yml")
         return
 
-    jobs: Dict[str, Any] = workflow["jobs"]
+    jobs: dict[str, Any] = workflow["jobs"]
     for job_name in jobs:
         logger.debug("job: {}", job_name)
 
@@ -311,7 +311,7 @@ def pylint_to_ruff_check_github_workflows(repo: RepoLinter) -> None:
         if "steps" not in job:
             logger.debug("Couldn't find steps for job {}", job_name)
             continue
-        steps: List[Dict[str, Any]] = job["steps"]
+        steps: list[dict[str, Any]] = job["steps"]
 
         for step_index, step in enumerate(steps):
             logger.info(step)

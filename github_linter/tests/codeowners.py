@@ -1,14 +1,16 @@
 """template test file"""
 
-from typing import TypedDict, Optional, Union, List, Dict
+from typing import TypedDict
+
 from loguru import logger
+
 from ..repolinter import RepoLinter
 
 
 class DefaultConfig(TypedDict):
     """config object"""
 
-    codeowners: Optional[Dict[str, Union[List[str], str]]]
+    codeowners: dict[str, list[str] | str] | None
     filepath: str
 
 

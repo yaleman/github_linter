@@ -1,30 +1,27 @@
 """goes through your repos and checks for things"""
 
-from collections import deque
-
-from datetime import datetime
 import itertools
-
 import os
 import time
+from collections import deque
+from datetime import datetime
 from types import ModuleType
-from typing import Any, Dict, Optional, List, Tuple
+from typing import Any
 
+import github3
 import json5 as json
-from loguru import logger
+import pydantic
+import pytz
+import wildcard_matcher
 from github import Github
 from github.Auth import Token as GithubAuthToken
 from github.ContentFile import ContentFile
 from github.Repository import Repository
-import github3
 from github3.repos import ShortRepository
-import pydantic
-import pytz
-import wildcard_matcher
+from loguru import logger
 
 from .repolinter import RepoLinter
 from .utils import load_config
-
 
 __version__ = "0.0.1"
 
@@ -53,10 +50,10 @@ class GithubLinter:
         self.github = self.do_login()
         self.github3 = self.do_login3()
 
-        self.current_repo: Optional[Repository] = None
-        self.report: Dict[str, Any] = {}
-        self.modules: Dict[str, ModuleType] = {}
-        self.filecache: Dict[str, Dict[str, Optional[ContentFile]]] = {}
+        self.current_repo: Repository | None = None
+        self.report: dict[str, Any] = {}
+        self.modules: dict[str, ModuleType] = {}
+        self.filecache: dict[str, dict[str, ContentFile | None]] = {}
 
         self.do_login3()
 
@@ -85,7 +82,7 @@ class GithubLinter:
             logger.debug("Using GITHUB_TOKEN environment variable for login.")
             self.github = Github(auth=GithubAuthToken(env_token))
             return self.github
-        if "github" in self.config and self.config["github"]:
+        if self.config.get("github"):
             if "ignore_auth" in self.config["github"] and self.config["github"]["ignore_auth"]:
                 self.github = Github()
                 return self.github
@@ -130,8 +127,7 @@ class GithubLinter:
                             now,
                             wait_time.seconds,
                         )
-                    if wait_time.seconds > sleep_time:
-                        sleep_time = wait_time.seconds
+                    sleep_time = max(sleep_time, wait_time.seconds)
                 else:
                     logger.debug(
                         "Rate limit for {} is {}, {} remaining - resets {}",
@@ -148,10 +144,10 @@ class GithubLinter:
             repo = self.report[repo_name]
             if not repo:
                 logger.warning("Empty report for {}, skipping", repo_name)
-            errors: List[str] = []
-            warnings: List[str] = []
-            fixes: List[str] = []
-            if "errors" in repo and repo["errors"]:
+            errors: list[str] = []
+            warnings: list[str] = []
+            fixes: list[str] = []
+            if repo.get("errors"):
                 for category in repo["errors"]:
                     deque(
                         map(
@@ -159,7 +155,7 @@ class GithubLinter:
                             [f"{category} - {error}" for error in repo["errors"].get(category)],
                         )
                     )
-            if "warnings" in repo and repo["warnings"]:
+            if repo.get("warnings"):
                 for category in repo["warnings"]:
                     deque(
                         map(
@@ -167,7 +163,7 @@ class GithubLinter:
                             [f"{category} - {warning}" for warning in repo["warnings"].get(category)],
                         )
                     )
-            if "fixes" in repo and repo["fixes"]:
+            if repo.get("fixes"):
                 for category in repo["fixes"]:
                     deque(
                         map(
@@ -188,7 +184,7 @@ class GithubLinter:
     def handle_repo(
         self,
         repo: ShortRepository,
-        check: Optional[Tuple[str]],
+        check: tuple[str] | None,
         fix: bool,
         ignore_protected: bool,
     ) -> None:
@@ -238,7 +234,7 @@ class GithubLinter:
 
 
 @pydantic.validate_call(config={"arbitrary_types_allowed": True})
-def get_all_user_repos(github: GithubLinter, config: Optional[Dict[str, Any]] = None) -> List[str]:
+def get_all_user_repos(github: GithubLinter, config: dict[str, Any] | None = None) -> list[str]:
     """simpler filtered listing"""
     if config is None:
         config = load_config()
@@ -262,7 +258,7 @@ def get_all_user_repos(github: GithubLinter, config: Optional[Dict[str, Any]] = 
 
 
 @pydantic.validate_call(config={"arbitrary_types_allowed": True})
-def filter_by_repo(repo_list: List[Repository], repo_filters: List[str]) -> List[Repository]:
+def filter_by_repo(repo_list: list[Repository], repo_filters: list[str]) -> list[Repository]:
     """filter repositories by name"""
     retval = []
     for repository in repo_list:
@@ -272,12 +268,11 @@ def filter_by_repo(repo_list: List[Repository], repo_filters: List[str]) -> List
                 logger.debug("Adding {} based on name match", repository)
             continue
         for repo_filter in repo_filters:
-            if "*" in repo_filter:
-                if wildcard_matcher.match(repository.name, repo_filter):
-                    if repository not in retval:
-                        retval.append(repository)
-                    logger.debug("Adding {} based on wildcard match", repository)
-                    continue
+            if "*" in repo_filter and wildcard_matcher.match(repository.name, repo_filter):
+                if repository not in retval:
+                    retval.append(repository)
+                logger.debug("Adding {} based on wildcard match", repository)
+                continue
 
     return retval
 
@@ -291,8 +286,8 @@ class RepoSearchString(pydantic.BaseModel):
 
 @pydantic.validate_call
 def generate_repo_search_string(
-    repo_filter: List[str],
-    owner_filter: List[str],
+    repo_filter: list[str],
+    owner_filter: list[str],
 ) -> RepoSearchString:
     """generates the search string,
     if there's wildcards in repo_filter, then you
@@ -329,9 +324,9 @@ def generate_repo_search_string(
 @pydantic.validate_call(config={"arbitrary_types_allowed": True})
 def search_repos(
     github: GithubLinter,
-    repo_filter: List[str],
-    owner_filter: List[str],
-) -> List[ShortRepository]:
+    repo_filter: list[str],
+    owner_filter: list[str],
+) -> list[ShortRepository]:
     """search repos based on cli input"""
 
     username = github.github3.me().login

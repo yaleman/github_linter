@@ -1,14 +1,12 @@
 """docs tests"""
 
-from typing import Optional, TypedDict
+from typing import TypedDict
 
-
-from jinja2 import Environment, PackageLoader, select_autoescape
 import jinja2.exceptions
+from github.Repository import Repository
+from jinja2 import Environment, PackageLoader, select_autoescape
 from loguru import logger
 
-
-from github.Repository import Repository
 from ..repolinter import RepoLinter
 
 
@@ -33,12 +31,12 @@ def check_contributing_exists(repo: RepoLinter) -> None:
 
     if filecontents is None:
         repo.error(CATEGORY, f"Couldn't find {filepath}")
-        return None
+        return
     logger.debug("Found {}", filepath)
-    return None
+    return
 
 
-def generate_contributing_file(repo: Repository) -> Optional[str]:
+def generate_contributing_file(repo: Repository) -> str | None:
     """generates the 'CONTRIBUTING.md' file"""
 
     # start up jinja2

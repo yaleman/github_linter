@@ -48,7 +48,7 @@ def fix_create_security_md(repo: RepoLinter) -> None:
         )
         if security_md_file is None:
             repo.error(CATEGORY, "Failed to generate {filename}")
-            return None
+            return
 
         logger.debug(security_md_file)
         message = f"Created {filename}"
@@ -65,4 +65,4 @@ def fix_create_security_md(repo: RepoLinter) -> None:
             logger.debug("File {} wasn't updated.", filename)
     else:
         logger.debug("Skipping creation of SECURITY.md, file exists...")
-    return None
+    return

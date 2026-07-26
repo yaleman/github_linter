@@ -1,7 +1,9 @@
 """checks for homebrew things"""
 
 import sys
-from typing import List, TypedDict, Callable, TypeVar, cast
+from collections.abc import Callable
+from typing import TypedDict, TypeVar, cast
+
 from loguru import logger
 
 from ..repolinter import RepoLinter
@@ -15,7 +17,7 @@ LANGUAGES = ["Ruby"]
 class DefaultConfig(TypedDict):
     """config typing for module config"""
 
-    required_files: List[str]
+    required_files: list[str]
 
 
 DEFAULT_CONFIG: DefaultConfig = {
@@ -29,16 +31,16 @@ DEFAULT_CONFIG: DefaultConfig = {
 WrappedFunction = TypeVar("WrappedFunction", bound=Callable[[RepoLinter], None])
 
 
-def should_this_run(func: WrappedFunction) -> WrappedFunction:
+def should_this_run(func: WrappedFunction) -> WrappedFunction:  # noqa: UP047
     """if the repo name doesn't match then don't run"""
 
     def inner(repo: RepoLinter) -> None:
         if not repo.repository.name.startswith("homebrew-"):
             logger.debug("Not a homebrew repo, skipping")
-            return None
+            return
         logger.debug("Name checks out: {}", repo.repository.name)
         func(repo)
-        return None
+        return
 
     return cast(WrappedFunction, inner)
 

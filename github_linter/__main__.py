@@ -1,13 +1,11 @@
 """cli bits"""
 
-from typing import List, Optional, Tuple
-
 import click
 from loguru import logger
 
 from github_linter import GithubLinter, search_repos
-from github_linter.utils import setup_logging
 from github_linter.tests import MODULES, load_modules
+from github_linter.utils import setup_logging
 
 MODULE_CHOICES = [key for key in list(MODULES.keys()) if not key.startswith("github_linter")]
 
@@ -34,14 +32,14 @@ MODULE_CHOICES = [key for key in list(MODULES.keys()) if not key.startswith("git
 @click.option("--list-repos", is_flag=True, default=False, help="List repos and exit")
 @click.option("--debug", "-d", is_flag=True, default=False, help="Enable debug logging")
 def cli(
-    repo: Optional[Tuple[str]] = None,
-    owner: Optional[Tuple[str]] = None,
+    repo: tuple[str] | None = None,
+    owner: tuple[str] | None = None,
     fix: bool = False,
     ignore_protected: bool = False,
-    check: Optional[Tuple[str]] = None,
+    check: tuple[str] | None = None,
     no_progress: bool = False,
     debug: bool = False,
-    module: Optional[List[str]] = None,
+    module: list[str] | None = None,
     list_repos: bool = False,
 ) -> None:
     """Github linter for checking your repositories for various things."""

@@ -1,7 +1,5 @@
 """cli for the web interface for the project that outgrew its intention"""
 
-from typing import Optional
-
 import click
 import uvicorn
 
@@ -14,7 +12,7 @@ import uvicorn
 def cli(
     reload: bool = False,
     port: int = 8000,
-    host: Optional[str] = None,
+    host: str | None = None,
     proxy_headers: bool = False,
 ) -> None:
     """github_linter server"""

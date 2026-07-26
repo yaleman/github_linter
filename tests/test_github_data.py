@@ -1,6 +1,5 @@
 import pytest
 
-
 from github_linter import GithubLinter
 from github_linter.web import get_all_user_repos
 

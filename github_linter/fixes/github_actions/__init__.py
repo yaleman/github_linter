@@ -5,12 +5,13 @@ import json
 from loguru import logger
 from pydantic import BaseModel
 from requests import Response
+
 from github_linter.repolinter import RepoLinter
 
 __all__ = [
+    "VALID_DEFAULT_WORKFLOW_PERMISSIONS",
     "get_repo_default_workflow_permissions",
     "set_repo_default_workflow_permissions",
-    "VALID_DEFAULT_WORKFLOW_PERMISSIONS",
 ]
 
 VALID_DEFAULT_WORKFLOW_PERMISSIONS = ["read", "write"]
