@@ -1,7 +1,5 @@
 """github_linter dependabot tests constants"""
 
-from typing import Dict, List
-
 
 DEPENDABOT_SCHEDULE_INTERVALS = [
     "daily",
@@ -9,7 +7,7 @@ DEPENDABOT_SCHEDULE_INTERVALS = [
     "monthly",  # first of the month
 ]
 
-PACKAGE_ECOSYSTEM: Dict[str, List[str]] = {
+PACKAGE_ECOSYSTEM: dict[str, list[str]] = {
     "bundler": [],
     "cargo": ["rust"],
     "composer": [],

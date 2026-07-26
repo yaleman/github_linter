@@ -1,18 +1,15 @@
 """Terraform-related tests"""
 
-from typing import Any, Dict
 import re
-
 import sys
+from typing import Any
 
-from loguru import logger
 import hcl2.api
 import json5 as json
+from loguru import logger
 from semver.version import Version
 
-
 from ..repolinter import RepoLinter
-
 
 CATEGORY = "terraform"
 
@@ -43,7 +40,7 @@ LANGUAGES = [
 def load_hclfile(
     repo: RepoLinter,
     filename: str,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """loads the given filename using hcl2"""
     filecontent = repo.cached_get_file(filename)
     if not filecontent or not filecontent.decoded_content:
@@ -61,12 +58,12 @@ def check_providers_tf_exists(
     for filename in repo.config[CATEGORY]["provider_file_list"]:
         hclfile = load_hclfile(repo, filename)
         if hclfile:
-            return None
+            return
     repo.error(
         CATEGORY,
         f"Couldn't find a providers.tf file, looked in {','.join(repo.config[CATEGORY]['provider_file_list'])}",
     )
-    return None
+    return
 
 
 def check_providers_for_modules(
@@ -89,7 +86,7 @@ def check_providers_for_modules(
             )
             continue
 
-        required_providers: Dict[str, Dict[str, str]] = {}
+        required_providers: dict[str, dict[str, str]] = {}
         for entry in hclfile["terraform"]:
             if "required_providers" in entry:
                 required_providers = entry["required_providers"]

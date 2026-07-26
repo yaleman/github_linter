@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 
 from github_linter.web import app
 
-
 client = TestClient(app)
 
 

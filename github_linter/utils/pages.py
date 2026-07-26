@@ -1,35 +1,34 @@
 """helper to pull pages information"""
 
 import json
-
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from loguru import logger
 
-from ..repolinter import RepoLinter
 from .. import GithubLinter
+from ..repolinter import RepoLinter
 
 
 class PagesSource(TypedDict):
     """subclass of PagesData"""
 
-    branch: Optional[str]
-    path: Optional[str]
+    branch: str | None
+    path: str | None
 
 
 class PagesData(TypedDict):
     """returend from a call to /repos/{repo}/{owner}/pages"""
 
-    url: Optional[str]
-    status: Optional[str]
-    cname: Optional[str]
+    url: str | None
+    status: str | None
+    cname: str | None
     custom_404: bool
-    html_url: Optional[str]
+    html_url: str | None
     source: PagesSource
     public: bool
-    protected_domain_state: Optional[str]
-    pending_domain_unverified_at: Optional[str]
-    https_enforced: Optional[str]
+    protected_domain_state: str | None
+    pending_domain_unverified_at: str | None
+    https_enforced: str | None
 
 
 def get_repo_pages_data(repo: RepoLinter) -> PagesData:

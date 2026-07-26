@@ -1,27 +1,27 @@
 """checks for dependabot config"""
 
-from io import StringIO
 import json
 import sys
+from io import StringIO
 from typing import List, cast
 
+import pydantic
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException, UnknownObjectException
 from loguru import logger
-import pydantic
 from requests import JSONDecodeError
 from ruyaml import YAML
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
 from github_linter.repolinter import RepoLinter
 from github_linter.utils import get_fix_file_path
+
 from .types import (
     DefaultConfig,
     DependabotConfigFile,
     DependabotSchedule,
     DependabotUpdateConfig,
 )
-
 from .utils import find_language_in_ecosystem, load_dependabot_config_file
 
 CATEGORY = "dependabot"
@@ -70,7 +70,7 @@ def generate_expected_update_config(
 ) -> DependabotConfigFile:
     """generates the required configuration"""
 
-    updates: List[DependabotUpdateConfig] = []
+    updates: list[DependabotUpdateConfig] = []
     for language in repo.repository.get_languages():
         if find_language_in_ecosystem(language):
             logger.debug("Found lang/eco: {}, {}", language, find_language_in_ecosystem(language))
@@ -138,7 +138,7 @@ def check_updates_for_languages(repo: RepoLinter) -> None:
         if get_workflows:
             if not isinstance(get_workflows, list):
                 get_workflows = [get_workflows]
-            get_workflows = cast(List[ContentFile], get_workflows)
+            get_workflows = cast(list[ContentFile], get_workflows)
             logger.debug("List of files in .github/workflows: {}", get_workflows)
             for file_details in get_workflows:
                 if file_details.path.endswith(".yml"):
@@ -208,15 +208,15 @@ def check_dependabot_config_valid(
         dependabot = load_dependabot_config_file(repo, CATEGORY)
     except pydantic.ValidationError as validation_error:
         repo.error(CATEGORY, f"Failed to parse dependabot config: {validation_error}")
-        return None
+        return
 
     if not dependabot:
         logger.debug("Couldn't load dependabot config.")
-        return None
+        return
 
     if not dependabot.updates:
         repo.error(CATEGORY, "No updates config in dependabot.yml.")
-        return None
+        return
 
     for update in dependabot.updates:
         logger.debug(update.model_dump_json(indent=4))
@@ -245,7 +245,7 @@ def check_dependabot_config_valid(
         #             CATEGORY,
         #             f"Update timezone's not valid? {timezone}",
         #         )
-    return None
+    return
 
 
 def check_updates_have_directory_set(
@@ -416,7 +416,7 @@ def check_repository_automerge(repo: RepoLinter) -> None:
         configured = res.json().get("allow_auto_merge")
     except JSONDecodeError as error:
         repo.error(CATEGORY, f"Failed to decode JSON while checking allow_auto_merge: {error}")
-        return None
+        return
     if configured is None:
         repo.error(CATEGORY, "None result in allow_auto_merge")
     if configured == expected_result:

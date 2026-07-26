@@ -1,14 +1,13 @@
 """generic tests"""
 
 from io import StringIO
-
-from typing import List, Optional, TypedDict, Union
-
-from loguru import logger
-from ruyaml import YAML
+from typing import Optional, TypedDict
 
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException
+from loguru import logger
+from ruyaml import YAML
+
 from ..repolinter import RepoLinter
 
 __all__ = [
@@ -19,7 +18,7 @@ LANGUAGES = [
 ]
 CATEGORY = "generic"
 
-OptionalListOrStr = Optional[Union[List[str], str]]
+OptionalListOrStr = Optional[list[str] | str]
 
 
 class FundingDict(TypedDict):
@@ -27,22 +26,22 @@ class FundingDict(TypedDict):
     based on https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
     """
 
-    community_bridge: Optional[str]
+    community_bridge: str | None
     custom: OptionalListOrStr
     github: OptionalListOrStr
-    issuehunt: Optional[str]
-    ko_fi: Optional[str]
-    liberapay: Optional[str]
-    open_collective: Optional[str]
-    otechie: Optional[str]
-    patreon: Optional[str]
-    tidelift: Optional[str]
+    issuehunt: str | None
+    ko_fi: str | None
+    liberapay: str | None
+    open_collective: str | None
+    otechie: str | None
+    patreon: str | None
+    tidelift: str | None
 
 
 class DefaultConfig(TypedDict):
     """config object"""
 
-    files_to_remove: List[str]
+    files_to_remove: list[str]
     funding: FundingDict
 
 
@@ -70,7 +69,7 @@ DEFAULT_CONFIG: DefaultConfig = {
 }
 
 
-def parse_funding_file(input_string: Union[str, bytes]) -> FundingDict:
+def parse_funding_file(input_string: str | bytes) -> FundingDict:
     """parses the FUNDING.yml file into a FundingDict"""
     parsed_data: FundingDict = YAML(pure=True).load(input_string)
     return parsed_data

@@ -1,15 +1,15 @@
 """default linter configuration goes here"""
 
-from typing import Dict, List, Optional, TypedDict
+from typing import TypedDict
 
 
 class DefaultLinterConfig(TypedDict):
     """typedef for DEFAULT_LINTER_CONFIG"""
 
-    github: Optional[Dict[str, str]]
+    github: dict[str, str] | None
     check_forks: bool
-    owner_list: List[str]
-    fix_branch: Optional[str]
+    owner_list: list[str]
+    fix_branch: str | None
 
 
 DEFAULT_LINTER_CONFIG: DefaultLinterConfig = {

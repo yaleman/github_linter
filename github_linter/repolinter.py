@@ -1,21 +1,21 @@
 """repolinter class"""
 
+import difflib
+import sys
 from datetime import datetime
 from pathlib import Path
-import sys
 from types import ModuleType
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, cast
 
-import difflib
+import tomli
+import wildcard_matcher
 from github.ContentFile import ContentFile
 from github.GithubException import GithubException, UnknownObjectException
 from github.Repository import Repository
 from github3.repos import ShortRepository
 from loguru import logger
-import tomli
 
-import wildcard_matcher
-
+from .custom_types import DICTLIST
 from .exceptions import (
     NoChangeNeeded,
     SkipNoLanguage,
@@ -24,12 +24,10 @@ from .exceptions import (
     SkipOnProtected,
     SkipOnPublic,
 )
-
-from .custom_types import DICTLIST
 from .utils import load_config
 
 
-def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]) -> None:
+def add_from_dict(source: dict[str, Any], dest: dict[str, Any]) -> None:
     """digs into a dict, shoving the defaults in"""
     if not source:
         return
@@ -51,7 +49,7 @@ def add_from_dict(source: Dict[str, Any], dest: Dict[str, Any]) -> None:
             add_from_dict(source[key], dest[key])
 
 
-def get_filtered_commands(checklist: List[str], check_filter: Optional[Tuple[str]]) -> List[str]:
+def get_filtered_commands(checklist: list[str], check_filter: tuple[str] | None) -> list[str]:
     """filters the checks, the input is the list of wanted modules
     from click.option()
     """
@@ -92,9 +90,9 @@ class RepoLinter:
         self.errors: DICTLIST = {}
         self.warnings: DICTLIST = {}
         self.fixes: DICTLIST = {}
-        self.filecache: Dict[str, Optional[ContentFile]] = {}
+        self.filecache: dict[str, ContentFile | None] = {}
 
-        self.languages: Optional[List[str]] = None
+        self.languages: list[str] | None = None
 
     def clear_file_cache(self, filepath: str) -> bool:
         """removes a file from the file cache, returns bool if it was in there"""
@@ -103,7 +101,7 @@ class RepoLinter:
             return True
         return False
 
-    def cached_get_file(self, filepath: str, clear_cache: bool = False) -> Optional[ContentFile]:
+    def cached_get_file(self, filepath: str, clear_cache: bool = False) -> ContentFile | None:
         """checks if we've made a call looking for a file and grabs it if not
         returns none if no file exists, caches per-repository.
         """
@@ -139,16 +137,16 @@ class RepoLinter:
     def create_or_update_file(
         self,
         filepath: str,
-        newfile: Union[Path, str, bytes],
-        oldfile: Optional[ContentFile] = None,
-        message: Optional[str] = None,
-    ) -> Optional[str]:
+        newfile: Path | str | bytes,
+        oldfile: ContentFile | None = None,
+        message: str | None = None,
+    ) -> str | None:
         """Create or update a file in the repository.
         The message variable is what's put into the commit message.
         Returns the commit URL.
         """
 
-        if not not self.ignore_protected:
+        if self.ignore_protected:
             if self.repository3.branch(self.repository3.default_branch).protected:
                 logger.warning(
                     "Can't update file on  {} as the default branch is protected",
@@ -228,10 +226,10 @@ class RepoLinter:
     #     self.filecache[filepath] = self.get_file(filepath)
     #     return self.filecache[filepath]
 
-    def get_files(self, path: str) -> List[ContentFile]:
+    def get_files(self, path: str) -> list[ContentFile]:
         """give it a path and it'll return the match(es). If it's a single file it'll get that, if it's a path it'll get up to 1000 files"""
         try:
-            fileresult: List[ContentFile] | ContentFile = self.repository.get_contents(path)
+            fileresult: list[ContentFile] | ContentFile = self.repository.get_contents(path)
             if not fileresult:
                 logger.debug("Couldn't find files matching '{}'", path)
                 return []
@@ -239,7 +237,7 @@ class RepoLinter:
                 return [
                     fileresult,
                 ]
-            return cast(List[ContentFile], fileresult)
+            return cast(list[ContentFile], fileresult)
         except GithubException as exc:
             if exc.status == 404:
                 logger.debug("Couldn't find file, returning None - exception={}", exc)
@@ -251,7 +249,7 @@ class RepoLinter:
             logger.debug("UnknownObjectException calling get_contents({}): {}", path, exc)
             return []
 
-    def get_file(self, filename: str) -> Optional[ContentFile]:
+    def get_file(self, filename: str) -> ContentFile | None:
         """looks for a file or returns none"""
         try:
             fileresult = self.get_files(filename)
@@ -356,13 +354,13 @@ class RepoLinter:
     def run_module(
         self,
         module: ModuleType,
-        check_filter: Optional[Tuple[str]],
+        check_filter: tuple[str] | None,
         do_fixes: bool,
     ) -> bool:
         """runs a given module"""
         self.load_module_config(module)
 
-        if hasattr(module, "LANGUAGES") and "ALL" not in getattr(module, "LANGUAGES"):
+        if hasattr(module, "LANGUAGES") and "ALL" not in module.LANGUAGES:
             if not self.module_language_check(module):
                 logger.debug(
                     "Module {} not required after language check, module langs: {}, repo langs: {}",
@@ -392,14 +390,7 @@ class RepoLinter:
                     logger.debug("Running {}.{}", module.__name__.split(".")[-1], check)
                     try:
                         getattr(module, check)(repo=self)
-                    except (
-                        NoChangeNeeded,
-                        SkipOnArchived,
-                        SkipOnPrivate,
-                        SkipOnPublic,
-                        NoChangeNeeded,
-                        SkipOnProtected,
-                    ):
+                    except (NoChangeNeeded, SkipOnArchived, SkipOnPrivate, SkipOnPublic, SkipOnProtected):
                         pass
         return True
 
@@ -413,7 +404,7 @@ class RepoLinter:
             raise SkipNoLanguage
         logger.debug("Found {} in repo's language list", language)
 
-    def load_pyproject(self) -> Optional[Dict[str, Any]]:
+    def load_pyproject(self) -> dict[str, Any] | None:
         """loads the pyproject.toml file"""
 
         fileresult = self.cached_get_file("pyproject.toml")
@@ -422,7 +413,7 @@ class RepoLinter:
             return None
 
         try:
-            retval: Dict[str, Any] = tomli.loads(fileresult.decoded_content.decode("utf-8"))
+            retval: dict[str, Any] = tomli.loads(fileresult.decoded_content.decode("utf-8"))
             return retval
         except tomli.TOMLDecodeError as tomli_error:
             logger.debug(

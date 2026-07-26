@@ -1,15 +1,15 @@
 """does mkdocs things"""
 
+import json
 from difflib import unified_diff
 from io import BytesIO
-import json
 from typing import Tuple
 
 from loguru import logger
 from ruyaml import YAML
 
-from github_linter.repolinter import RepoLinter
 from github_linter.exceptions import NoChangeNeeded
+from github_linter.repolinter import RepoLinter
 from github_linter.utils import get_fix_file_path
 from github_linter.utils.pages import get_repo_pages_data
 
@@ -73,7 +73,7 @@ def fix_missing_mkdocs_workflow(repo: RepoLinter) -> None:
             repo.fix(CATEGORY, f"Updated MKDocs github actions configuration: {commit_url}")
 
 
-def generate_expected_config(repo: RepoLinter) -> Tuple[str, bytes]:
+def generate_expected_config(repo: RepoLinter) -> tuple[str, bytes]:
     """generates a config file based on the repo"""
 
     mkdocs_config_file = None

@@ -1,22 +1,19 @@
 """utils for github_actions.dependabot"""
 
-from typing import Optional
 
 import json5 as json
 from loguru import logger
 from ruyaml import YAML
 
 from ...repolinter import RepoLinter
-
 from .constants import PACKAGE_ECOSYSTEM
-
 from .types import (
     # DefaultConfig,
     DependabotConfigFile,
 )
 
 
-def find_language_in_ecosystem(language: str) -> Optional[str]:
+def find_language_in_ecosystem(language: str) -> str | None:
     """checks to see if languages are in VALID_VALUES["package-ecosystem"]"""
     for package in PACKAGE_ECOSYSTEM:
         lowerlang = [lang.lower() for lang in PACKAGE_ECOSYSTEM[package]]
@@ -28,7 +25,7 @@ def find_language_in_ecosystem(language: str) -> Optional[str]:
 def load_dependabot_config_file(
     repo: RepoLinter,
     category: str,
-) -> Optional[DependabotConfigFile]:
+) -> DependabotConfigFile | None:
     """grabs the dependabot config file and loads it"""
     fileresult = repo.cached_get_file(repo.config[category]["config_filename"])
     if not fileresult:

@@ -1,10 +1,10 @@
 """Branch protection checks and fixes using both legacy rules and modern rulesets"""
 
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from github.BranchProtection import BranchProtection
-from github.GithubException import GithubException, UnknownObjectException
 from github.ContentFile import ContentFile
+from github.GithubException import GithubException, UnknownObjectException
 from loguru import logger
 from pydantic import BaseModel
 from ruyaml import YAML
@@ -28,7 +28,7 @@ class DefaultConfig(BaseModel):
     migrate_to_rulesets: bool = True  # Migrate legacy protection to rulesets
 
     # Mapping of language to required status check names
-    language_checks: Dict[str, List[str]] = {
+    language_checks: dict[str, list[str]] = {
         "Python": ["pylint", "pytest", "mypy"],
         "Docker": ["build_container"],
         # "Rust": ["cargo-test", "clippy"],
@@ -45,7 +45,7 @@ class DefaultConfig(BaseModel):
 DEFAULT_CONFIG = DefaultConfig()
 
 
-def _get_required_checks_for_repo(repo: RepoLinter, config: Dict[str, Any]) -> List[str]:
+def _get_required_checks_for_repo(repo: RepoLinter, config: dict[str, Any]) -> list[str]:
     """
     Get the list of required status checks based on repository languages.
 
@@ -56,7 +56,7 @@ def _get_required_checks_for_repo(repo: RepoLinter, config: Dict[str, Any]) -> L
     Returns:
         List of required status check names
     """
-    required_checks: List[str] = []
+    required_checks: list[str] = []
     repo_languages = list(repo.repository.get_languages().keys())
 
     language_checks = config.get("language_checks", {})
@@ -78,7 +78,7 @@ def _get_required_checks_for_repo(repo: RepoLinter, config: Dict[str, Any]) -> L
     return required_checks
 
 
-def _get_available_checks_for_repo(repo: RepoLinter) -> Set[str]:
+def _get_available_checks_for_repo(repo: RepoLinter) -> set[str]:
     """
     Get the list of available status checks by parsing workflow files.
 
@@ -91,7 +91,7 @@ def _get_available_checks_for_repo(repo: RepoLinter) -> Set[str]:
     Returns:
         Set of available check names (job names from workflows)
     """
-    available_checks: Set[str] = set()
+    available_checks: set[str] = set()
 
     try:
         # Get all workflow files from .github/workflows/
@@ -100,7 +100,7 @@ def _get_available_checks_for_repo(repo: RepoLinter) -> Set[str]:
 
         # Handle single file or list of files
         if not isinstance(contents, list):
-            contents: List[ContentFile] = [contents]
+            contents: list[ContentFile] = [contents]
 
         for content_file in contents:
             # Only process YAML files
@@ -146,8 +146,8 @@ def _get_available_checks_for_repo(repo: RepoLinter) -> Set[str]:
 
 def _validate_required_checks(
     repo: RepoLinter,
-    required_checks: List[str],
-    available_checks: Set[str],
+    required_checks: list[str],
+    available_checks: set[str],
 ) -> None:
     """
     Validate that required status checks actually exist in the repository.
@@ -195,7 +195,7 @@ def _validate_required_checks(
         )
 
 
-def _get_rulesets(repo: RepoLinter) -> List[Dict[str, Any]]:
+def _get_rulesets(repo: RepoLinter) -> list[dict[str, Any]]:
     """
     Get repository rulesets using PyGithub's internal _requester.
 
@@ -225,7 +225,7 @@ def _get_rulesets(repo: RepoLinter) -> List[Dict[str, Any]]:
         )
 
         # Now fetch full details for each ruleset
-        full_rulesets: List[Dict[str, Any]] = []
+        full_rulesets: list[dict[str, Any]] = []
         for summary in ruleset_summaries:
             ruleset_id = summary.get("id")
             if not ruleset_id:
@@ -261,7 +261,7 @@ def _get_rulesets(repo: RepoLinter) -> List[Dict[str, Any]]:
         return []
 
 
-def _get_admin_bypass_actors() -> List[Dict[str, Any]]:
+def _get_admin_bypass_actors() -> list[dict[str, Any]]:
     """
     Get bypass actors list to allow repository admins to bypass rulesets.
 
@@ -284,9 +284,9 @@ def _create_ruleset(
     required_approving_review_count: int,
     dismiss_stale_reviews: bool,
     require_code_owner_review: bool,
-    required_checks: List[str],
-    bypass_actors: Optional[List[Dict[str, Any]]] = None,
-) -> Optional[Dict[str, Any]]:
+    required_checks: list[str],
+    bypass_actors: list[dict[str, Any]] | None = None,
+) -> dict[str, Any] | None:
     """
     Create a repository ruleset using PyGithub's internal _requester.
 
@@ -303,11 +303,11 @@ def _create_ruleset(
     Returns:
         Created ruleset data, or None if creation failed
     """
-    rules: List[Dict[str, Any]] = []
+    rules: list[dict[str, Any]] = []
 
     # Add pull request rule if requested
     if require_pr:
-        pr_rule: Dict[str, Any] = {
+        pr_rule: dict[str, Any] = {
             "type": "pull_request",
             "parameters": {
                 "required_approving_review_count": required_approving_review_count,
@@ -321,7 +321,7 @@ def _create_ruleset(
 
     # Add status checks rule if there are any checks
     if required_checks:
-        status_check_rule: Dict[str, Any] = {
+        status_check_rule: dict[str, Any] = {
             "type": "required_status_checks",
             "parameters": {
                 "required_status_checks": [{"context": check} for check in required_checks],
@@ -365,7 +365,7 @@ def _create_ruleset(
         return None
 
 
-def _get_branch_protection(repo: RepoLinter) -> Optional[BranchProtection]:
+def _get_branch_protection(repo: RepoLinter) -> BranchProtection | None:
     """
     Get branch protection for the default branch.
 
@@ -437,8 +437,8 @@ def _check_protection_matches_config(
     enforce_admins: bool,
     require_pr: bool,
     required_approving_review_count: int,
-    required_checks: List[str],
-) -> tuple[bool, List[str]]:
+    required_checks: list[str],
+) -> tuple[bool, list[str]]:
     """
     Check if existing protection matches desired configuration.
 
@@ -452,7 +452,7 @@ def _check_protection_matches_config(
     Returns:
         Tuple of (matches, list of differences)
     """
-    differences: List[str] = []
+    differences: list[str] = []
 
     # Check enforce_admins setting
     # Note: protection.enforce_admins may be a boolean or an object with enabled attribute
@@ -498,12 +498,12 @@ def _check_protection_matches_config(
 
 
 def _check_ruleset_matches_config(
-    ruleset: Dict[str, Any],
+    ruleset: dict[str, Any],
     require_pr: bool,
     required_approving_review_count: int,
-    required_checks: List[str],
+    required_checks: list[str],
     allow_admin_bypass: bool,
-) -> tuple[bool, List[str]]:
+) -> tuple[bool, list[str]]:
     """
     Check if existing ruleset matches desired configuration.
 
@@ -517,7 +517,7 @@ def _check_ruleset_matches_config(
     Returns:
         Tuple of (matches, list of differences)
     """
-    differences: List[str] = []
+    differences: list[str] = []
 
     rules = ruleset.get("rules", [])
 
@@ -845,7 +845,7 @@ def fix_default_branch_protection(repo: RepoLinter) -> None:
             branch = repo.repository.get_branch(repo.repository.default_branch)
 
             # Build parameters for edit_protection
-            protection_params: Dict[str, Any] = {
+            protection_params: dict[str, Any] = {
                 "enforce_admins": enforce_admins,
             }
 

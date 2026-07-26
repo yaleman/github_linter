@@ -2,14 +2,12 @@
 
 from utils import generate_test_repo
 
-
 from github_linter.tests.docs import generate_contributing_file
 from github_linter.tests.generic import (
     FundingDict,
     generate_funding_file,
     parse_funding_file,
 )
-
 
 EXAMPLE_INPUT_FILE_ONE = """# These are supported funding model platforms
 

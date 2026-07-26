@@ -2,10 +2,9 @@
 
 from typing import TypedDict
 
-from github.PullRequest import PullRequest
 from github.PaginatedList import PaginatedListBase
+from github.PullRequest import PullRequest
 from loguru import logger
-
 
 from ..repolinter import RepoLinter
 from ..utils import get_fix_file_path

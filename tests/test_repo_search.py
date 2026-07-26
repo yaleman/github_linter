@@ -1,6 +1,7 @@
 """testing the search filter generator"""
 
 from utils import generate_test_repo
+
 from github_linter import filter_by_repo, generate_repo_search_string
 
 
