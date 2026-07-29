@@ -1,2 +1,28 @@
 [tools]
 biome = "latest"
+python = "3.13"
+uv = "latest"
+
+
+[tasks.ruff]
+run = ["uv run ruff format", "uv run ruff check --fix"]
+[tasks.ty]
+run = "uv run ty check --fix"
+[tasks.pytest]
+run = "uv run pytest"
+[tasks.biome]
+run = "biome check --verbose"
+
+[tasks.docker_build]
+run = "docker build -t 'ghcr.io/yaleman/github_linter:latest' ."
+
+[tasks.docker_run]
+depends = ["docker_build"]
+run = """docker run --rm -it \
+        -p 8000:8000 \
+        --env-file .envrc -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
+        'ghcr.io/yaleman/github_linter:latest' \
+        python -m github_linter.web"""
+
+[tasks.check]
+depends = ["ruff", "ty", "pytest", "biome"]

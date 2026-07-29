@@ -106,8 +106,8 @@ def check_files_to_remove(
         if isinstance(error_message.data, dict):
             logger.error(
                 "Failed to query repo contents {} ({})",
-                error_message.data["message"],
-                error_message.data["documentation_url"],
+                error_message.data.get("message", "Unknown error"),
+                error_message.data.get("documentation_url", ""),
             )
         else:
             logger.error("Failed to query repo contents {}", error_message.data)

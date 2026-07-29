@@ -2,6 +2,7 @@
 
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager
+from fcntl import LOCK_EX, flock
 from pathlib import Path
 from time import time
 from typing import Annotated, Any
@@ -29,6 +30,9 @@ from .. import GithubLinter, get_all_user_repos
 
 DB_PATH = Path("~/.config/github_linter.sqlite").expanduser().resolve()
 DB_URL = f"sqlite+aiosqlite:///{DB_PATH.as_posix()}"
+DB_INITIALIZATION_LOCK_PATH = DB_PATH.with_suffix(f"{DB_PATH.suffix}.lock")
+
+UVICORN_WORKERS = 4
 
 engine = create_async_engine(DB_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
@@ -37,10 +41,13 @@ Base = declarative_base()
 
 async def create_db() -> None:
     """do the initial DB creation"""
-    logger.info("Synchronising database on startup...")
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Done!")
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with DB_INITIALIZATION_LOCK_PATH.open(mode="a", encoding="utf-8") as lock_file:
+        flock(lock_file.fileno(), LOCK_EX)
+        logger.debug("Synchronising database on startup...")
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Done!")
 
 
 @asynccontextmanager
@@ -396,7 +403,7 @@ async def get_health(
 ) -> Response:
     """really simple health check, also triggers cron jobs sneakily"""
 
-    # let's just check periodically for an update
+    # check periodically for an update
     background_tasks.add_task(cron_update)
 
     return Response(content="OK", status_code=200)

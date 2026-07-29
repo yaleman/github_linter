@@ -62,7 +62,6 @@ def fix_codeowners_exists(repo: RepoLinter) -> None:
     if oldfile is not None and oldfile.decoded_content.decode("utf-8") == filecontents:
         logger.debug("Don't need to update {}", filepath)
         return
-    # TODO: prompt the user to continue
     commit_url = repo.create_or_update_file(
         filepath=filepath,
         newfile=filecontents,

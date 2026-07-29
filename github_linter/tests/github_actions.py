@@ -23,6 +23,7 @@ import json5 as json
 from loguru import logger
 from pydantic import BaseModel, field_validator
 
+from github_linter.exceptions import NoChangeNeeded
 from github_linter.fixes.github_actions import (
     VALID_DEFAULT_WORKFLOW_PERMISSIONS,
     get_repo_default_workflow_permissions,
@@ -413,15 +414,19 @@ def check_repo_workflow_permissions(repo: RepoLinter) -> bool:
 def fix_repo_workflow_permissions(repo: RepoLinter) -> None:
     """set the default workflow permissions"""
     repo.skip_on_archived()
-    dwp = repo.config[CATEGORY]["default_workflow_permissions"]
-    caprr = repo.config[CATEGORY]["can_approve_pull_request_reviews"]
-    # TODO: make this only take action if the check doesn't pass
+    default_workflow_permissions = repo.config[CATEGORY]["default_workflow_permissions"]
+    can_approve_pull_request_reviews = repo.config[CATEGORY]["can_approve_pull_request_reviews"]
+
+    # only take action if the check doesn't pass
+    if not [error for error in repo.errors[CATEGORY] if "default_workflow_permissions" in error or "can_approve_pull_request_reviews" in error]:
+        raise NoChangeNeeded("No changes needed for workflow permissions")
+
     if set_repo_default_workflow_permissions(
         repo,
-        dwp,
-        caprr,
+        default_workflow_permissions,
+        can_approve_pull_request_reviews,
     ):
         repo.fix(
             CATEGORY,
-            f"Updated default workflow permissions to default_workflow_permissions={dwp} can_approve_pull_request_reviews={caprr}",
+            f"Updated default workflow permissions to default_workflow_permissions={default_workflow_permissions} can_approve_pull_request_reviews={can_approve_pull_request_reviews}",
         )

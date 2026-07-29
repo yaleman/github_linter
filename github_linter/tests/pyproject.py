@@ -19,17 +19,17 @@ LANGUAGES = ["python"]
 DefaultConfig = TypedDict(
     "DefaultConfig",
     {
-        "build-system": list[str],
+        "build-system": dict[str, list[str] | str],
         "readme": str,
     },
 )
 
 DEFAULT_CONFIG: DefaultConfig = {
     # TODO: FIX THIS TO USE UV/HATCHLING
-    "build-system": [
-        #     "flit_core.buildapi",  # flit
-        #     "poetry.core.masonry.api",  # poetry
-    ],
+    "build-system": {
+        "requires": ["hatchling"],
+        "build-backend": "hatchling.build",
+    },
     "readme": "README.md",
 }
 
@@ -119,7 +119,7 @@ def validate_scripts(
                 f"Script has invalid module: expected {repo.repository.name}, found {script_def_module}",
             )
         # check it's pulling from __main__
-        if len(script_def_module.split(".") > 1) and script_def_module.split(".")[1].split(":") != "__main__":
+        if len(script_def_module.split(".")) > 1 and script_def_module.split(".")[1].split(":") != "__main__":
             repo.error(
                 CATEGORY,
                 f"Script has invalid module: expected __main__, found {script_def_module}",
