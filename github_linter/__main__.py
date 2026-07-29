@@ -49,7 +49,7 @@ def cli(
 
     github = GithubLinter()
 
-    # these just set defaults
+    # these set defaults
     repo_filter = [] if repo is None else [element for element in repo if element is not None]
     owner_filter = [] if owner is None else [element for element in owner if element is not None]
 

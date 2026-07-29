@@ -15,16 +15,16 @@ The project is built around a modular "test then fix" model:
 
 In practice, the tool is closer to a repository configuration manager than a passive linter. It can validate state, propose drift through warnings/errors, and push changes back to GitHub when fixes are enabled.
 
-**MANDATORY** You are not finished with a task until running `just check` passes without warnings or errors.
+**MANDATORY** You are not finished with a task until running `mise check` passes without warnings or errors.
 
 ## Development Commands
 
 ### Testing and Linting
 
-- Run all precommit checks: `just check`
-- Run linting: `just ruff`
-- Run type checking: `just lint`
-- Run tests: `just test`
+- Run all precommit checks: `mise check`
+- Run linting: `mise ruff`
+- Run type checking: `mise ty`
+- Run tests: `mise pytest`
 - Run single test: `uv run pytest tests/test_<module>.py::<test_name>`
 
 ### Running the CLI
@@ -41,8 +41,8 @@ In practice, the tool is closer to a repository configuration manager than a pas
 
 ### Docker
 
-- Build container: `just docker_build`
-- Run web server in container: `just docker_run`
+- Build container: `mise docker_build`
+- Run web server in container: `mise docker_run`
 
 ## Architecture
 

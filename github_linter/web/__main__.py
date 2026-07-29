@@ -3,6 +3,8 @@
 import click
 import uvicorn
 
+from github_linter.web import UVICORN_WORKERS
+
 
 @click.command()
 @click.option("--reload", is_flag=True)
@@ -26,7 +28,7 @@ def cli(
         host=host,
         port=port,
         proxy_headers=proxy_headers,
-        workers=4,
+        workers=UVICORN_WORKERS,
     )
 
 
