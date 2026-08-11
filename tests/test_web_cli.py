@@ -9,7 +9,7 @@ from github_linter.web import UVICORN_WORKERS
 from github_linter.web.__main__ import cli
 
 
-def test_cli_starts_multiple_workers(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cli_starts_right_workers(monkeypatch: pytest.MonkeyPatch) -> None:
     """The web server should retain its configured worker concurrency."""
     run_arguments: dict[str, Any] = {}
 
