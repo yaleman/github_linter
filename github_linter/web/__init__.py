@@ -28,6 +28,7 @@ __all__ = [
 ]
 
 from .. import GithubLinter, get_all_user_repos
+from ..utils import load_config
 
 DB_PATH = Path("~/.config/github_linter.sqlite").expanduser().resolve()
 DB_URL = f"sqlite+aiosqlite:///{DB_PATH.as_posix()}"
@@ -172,7 +173,7 @@ async def update_stored_repo(repo: Repository) -> None:
             {
                 "full_name": repo.full_name,
                 "name": repo.name,
-                "owner": repo.owner.name,
+                "owner": repo.owner.login,
                 "organization": repo.organization.name if repo.organization else None,
                 "default_branch": repo.default_branch,
                 "archived": repo.archived,
@@ -209,7 +210,7 @@ async def update_stored_repos() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(base.metadata.create_all)
 
-        github_repos = get_all_user_repos(githublinter)
+        github_repos = get_all_user_repos(githublinter, githublinter.config)
 
         logger.info(f"Got {len(github_repos)} repos")
         for repo in github_repos:
@@ -415,13 +416,29 @@ async def get_repos(session: Annotated[AsyncSession, Depends(get_async_session)]
     """endpoint to provide the cached repo list"""
 
     try:
-        stmt = sqlalchemy.select(SQLRepos)
+        stmt = get_repos_query()
         result = await session.execute(stmt)
         retval = [RepoDataSimple.model_validate(element.SQLRepos) for element in result.fetchall()]
     except OperationalError as operational_error:
         logger.warning("Failed to pull repos from DB: {}", operational_error)
         return []
     return retval
+
+
+def get_repos_query(config: dict[str, Any] | None = None) -> Any:
+    """Build the cached repository query constrained by the linter configuration."""
+    if config is None:
+        config = load_config()
+
+    linter_config = config.get("linter", {})
+    stmt = sqlalchemy.select(SQLRepos)
+
+    owner_list = linter_config.get("owner_list", [])
+    if owner_list:
+        stmt = stmt.where(sqlalchemy.func.lower(SQLRepos.owner).in_([owner.lower() for owner in owner_list]))
+    if not linter_config.get("check_forks", False):
+        stmt = stmt.where(SQLRepos.fork.is_(False))
+    return stmt
 
 
 @app.get("/", response_model=None)
