@@ -30,4 +30,4 @@ RUN mkdir -p ~/.config/
 
 RUN pip install --no-cache-dir --disable-pip-version-check /build/
 
-CMD ["github-linter-web"]
+ENTRYPOINT ["/home/useruser/.local/bin/github-linter-web"]

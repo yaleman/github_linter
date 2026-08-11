@@ -35,3 +35,6 @@ jobs:
           tags: ghcr.io/${{ github.repository }}:latest
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
+      - name: Test container starts
+        run: docker run --rm ghcr.io/${{ github.repository }}:latest --help
+        if: ${{ github.ref == 'refs/heads/main' }}
