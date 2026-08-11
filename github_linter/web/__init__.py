@@ -435,7 +435,7 @@ def get_repos_query(config: dict[str, Any] | None = None) -> Any:
 
     owner_list = linter_config.get("owner_list", [])
     if owner_list:
-        stmt = stmt.where(SQLRepos.owner.in_(owner_list))
+        stmt = stmt.where(sqlalchemy.func.lower(SQLRepos.owner).in_([owner.lower() for owner in owner_list]))
     if not linter_config.get("check_forks", False):
         stmt = stmt.where(SQLRepos.fork.is_(False))
     return stmt

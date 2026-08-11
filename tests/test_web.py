@@ -28,5 +28,5 @@ def test_repo_query_respects_linter_config() -> None:
 
     compiled = str(query.compile(dialect=sqlite.dialect(), compile_kwargs={"literal_binds": True}))
 
-    assert "repos.owner IN ('yaleman', 'terminaloutcomes')" in compiled
+    assert "lower(repos.owner) IN ('yaleman', 'terminaloutcomes')" in compiled
     assert "repos.fork IS 0" in compiled
