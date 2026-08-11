@@ -1,5 +1,6 @@
 """web interface for the project that outgrew its intention"""
 
+import os
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager
 from fcntl import LOCK_EX, flock
@@ -9,7 +10,6 @@ from typing import Annotated, Any
 
 import sqlalchemy
 import sqlalchemy.dialects.sqlite
-from coverage.python import os
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, Response
