@@ -241,18 +241,18 @@ def get_all_user_repos(github: GithubLinter, config: dict[str, Any] | None = Non
 
     if config["linter"].get("owner_list", []):
         repolist = []
+        repo_filter = config["linter"].get("repo_filter")
+        check_forks = config["linter"].get("check_forks", False)
 
         for owner in config["linter"]["owner_list"]:
             logger.debug("Pulling all the repositories for {}", owner)
-            if config.get("linter", {}).get("repo_filter") is not None:
-                for repo in github.github3.repositories_by(username=owner, type="owner"):
-                    if repo.name in config["linter"]["repo_filter"]:
-                        repolist.append(repo.full_name)
-            else:
-                repolist.extend([repo.full_name for repo in github.github3.repositories(owner)])
+            for repo in github.github3.repositories_by(username=owner, type="owner"):
+                if (repo_filter is None or repo.name in repo_filter) and (check_forks or not repo.fork):
+                    repolist.append(repo.full_name)
     else:
         logger.debug("Pulling all the repositories I own")
-        repolist = [repo.full_name for repo in github.github3.repositories(type="owner")]
+        check_forks = config["linter"].get("check_forks", False)
+        repolist = [repo.full_name for repo in github.github3.repositories(type="owner") if check_forks or not repo.fork]
     logger.debug("Repo list: {}", ", ".join(repolist))
     return repolist
 
