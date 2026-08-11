@@ -1,10 +1,17 @@
 // axios get from here: https://reactgo.com/vue-fetch-data/
 
 const _repo_app = new Vue({
-  delimiters: ["|", "|"], // because we're using it alongside jinja2
+  delimiters: [
+    "|",
+    "|",
+  ], // because we're using it alongside jinja2
   el: "#repos",
   data: {
-    repos: [{ full_name: "Loading" }],
+    repos: [
+      {
+        full_name: "Loading",
+      },
+    ],
     repo_filter: "",
     hide_archived: true,
     show_has_issues: true,
@@ -84,7 +91,9 @@ const _repo_app = new Vue({
   },
   methods: {
     updateRepos: function () {
-      const headers = { crossDomain: true };
+      const headers = {
+        crossDomain: true,
+      };
       axios.get("/repos", headers).then((res) => {
         this.repos = res.data;
       });

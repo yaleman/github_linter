@@ -44,7 +44,7 @@ def add_from_dict(source: dict[str, Any], dest: dict[str, Any]) -> None:
                 dest[key] = value
                 continue
 
-        # TODO: work out how to do this with a pydantic BaseModel
+        # TODO: work out how to do this for a pydantic BaseModel
         if isinstance(dest[key], dict):
             add_from_dict(value, dest[key])
 
@@ -166,8 +166,7 @@ class RepoLinter:
         if oldfile:
             if oldfile.decoded_content == newfile_contents:
                 logger.debug("File content is up to date for {}", filepath)
-                # TODO: probably should raise NoChangeNeeded when create_or_update_file finds there's no change required
-                return None
+                raise NoChangeNeeded(f"File content is up to date for {filepath}")
             blobsha = oldfile.sha
         else:
             blobsha = ""

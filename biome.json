@@ -11,7 +11,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "preset": "recommended"
     }
   },
   "formatter": {
@@ -21,7 +21,15 @@
   },
   "javascript": {
     "formatter": {
-      "lineWidth": 80
+      "lineWidth": 80,
+      "expand": "always"
+    }
+  },
+  "json": {
+    "formatter": {
+      "lineWidth": 80,
+      "expand": "always",
+      "trailingNewline": false
     }
   },
   "overrides": [

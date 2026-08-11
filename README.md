@@ -4,6 +4,102 @@ This is mainly for me, but it's a way of going through the Github repositories t
 
 Because I've got like ~100 repos and keep changing how I do things, and it annoys me to work on an old one and hit all the weird edge cases I've fixed elsewhere.
 
+## Getting Started
+
+### Installation
+
+Install using `uv` (recommended) or `pip`:
+
+```shell
+# Or install from source
+git clone https://github.com/yaleman/github_linter.git
+cd github_linter
+uv sync
+```
+
+### Configuration
+
+Create a configuration file at `~/.config/github_linter.json` or in your project directory:
+
+```json
+{
+    "github": {
+        "token": "ghp_your_personal_access_token_here"
+    },
+    "linter": {
+        "owner_list": ["your_github_username"]
+    }
+}
+```
+
+**Generating a Personal Access Token (PAT):**
+
+1. Go to GitHub Settings > Developer settings > Personal access tokens > Tokens (classic)
+2. Click "Generate new token" > "Generate new token (classic)"
+3. Select scopes: `repo` (for full repo access) and `read:user` (for user info)
+4. Copy the token and save it in your config file
+
+### Basic CLI Usage
+
+List repositories you have access to:
+
+```shell
+uv run github-linter --list-repos
+```
+
+Run all checks on your repositories:
+
+```shell
+uv run github-linter
+```
+
+Run checks for a specific module:
+
+```shell
+uv run github-linter --module pyproject
+uv run github-linter --module dependabot
+```
+
+Apply automated fixes (requires `--fix` flag):
+
+```shell
+uv run github-linter --fix
+```
+
+Filter by repository or owner:
+
+```shell
+uv run github-linter --repo my-project
+uv run github-linter --owner my-org
+```
+
+### Troubleshooting
+
+#### Authentication Errors
+
+If you see authentication errors:
+
+1.  Verify your PAT is correct and has the required scopes (`repo`, `read:user`)
+2.  Ensure the token is saved in your config file without extra quotes or whitespace
+3.  Test your token: `curl -H "Authorization: token ghp_your_token" https://api.github.com/user`
+
+#### Permission Denied
+
+-   The token must have appropriate permissions for the repositories you're checking
+-   For organization repos, you need to be a member with at least read access
+
+#### Module Not Found
+
+-   Check the module name matches one of the available modules: `branch_protection`, `codeowners`, `dependabot`, `generic`, `github_actions`, `issues`, `mkdocs`, `pyproject`, `security_md`, `terraform`
+-   Run `uv run github-linter --help` to see all available options
+
+#### Rate Limiting
+
+If you hit GitHub API rate limits:
+
+-   Use a PAT instead of unauthenticated requests
+-   Reduce the number of repositories checked at once using `--repo` or `--owner` filters
+
 ## Current Modules
 
 ### Dependabot
