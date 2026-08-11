@@ -21,8 +21,7 @@ depends = ["docker_build"]
 run = """docker run --rm -it \
         -p 8000:8000 \
         --env-file .envrc -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
-        'ghcr.io/yaleman/github_linter:latest' \
-        python -m github_linter.web"""
+        'ghcr.io/yaleman/github_linter:latest'"""
 
 [tasks.check]
 depends = ["ruff", "ty", "pytest", "biome"]
