@@ -5,9 +5,11 @@ FROM python:3.13-slim
 ########################################
 RUN useradd useruser
 
-RUN apt-get update
-RUN apt-get install -y git
-RUN apt-get clean
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 
 RUN mkdir -p build/github_linter

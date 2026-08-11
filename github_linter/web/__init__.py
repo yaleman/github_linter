@@ -32,7 +32,7 @@ DB_PATH = Path("~/.config/github_linter.sqlite").expanduser().resolve()
 DB_URL = f"sqlite+aiosqlite:///{DB_PATH.as_posix()}"
 DB_INITIALIZATION_LOCK_PATH = DB_PATH.with_suffix(f"{DB_PATH.suffix}.lock")
 
-UVICORN_WORKERS = 4
+UVICORN_WORKERS = 1
 
 engine = create_async_engine(DB_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
