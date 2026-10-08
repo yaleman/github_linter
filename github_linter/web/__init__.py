@@ -18,56 +18,85 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from loguru import logger
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.exc import OperationalError
-
-# , sessionmaker
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
-
-__all__ = [
-    "get_all_user_repos",
-]
 
 from .. import GithubLinter, get_all_user_repos
 from ..utils import load_config
 
-DB_PATH = Path("~/.config/github_linter.sqlite").expanduser().resolve()
-DB_URL = f"sqlite+aiosqlite:///{DB_PATH.as_posix()}"
-DB_INITIALIZATION_LOCK_PATH = DB_PATH.with_suffix(f"{DB_PATH.suffix}.lock")
+__all__ = ["get_all_user_repos"]
+
+
+class DbPaths:
+    def __init__(self, db_path: Path | None = None) -> None:
+        self.DB_PATH = db_path or Path("~/.config/github_linter.sqlite").expanduser().resolve()
+
+    def db_url(self, db_path: Path | None = None) -> str:
+        db_path = db_path or self.DB_PATH
+        return f"sqlite+aiosqlite:///{db_path.as_posix()}"
+
+    def lock_path(self) -> Path:
+        return self.DB_PATH.with_suffix(f"{self.DB_PATH.suffix}.lock")
+
 
 UVICORN_WORKERS = int(os.getenv("UVICORN_WORKERS", "1"))
 
-engine = create_async_engine(DB_URL)
-async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
+engine = create_async_engine(DbPaths().db_url())
+async_session_maker: async_sessionmaker[AsyncSession] = async_sessionmaker(engine, expire_on_commit=False)
 Base = declarative_base()
 
 
-async def create_db() -> None:
+async def create_db(
+    engine: AsyncEngine,
+    db_path: DbPaths | None = None,
+) -> None:
     """do the initial DB creation"""
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with DB_INITIALIZATION_LOCK_PATH.open(mode="a", encoding="utf-8") as lock_file:
+    if db_path is None:
+        db_path = DbPaths()
+    db_path.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    db_initialization_lock_path = db_path.lock_path()
+    with db_initialization_lock_path.open(mode="a", encoding="utf-8") as lock_file:
         flock(lock_file.fileno(), LOCK_EX)
-        logger.debug("Synchronising database on startup...")
+        logger.debug("Synchronising database at ({}) on startup...", db_path.DB_PATH)
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Done!")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Handle app startup and shutdown"""
-    # Startup
+class AppLifeSpan:
+    def __init__(self, engine: AsyncEngine):
+        self.engine = engine
+
+    @asynccontextmanager
+    async def lifespan(self, app: FastAPI):
+        """Handle app startup and shutdown"""
+        # Startup
+        try:
+            await create_db(self.engine)
+        except Exception as error_message:
+            logger.critical(f"Failed to create DB, shutting down: {error_message}")
+            raise
+        yield
+        # Shutdown
+        await self.engine.dispose()
+
+
+async def set_db_update_running(conn: AsyncConnection, value: bool) -> bool:
     try:
-        await create_db()
-    except Exception as error_message:
-        logger.critical(f"Failed to create DB, shutting down: {error_message}")
-        raise
-    yield
-    # Shutdown
-    await engine.dispose()
+        await conn.run_sync(Base.metadata.create_all)
+        update_running = {"name": "update_running", "value": value}
 
-
-app = FastAPI(lifespan=lifespan)
-app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=9)  # type: ignore[argument-type]
+        insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(**update_running)
+        do_update = insert_row.on_conflict_do_update(
+            index_elements=["name"],
+            set_=update_running,
+        )
+        await conn.execute(do_update)
+        await conn.commit()
+        return True
+    except Exception as error_message:  # noqa: BLE001
+        logger.warning(f"Failed to set update_running to {value}: {error_message}")
+        return False
 
 
 class SQLRepos(Base):
@@ -150,6 +179,201 @@ def githublinter_factory() -> Generator[GithubLinter, None, None]:
     yield githublinter
 
 
+def get_repos_query(config: dict[str, Any] | None = None) -> Any:
+    """Build the cached repository query constrained by the linter configuration."""
+    if config is None:
+        config = load_config()
+
+    linter_config = config.get("linter", {})
+    stmt = sqlalchemy.select(SQLRepos)
+
+    owner_list = linter_config.get("owner_list", [])
+    if owner_list:
+        stmt = stmt.where(sqlalchemy.func.lower(SQLRepos.owner).in_([owner.lower() for owner in owner_list]))
+    if not linter_config.get("check_forks", False):
+        stmt = stmt.where(SQLRepos.fork.is_(False))
+    return stmt
+
+
+def get_app(engine) -> FastAPI:
+    app = FastAPI(lifespan=AppLifeSpan(engine).lifespan)
+    app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=9)  # type: ignore[argument-type]
+
+    @app.get("/favicon.svg", response_model=None)
+    async def favicon() -> Response | FileResponse:
+        """return a"""
+        icon_file = Path(Path(__file__).resolve().parent.as_posix() + "/images/github.svg")
+        if icon_file.exists():
+            return FileResponse(icon_file)
+        return Response(status_code=404)
+
+    @app.get("/images/{filename}", response_model=None)
+    async def images(filename: str) -> Response | FileResponse:
+        """return an image"""
+        icon_file = Path(Path(__file__).resolve().parent.as_posix() + f"/images/{filename}")
+        if icon_file.exists():
+            return FileResponse(icon_file)
+        return Response(status_code=404)
+
+    @app.get("/css/{filename:str}", response_model=None)
+    async def css_file(filename: str) -> Response | FileResponse:
+        """css returner"""
+        cssfile = Path(Path(__file__).resolve().parent.as_posix() + f"/css/{filename}")
+        if cssfile.exists():
+            return FileResponse(cssfile)
+        return Response(status_code=404)
+
+    @app.get("/github_linter.js", response_model=None)
+    async def github_linter_js() -> Response | FileResponse:
+        """load the js"""
+        jspath = Path(Path(__file__).resolve().parent.as_posix() + "/github_linter.js")
+        if jspath.exists():
+            return FileResponse(jspath)
+        return Response(status_code=404)
+
+    @app.get("/db/updating", response_model=None)
+    async def db_update_running() -> bool:
+        """check if a db update is running"""
+        async with engine.begin() as conn:
+            try:
+                stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name == "update_running")
+                result = await conn.execute(stmt)
+
+                row = result.fetchone()
+
+                if row is None:
+                    logger.debug("no row data querying update_running: {}", row)
+                    await set_db_update_running(conn, False)
+                    return False
+                # print(row)
+                data = MetaData.model_validate(row)
+                try:
+                    return bool(data.value)
+                except ValueError:
+                    logger.debug(
+                        "Failed to turn update_running metadata value '{}' into bool",
+                        data.value,
+                    )
+                    await set_db_update_running(conn, False)
+                    return False
+            except Exception as error_message:  # noqa: BLE001
+                logger.warning(f"Failed to pull update_running: {error_message}")
+                try:
+                    await set_db_update_running(conn, False)
+                    logger.success("Set it to False instead")
+                except Exception as error:  # noqa: BLE001
+                    logger.error(
+                        "Tried to set update_running to False but THAT went wrong too! {}",
+                        error,
+                    )
+            return False
+
+    @app.post("/db/updating", response_model=None)
+    async def set_db_updating(value: bool) -> bool:
+        """set that a db update is running, returns if it worked or not"""
+        async with engine.begin() as conn:
+            return await set_db_update_running(conn, value)
+
+    @app.get("/db/updated", response_model=None)
+    async def db_updated() -> int:
+        """pulls the last_updated field from the db"""
+        async with engine.begin() as conn:
+            return await get_updated(conn)
+
+    class ResponseMessage(BaseModel):
+        """simple basemodel for response messages"""
+
+        message: str
+
+    @app.get("/repos/update")
+    async def update_repos(
+        background_tasks: BackgroundTasks,
+    ) -> ResponseMessage:
+        """Call this endpoint (/repos/update) to start the update process in the background."""
+
+        async with engine.begin() as conn:
+            if not await set_db_update_running(conn, True):
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to set update_running to True, something else is going on!",
+                )
+        logger.info("Spawning an update process...")
+        background_tasks.add_task(update_stored_repos)
+        return ResponseMessage(message="Updating in the background")
+
+    @app.get("/health", response_model=None)
+    async def get_health(
+        background_tasks: BackgroundTasks,
+    ) -> Response:
+        """really simple health check, also triggers cron jobs sneakily"""
+
+        # check periodically for an update
+        background_tasks.add_task(cron_update)
+
+        return Response(content="OK", status_code=200)
+
+    @app.get("/repos")
+    async def get_repos(session: Annotated[AsyncSession, Depends(get_async_session)]) -> list[RepoDataSimple]:
+        """endpoint to provide the cached repo list"""
+
+        try:
+            stmt = get_repos_query()
+            result = await session.execute(stmt)
+            retval = [RepoDataSimple.model_validate(element.SQLRepos) for element in result.fetchall()]
+        except OperationalError as operational_error:
+            logger.warning("Failed to pull repos from DB: {}", operational_error)
+            return []
+        return retval
+
+    @app.get("/", response_model=None)
+    async def root(
+        background_tasks: BackgroundTasks,
+    ) -> Response | HTMLResponse:
+        """homepage"""
+        env = Environment(
+            loader=PackageLoader(
+                package_name="github_linter.web.templates",
+                package_path=".",
+            ),
+            autoescape=select_autoescape(),
+        )
+        template = env.get_template("index.vue")
+
+        return HTMLResponse(template.render())
+
+    return app
+
+
+app = get_app(engine)
+
+
+async def get_updated(conn: AsyncConnection) -> int:
+    try:
+        stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name == "last_updated")
+        result: sqlalchemy.engine.result.Result = await conn.execute(stmt)
+
+        row = result.fetchone()
+
+        if row is None:
+            logger.error("no row data querying update time: {}", row)
+            return -1
+        # print(row)
+        data = MetaData.model_validate(row)
+        if "." in data.value:
+            return int(data.value.split(".")[0])
+        return int(data.value)
+    except Exception as error_message:  # noqa: BLE001
+        logger.warning(f"Failed to pull last_updated: {error_message}")
+        try:
+            await set_update_time(-1, conn)
+            await conn.commit()
+            logger.success("Set it to -1 instead")
+        except Exception as error:  # noqa: BLE001
+            logger.error("Tried to set it to -1 but THAT went wrong too! {}", error)
+    logger.error("Didn't get update time from db!")
+    return -1
+
+
 async def set_update_time(update_time: float, conn: Any) -> None:
     """sets the last_updated time in the DB"""
     logger.debug("Setting update time to {}", update_time)
@@ -166,9 +390,13 @@ async def set_update_time(update_time: float, conn: Any) -> None:
     logger.debug("Successfully set update time to {}", update_time)
 
 
-async def update_stored_repo(repo: Repository) -> None:
+async def update_stored_repo(repo: Repository, dbengine: AsyncEngine = engine, do_update: bool = True) -> None:
     """updates a single repository"""
-    async with engine.begin() as conn:
+    async with dbengine.begin() as conn:
+        if do_update:
+            open_prs = repo.get_pulls().totalCount
+        else:
+            open_prs = 0
         repoobject = RepoData.model_validate(
             {
                 "full_name": repo.full_name,
@@ -180,7 +408,7 @@ async def update_stored_repo(repo: Repository) -> None:
                 "description": repo.description,
                 "fork": repo.fork,
                 "open_issues": repo.open_issues_count,
-                "open_prs": repo.get_pulls().totalCount,
+                "open_prs": open_prs,
                 "last_updated": time(),
                 "private": repo.private,
                 "parent": repo.parent.full_name if repo.parent else None,
@@ -190,11 +418,11 @@ async def update_stored_repo(repo: Repository) -> None:
 
         insert_row = sqlalchemy.dialects.sqlite.insert(SQLRepos).values(**repoobject.model_dump())
 
-        do_update = insert_row.on_conflict_do_update(
+        needs_update = insert_row.on_conflict_do_update(
             index_elements=["full_name"],
             set_=repoobject.model_dump(),
         )
-        await conn.execute(do_update)
+        await conn.execute(needs_update)
         logger.info("Done with {}", repo.full_name)
 
         await set_update_time(time(), conn)
@@ -206,7 +434,8 @@ async def update_stored_repos() -> None:
     githublinter = GithubLinter()
     base = declarative_base()
 
-    await set_db_update_running(True)
+    async with engine.begin() as conn:
+        await set_db_update_running(conn, True)
     async with engine.begin() as conn:
         await conn.run_sync(base.metadata.create_all)
 
@@ -228,7 +457,7 @@ async def update_stored_repos() -> None:
                 logger.info("Removing unlisted repo: {}", dbrepo.full_name)
                 deleterepo_query = sqlalchemy.delete(SQLRepos).where(SQLRepos.full_name == dbrepo.full_name)
                 await conn.execute(deleterepo_query)
-    await set_db_update_running(False)
+    await set_db_update_running(conn, False)
 
 
 async def cron_update() -> None:
@@ -238,221 +467,8 @@ async def cron_update() -> None:
 
     async with engine.begin() as conn:
         await conn.run_sync(base.metadata.create_all)
-        last_update = await db_updated()
+        last_update = await get_updated(conn)
         if (time() - last_update) >= 3600:
             logger.debug("Cron shows it's been an hour, doing update...")
             await update_stored_repos()
             logger.success("Completed background cron update...")
-
-
-@app.get("/favicon.svg", response_model=None)
-async def favicon() -> Response | FileResponse:
-    """return a"""
-    icon_file = Path(Path(__file__).resolve().parent.as_posix() + "/images/github.svg")
-    if icon_file.exists():
-        return FileResponse(icon_file)
-    return Response(status_code=404)
-
-
-@app.get("/images/{filename}", response_model=None)
-async def images(filename: str) -> Response | FileResponse:
-    """return an image"""
-    icon_file = Path(Path(__file__).resolve().parent.as_posix() + f"/images/{filename}")
-    if icon_file.exists():
-        return FileResponse(icon_file)
-    return Response(status_code=404)
-
-
-@app.get("/css/{filename:str}", response_model=None)
-async def css_file(filename: str) -> Response | FileResponse:
-    """css returner"""
-    cssfile = Path(Path(__file__).resolve().parent.as_posix() + f"/css/{filename}")
-    if cssfile.exists():
-        return FileResponse(cssfile)
-    return Response(status_code=404)
-
-
-@app.get("/github_linter.js", response_model=None)
-async def github_linter_js() -> Response | FileResponse:
-    """load the js"""
-    jspath = Path(Path(__file__).resolve().parent.as_posix() + "/github_linter.js")
-    if jspath.exists():
-        return FileResponse(jspath)
-    return Response(status_code=404)
-
-
-@app.get("/db/updating", response_model=None)
-async def db_update_running() -> bool:
-    """check if a db update is running"""
-    async with engine.begin() as conn:
-        try:
-            stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name == "update_running")
-            result: sqlalchemy.engine.result.Result[tuple[Any]] = await conn.execute(stmt)
-
-            if result is None:
-                logger.debug("No response from db")
-                await set_db_update_running(False)
-                return False
-            row = result.fetchone()
-
-            if row is None:
-                logger.debug("no row data querying update_running: {}", row)
-                await set_db_update_running(False)
-                return False
-            # print(row)
-            data = MetaData.model_validate(row)
-            try:
-                return bool(data.value)
-            except ValueError:
-                logger.debug(
-                    "Failed to turn update_running metadata value '{}' into bool",
-                    data.value,
-                )
-                await set_db_update_running(False)
-                return False
-        except Exception as error_message:  # noqa: BLE001
-            logger.warning(f"Failed to pull update_running: {error_message}")
-            try:
-                await set_db_update_running(False)
-                logger.success("Set it to False instead")
-            except Exception as error:  # noqa: BLE001
-                logger.error(
-                    "Tried to set update_running to False but THAT went wrong too! {}",
-                    error,
-                )
-        return False
-
-
-@app.post("/db/updating", response_model=None)
-async def set_db_update_running(value: bool) -> bool:
-    """set that a db update is running, returns if it worked or not"""
-    async with engine.begin() as conn:
-        try:
-            await conn.run_sync(Base.metadata.create_all)
-            update_running = {"name": "update_running", "value": value}
-
-            insert_row = sqlalchemy.dialects.sqlite.insert(SQLMetadata).values(**update_running)
-            do_update = insert_row.on_conflict_do_update(
-                index_elements=["name"],
-                set_=update_running,
-            )
-            await conn.execute(do_update)
-            await conn.commit()
-            return True
-        except Exception as error_message:  # noqa: BLE001
-            logger.warning(f"Failed to set update_running to {value}: {error_message}")
-            return False
-
-
-@app.get("/db/updated", response_model=None)
-async def db_updated() -> int:
-    """pulls the last_updated field from the db"""
-
-    async with engine.begin() as conn:
-        try:
-            stmt = sqlalchemy.select(SQLMetadata).where(SQLMetadata.name == "last_updated")
-            result: sqlalchemy.engine.result.Result[tuple[Any]] = await conn.execute(stmt)
-
-            if result is None:
-                logger.debug("No response from db")
-                return -1
-            row = result.fetchone()
-
-            if row is None:
-                logger.error("no row data querying update time: {}", row)
-                return -1
-            # print(row)
-            data = MetaData.model_validate(row)
-            if "." in data.value:
-                return int(data.value.split(".")[0])
-        except Exception as error_message:  # noqa: BLE001
-            logger.warning(f"Failed to pull last_updated: {error_message}")
-            try:
-                await set_update_time(-1, conn)
-                await conn.commit()
-                logger.success("Set it to -1 instead")
-            except Exception as error:  # noqa: BLE001
-                logger.error("Tried to set it to -1 but THAT went wrong too! {}", error)
-        return -1
-
-
-class ResponseMessage(BaseModel):
-    """simple basemodel for response messages"""
-
-    message: str
-
-
-@app.get("/repos/update")
-async def update_repos(
-    background_tasks: BackgroundTasks,
-) -> ResponseMessage:
-    """Call this endpoint (/repos/update) to start the update process in the background."""
-
-    if not await set_db_update_running(True):
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to set update_running to True, something else is going on!",
-        )
-
-    logger.info("Spawning an update process...")
-    background_tasks.add_task(update_stored_repos)
-    return ResponseMessage(message="Updating in the background")
-
-
-@app.get("/health", response_model=None)
-async def get_health(
-    background_tasks: BackgroundTasks,
-) -> Response:
-    """really simple health check, also triggers cron jobs sneakily"""
-
-    # check periodically for an update
-    background_tasks.add_task(cron_update)
-
-    return Response(content="OK", status_code=200)
-
-
-@app.get("/repos")
-async def get_repos(session: Annotated[AsyncSession, Depends(get_async_session)]) -> list[RepoDataSimple]:
-    """endpoint to provide the cached repo list"""
-
-    try:
-        stmt = get_repos_query()
-        result = await session.execute(stmt)
-        retval = [RepoDataSimple.model_validate(element.SQLRepos) for element in result.fetchall()]
-    except OperationalError as operational_error:
-        logger.warning("Failed to pull repos from DB: {}", operational_error)
-        return []
-    return retval
-
-
-def get_repos_query(config: dict[str, Any] | None = None) -> Any:
-    """Build the cached repository query constrained by the linter configuration."""
-    if config is None:
-        config = load_config()
-
-    linter_config = config.get("linter", {})
-    stmt = sqlalchemy.select(SQLRepos)
-
-    owner_list = linter_config.get("owner_list", [])
-    if owner_list:
-        stmt = stmt.where(sqlalchemy.func.lower(SQLRepos.owner).in_([owner.lower() for owner in owner_list]))
-    if not linter_config.get("check_forks", False):
-        stmt = stmt.where(SQLRepos.fork.is_(False))
-    return stmt
-
-
-@app.get("/", response_model=None)
-async def root(
-    background_tasks: BackgroundTasks,
-) -> Response | HTMLResponse:
-    """homepage"""
-    env = Environment(
-        loader=PackageLoader(
-            package_name="github_linter.web.templates",
-            package_path=".",
-        ),
-        autoescape=select_autoescape(),
-    )
-    template = env.get_template("index.vue")
-
-    return HTMLResponse(template.render())

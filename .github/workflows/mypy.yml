@@ -8,17 +8,11 @@ name: mypy
   pull_request:
 
 jobs:
-  mypy:
+  mypy: # don't rename, used for rulesets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: extractions/setup-just@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          activate-environment: "true"
-          github-token: ${{ github.token }}
-      - uses: extractions/setup-just@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
       - name: Running type checking
         run: |
-          uv run ty check
+          mise run ty

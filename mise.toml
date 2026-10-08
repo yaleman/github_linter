@@ -1,15 +1,24 @@
 [tools]
-biome = "latest"
+biome = "2.5.14"
 python = "3.13"
+shellcheck = "latest"
 uv = "latest"
 
+[tasks.fmt]
+run = "uv run ruff format"
 
 [tasks.ruff]
-run = ["uv run ruff format", "uv run ruff check --fix"]
+depends = ["fmt"]
+run = "uv run ruff check --fix"
+
 [tasks.ty]
+depends = ["fmt"]
 run = "uv run ty check --fix"
+
 [tasks.pytest]
+depends = ["fmt"]
 run = "uv run pytest"
+
 [tasks.biome]
 run = "biome check --verbose"
 
@@ -25,3 +34,9 @@ run = """docker run --rm -it \
 
 [tasks.check]
 depends = ["ruff", "ty", "pytest", "biome"]
+
+[tasks.shellcheck]
+run = "find $(pwd) -name '*.sh' -exec shellcheck {} +"
+
+[tasks.coverage]
+run = ["uv run coverage run -m pytest", "uv run coverage html"]
