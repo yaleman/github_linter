@@ -29,7 +29,7 @@ dependencies = [
     "sqlalchemy>=2.1.1",
     "tomli>=2.4.1",
     "tomli-w>=1.2.0",
-    "uvicorn>=0.53.0",
+    "uvicorn>=0.54.0",
     "wildcard-matcher>=0.0.3",
 ]
 
