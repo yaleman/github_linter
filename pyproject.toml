@@ -68,6 +68,6 @@ dev = [
     "ty>=0.0.85",
     "types-pytz>=2026.3.1.20260727",
     "types-pyyaml>=6.0.12.20260906",
-    "types-requests>=2.33.0.20260906",
+    "types-requests>=2.33.0.20261006",
     "pytest-asyncio>=1.4.0",
 ]
