@@ -11,7 +11,7 @@ keywords = ["github"]
 requires-python = ">=3.12"
 dependencies = [
     "aiosqlite>=0.22.1",
-    "click>=8.5.0",
+    "click>=8.5.1",
     "fastapi>=0.154.0",
     "github3-py>=4.0.1",
     "greenlet>=3.5.6",
